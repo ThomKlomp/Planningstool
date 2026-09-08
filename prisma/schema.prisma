@@ -1,0 +1,211 @@
+// Prisma schema voor de horeca-planningstool
+// Multi-tenant model: elk "Company" record is een aparte zaak/omgeving.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth (NextAuth / Auth.js) ----------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- Platform-level (jouw admin-portaal) ----------
+
+// PlatformAdmin staat los van een Company: dit ben jij, de beheerder van de hele SaaS.
+model PlatformAdmin {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ---------- Tenant / Company ----------
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique // gebruikt in URL, bv. cafedepub.jouwtool.nl of /c/cafedepub
+  timezone  String   @default("Europe/Amsterdam")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  invites     Invite[]
+  shifts      Shift[]
+  timeEntries TimeEntry[]
+}
+
+enum Role {
+  OWNER // eigenaar van de zaak, volledige rechten binnen de company
+  MANAGER // maakt roosters, keurt uren goed
+  EMPLOYEE // vult beschikbaarheid en uren in
+}
+
+// Koppeltabel user <-> company, met rol. Eén user kan (in theorie) bij meerdere zaken werken.
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  availabilities Availability[]
+  shifts         Shift[]
+  timeEntries    TimeEntry[]
+
+  @@unique([userId, companyId])
+}
+
+// Uitnodiging van een medewerker per e-mail, voordat die een account heeft.
+model Invite {
+  id        String   @id @default(cuid())
+  email     String
+  role      Role     @default(EMPLOYEE)
+  token     String   @unique @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  acceptedAt DateTime?
+
+  @@index([companyId])
+}
+
+// ---------- User ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts Account[]
+  sessions Session[]
+
+  memberships   Membership[]
+  platformAdmin PlatformAdmin?
+
+  createdAt DateTime @default(now())
+}
+
+// ---------- Beschikbaarheid ("datumprikker") ----------
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  PREFERRED // liever wel, voorkeursdag
+}
+
+model Availability {
+  id           String             @id @default(cuid())
+  membershipId String
+  date         DateTime           @db.Date
+  // dagdeel; laat leeg ("") voor hele dag, of gebruik bv. "ochtend" / "middag" / "avond".
+  // Bewust geen nullable veld: NULL gedraagt zich onvoorspelbaar in een composite
+  // unique constraint (elke NULL telt als uniek), leeg-string voorkomt dat.
+  daypart      String  @default("")
+  status       AvailabilityStatus @default(AVAILABLE)
+  note         String?
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([membershipId, date, daypart])
+  @@index([date])
+}
+
+// ---------- Rooster ----------
+
+model Shift {
+  id           String   @id @default(cuid())
+  companyId    String
+  membershipId String? // null = openstaande shift, nog niet toegewezen
+  date         DateTime @db.Date
+  startTime    String // "17:00"
+  endTime      String // "23:00"
+  role         String? // bv. "bediening", "keuken", "bar"
+  note         String?
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membership Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, date])
+}
+
+// ---------- Urenregistratie ----------
+
+enum TimeEntryStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model TimeEntry {
+  id           String          @id @default(cuid())
+  companyId    String
+  membershipId String
+  date         DateTime        @db.Date
+  startTime    String
+  endTime      String
+  breakMinutes Int             @default(0)
+  status       TimeEntryStatus @default(SUBMITTED)
+  note         String?
+  reviewedById String? // membershipId van de manager die goed-/afkeurde
+  reviewedAt   DateTime?
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, date])
+}

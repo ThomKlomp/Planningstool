@@ -1,0 +1,26 @@
+databases:
+  - name: horeca-planner-db
+    plan: free
+    databaseName: horeca_planner
+    user: horeca_planner
+
+services:
+  - type: web
+    name: horeca-planner
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma migrate deploy && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: horeca-planner-db
+          property: connectionString
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
