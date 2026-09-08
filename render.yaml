@@ -9,7 +9,7 @@ services:
     name: horeca-planner
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma migrate deploy && npm run build
+    buildCommand: npm install && npx prisma db push && npm run build
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
