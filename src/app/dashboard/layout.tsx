@@ -24,6 +24,9 @@ export default async function DashboardLayout({
             <NavLink href="/dashboard/availability">Beschikbaarheid</NavLink>
             <NavLink href="/dashboard/roster">Rooster</NavLink>
             <NavLink href="/dashboard/hours">Uren</NavLink>
+            {(membership.role === "OWNER" || membership.role === "MANAGER") && (
+              <NavLink href="/dashboard/settings">Instellingen</NavLink>
+            )}
             {session.user.isPlatformAdmin && (
               <NavLink href="/admin">Adminportaal</NavLink>
             )}

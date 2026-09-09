@@ -73,6 +73,24 @@ model Company {
   shifts      Shift[]
   timeEntries TimeEntry[]
   weeks       WeekStatus[]
+  shiftTemplates ShiftTemplate[]
+}
+
+// Standaard shifts die de eigenaar/manager instelt (bv. "Middagshift
+// 12:00-18:00 op ma-vr"). Worden gebruikt als per-shift opties op de
+// beschikbaarheidspagina, in plaats van alleen "hele dag".
+model ShiftTemplate {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  startTime String
+  endTime   String
+  weekdays  Int[] // 0 = zondag ... 6 = zaterdag (JavaScript Date.getDay())
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }
 
 enum Role {

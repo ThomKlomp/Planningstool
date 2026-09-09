@@ -15,7 +15,7 @@ export default async function AvailabilityPage({
   const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();
 
-  const [ownEntries, teamEntries, members, weekStatus] = await Promise.all([
+  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates] = await Promise.all([
     prisma.availability.findMany({
       where: {
         membershipId: membership.membershipId,
@@ -41,6 +41,10 @@ export default async function AvailabilityPage({
       where: {
         companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
       },
+    }),
+    prisma.shiftTemplate.findMany({
+      where: { companyId: membership.companyId },
+      orderBy: { startTime: "asc" },
     }),
   ]);
 
@@ -74,11 +78,29 @@ export default async function AvailabilityPage({
         </p>
       )}
 
+      {canManage && shiftTemplates.length === 0 && (
+        <p className="mt-4 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
+          Nog geen standaard shifts ingesteld — medewerkers geven nu
+          beschikbaarheid per hele dag door.{" "}
+          <a href="/dashboard/settings" className="text-awning hover:underline">
+            Shifts instellen →
+          </a>
+        </p>
+      )}
+
       <div className="mt-6">
         <AvailabilityGrid
           week={week.map((d) => d.toISOString())}
+          shiftTemplates={shiftTemplates.map((t) => ({
+            id: t.id,
+            name: t.name,
+            startTime: t.startTime,
+            endTime: t.endTime,
+            weekdays: t.weekdays,
+          }))}
           ownEntries={ownEntries.map((e) => ({
             date: e.date.toISOString(),
+            daypart: e.daypart,
             status: e.status,
             note: e.note,
           }))}
@@ -106,14 +128,22 @@ export default async function AvailabilityPage({
                   <tr key={m.id} className="border-b border-line last:border-0">
                     <td className="px-4 py-3 font-medium">{m.user.name ?? m.user.email}</td>
                     {week.map((d) => {
-                      const entry = teamEntries.find(
+                      const dayEntries = teamEntries.filter(
                         (e) =>
                           e.membershipId === m.id &&
                           e.date.toDateString() === d.toDateString()
                       );
                       return (
                         <td key={d.toISOString()} className="px-3 py-3">
-                          <StatusDot status={entry?.status} note={entry?.note} />
+                          {dayEntries.length === 0 ? (
+                            <StatusDot />
+                          ) : (
+                            <div className="flex justify-center gap-1">
+                              {dayEntries.map((e) => (
+                                <StatusDot key={e.id} status={e.status} note={e.note} />
+                              ))}
+                            </div>
+                          )}
                         </td>
                       );
                     })}

@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const { date, status, note } = body ?? {};
+  const daypart = body?.daypart ?? "";
   if (!date || !status) {
     return NextResponse.json({ error: "date en status zijn verplicht" }, { status: 400 });
   }
@@ -76,13 +77,14 @@ export async function POST(req: Request) {
       membershipId_date_daypart: {
         membershipId: membership.membershipId,
         date: new Date(date),
-        daypart: "", // hele dag, geen specifiek dagdeel
+        daypart,
       },
     },
     update: { status, note: note ?? null },
     create: {
       membershipId: membership.membershipId,
       date: new Date(date),
+      daypart,
       status,
       note: note || null,
     },
