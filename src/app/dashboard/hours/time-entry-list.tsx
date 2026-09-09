@@ -102,7 +102,10 @@ export default function TimeEntryList({
                   Afkeuren
                 </button>
               </div>
-            ) : !canManage && (entry.status === "QUERIED" || entry.status === "DRAFT") ? null : (
+            ) : !canManage &&
+              (entry.status === "QUERIED" ||
+                entry.status === "DRAFT" ||
+                entry.status === "SUBMITTED") ? null : (
               <StatusBadge status={entry.status} />
             )}
           </div>
@@ -127,24 +130,27 @@ export default function TimeEntryList({
             </div>
           )}
 
-          {!canManage && (entry.status === "QUERIED" || entry.status === "DRAFT") && (
-            <EditableEntryPanel
-              entry={entry}
-              editing={editingId === entry.id || entry.status === "DRAFT"}
-              busy={busyId === entry.id}
-              onStartEdit={() => setEditingId(entry.id)}
-              onCancel={() => setEditingId(null)}
-              onSubmit={async (fields) => {
-                setBusyId(entry.id);
-                await fetch(`/api/time-entries/${entry.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(fields),
-                });
-                setBusyId(null);
-                setEditingId(null);
-                router.refresh();
-              }}
+          {!canManage &&
+            (entry.status === "QUERIED" ||
+              entry.status === "DRAFT" ||
+              entry.status === "SUBMITTED") && (
+              <EditableEntryPanel
+                entry={entry}
+                editing={editingId === entry.id || entry.status === "DRAFT"}
+                busy={busyId === entry.id}
+                onStartEdit={() => setEditingId(entry.id)}
+                onCancel={() => setEditingId(null)}
+                onSubmit={async (fields) => {
+                  setBusyId(entry.id);
+                  await fetch(`/api/time-entries/${entry.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(fields),
+                  });
+                  setBusyId(null);
+                  setEditingId(null);
+                  router.refresh();
+                }}
             />
           )}
         </li>
@@ -181,18 +187,31 @@ function EditableEntryPanel({
   const [note, setNote] = useState(entry.note ?? "");
 
   const isDraft = entry.status === "DRAFT";
+  const isQueried = entry.status === "QUERIED";
+  const isSubmitted = entry.status === "SUBMITTED";
 
   return (
-    <div className={`mt-3 rounded-lg p-3 ${isDraft ? "bg-awning/10" : "bg-amber/10"}`}>
-      {isDraft ? (
+    <div
+      className={`mt-3 rounded-lg p-3 ${
+        isDraft ? "bg-awning/10" : isQueried ? "bg-amber/10" : "bg-ink/5"
+      }`}
+    >
+      {isDraft && (
         <p className="text-xs font-medium text-awning">
           Vooraf ingevuld op basis van je shift — check de tijden en bevestig.
         </p>
-      ) : (
+      )}
+      {isQueried && (
         <>
           <p className="text-xs font-medium text-amber-dark">Vraag van je manager:</p>
           <p className="mt-1 text-sm text-ink/80">{entry.managerComment}</p>
         </>
+      )}
+      {isSubmitted && (
+        <p className="text-xs font-medium text-ink/50">
+          In behandeling — je kunt dit nog aanpassen zolang je manager het
+          niet heeft goedgekeurd.
+        </p>
       )}
 
       {!editing ? (
@@ -200,7 +219,7 @@ function EditableEntryPanel({
           onClick={onStartEdit}
           className="mt-2 rounded-full border border-line bg-white px-3 py-1 text-xs font-medium hover:border-ink"
         >
-          Aanpassen &amp; opnieuw indienen
+          {isSubmitted ? "Aanpassen" : "Aanpassen & opnieuw indienen"}
         </button>
       ) : (
         <div className="mt-3 flex flex-wrap items-end gap-2">
@@ -269,7 +288,7 @@ function EditableEntryPanel({
               disabled={busy || (isDraft && !endTime)}
               className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-50"
             >
-              {isDraft ? "Bevestigen & indienen" : "Opnieuw indienen"}
+              {isDraft ? "Bevestigen & indienen" : isSubmitted ? "Wijzigingen opslaan" : "Opnieuw indienen"}
             </button>
             {!isDraft && (
               <button

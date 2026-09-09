@@ -5,6 +5,7 @@ import ShiftTemplatesManager from "./shift-templates-manager";
 import AutoOpenWeeksSetting from "./auto-open-weeks-setting";
 import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
+import DepartmentsManager from "./departments-manager";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -14,7 +15,7 @@ export default async function SettingsPage() {
     redirect("/dashboard");
   }
 
-  const [shiftTemplates, company, closedDays] = await Promise.all([
+  const [shiftTemplates, company, closedDays, departments, members] = await Promise.all([
     prisma.shiftTemplate.findMany({
       where: { companyId: membership.companyId },
       orderBy: { startTime: "asc" },
@@ -26,6 +27,15 @@ export default async function SettingsPage() {
     prisma.closedDay.findMany({
       where: { companyId: membership.companyId, date: { gte: new Date() } },
       orderBy: { date: "asc" },
+    }),
+    prisma.department.findMany({
+      where: { companyId: membership.companyId },
+      orderBy: { name: "asc" },
+    }),
+    prisma.membership.findMany({
+      where: { companyId: membership.companyId },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
     }),
   ]);
 
@@ -72,6 +82,24 @@ export default async function SettingsPage() {
               id: c.id,
               date: c.date.toISOString().slice(0, 10),
               reason: c.reason,
+            }))}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Teams</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Deel je medewerkers in teams in, bijvoorbeeld Bediening en Keuken —
+          dan zie je dat onderscheid terug op het rooster.
+        </p>
+        <div className="mt-4">
+          <DepartmentsManager
+            initialDepartments={departments.map((d) => ({ id: d.id, name: d.name }))}
+            members={members.map((m) => ({
+              membershipId: m.id,
+              name: m.user.name ?? m.user.email ?? "Onbekend",
+              departmentId: m.departmentId,
             }))}
           />
         </div>

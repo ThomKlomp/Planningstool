@@ -9,7 +9,7 @@ type Availability = {
   status: string;
   note: string | null;
 };
-type Member = { membershipId: string; name: string };
+type Member = { membershipId: string; name: string; departmentName: string | null };
 type ShiftTemplate = {
   id: string;
   name: string;
@@ -99,7 +99,14 @@ export default function DayPanel({
                   key={m.membershipId}
                   className="rounded-lg border border-line bg-white px-3 py-2"
                 >
-                  <p className="text-sm font-medium">{m.name}</p>
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    <span>{m.name}</span>
+                    {m.departmentName && (
+                      <span className="rounded-full bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink/50">
+                        {m.departmentName}
+                      </span>
+                    )}
+                  </p>
                   {entries.length === 0 ? (
                     <p className="mt-1 text-xs text-ink/40">Nog niet doorgegeven</p>
                   ) : (
@@ -136,6 +143,18 @@ export default function DayPanel({
       </div>
     </div>
   );
+}
+
+function groupByDepartment(members: Member[]) {
+  const groups = new Map<string, Member[]>();
+  for (const m of members) {
+    const label = m.departmentName ?? "Geen team";
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label)!.push(m);
+  }
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => (a === "Geen team" ? 1 : b === "Geen team" ? -1 : a.localeCompare(b)))
+    .map(([label, members]) => ({ label, members }));
 }
 
 function AddShiftForm({
@@ -214,10 +233,14 @@ function AddShiftForm({
         className="w-full rounded-lg border border-line px-2 py-1.5 text-sm"
       >
         <option value="">Nog niet toewijzen</option>
-        {members.map((m) => (
-          <option key={m.membershipId} value={m.membershipId}>
-            {m.name}
-          </option>
+        {groupByDepartment(members).map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.members.map((m) => (
+              <option key={m.membershipId} value={m.membershipId}>
+                {m.name}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
       <input

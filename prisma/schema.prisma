@@ -77,6 +77,22 @@ model Company {
   closedDays  ClosedDay[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
+  departments Department[]
+}
+
+// Teams/afdelingen binnen een zaak, bv. "Bediening", "Keuken". Een lid
+// hoort bij maximaal één team, gebruikt om het rooster overzichtelijker
+// te maken.
+model Department {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  createdAt DateTime @default(now())
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+
+  @@index([companyId])
 }
 
 // Dagen dat de zaak dicht is (vakantie, feestdag) — geen beschikbaarheid
@@ -123,10 +139,12 @@ model Membership {
   userId    String
   companyId String
   role      Role     @default(EMPLOYEE)
+  departmentId String?
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   availabilities Availability[]
   shifts         Shift[]

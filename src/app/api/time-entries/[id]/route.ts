@@ -47,9 +47,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ timeEntry: updated });
   }
 
-  // Medewerker past een bevraagde óf een concept-urenregel aan en dient
-  // 'm (opnieuw) in.
-  if (isOwnEntry && (timeEntry.status === "QUERIED" || timeEntry.status === "DRAFT")) {
+  // Medewerker past een eigen, nog niet afgeronde urenregel aan (concept,
+  // in behandeling, of met een vraag erbij) en dient 'm (opnieuw) in.
+  const editableStatuses = ["DRAFT", "SUBMITTED", "QUERIED"];
+  if (isOwnEntry && editableStatuses.includes(timeEntry.status)) {
     const { date, startTime, endTime, breakMinutes, note } = body;
     const updated = await prisma.timeEntry.update({
       where: { id: params.id },

@@ -12,6 +12,7 @@ type Shift = {
   role: string | null;
   membershipId: string | null;
   memberName: string | null;
+  departmentName: string | null;
 };
 
 type Availability = {
@@ -21,7 +22,7 @@ type Availability = {
   status: string;
   note: string | null;
 };
-type Member = { membershipId: string; name: string };
+type Member = { membershipId: string; name: string; departmentName: string | null };
 type ShiftTemplate = {
   id: string;
   name: string;
@@ -38,6 +39,7 @@ export default function RosterBoard({
   shifts,
   shiftTemplates,
   closedDates = [],
+  isWeekOpen = true,
 }: {
   canManage: boolean;
   week: string[];
@@ -46,6 +48,7 @@ export default function RosterBoard({
   shifts: Shift[];
   shiftTemplates: ShiftTemplate[];
   closedDates?: string[];
+  isWeekOpen?: boolean;
 }) {
   const router = useRouter();
   const [openDay, setOpenDay] = useState<string | null>(null);
@@ -92,9 +95,14 @@ export default function RosterBoard({
                   <p className="font-medium">
                     {shift.startTime}–{shift.endTime}
                   </p>
-                  <p className="text-ink/60">
-                    {shift.memberName ?? "Nog niet toegewezen"}
-                    {shift.role ? ` · ${shift.role}` : ""}
+                  <p className="flex items-center gap-1 text-ink/60">
+                    <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
+                    {shift.departmentName && (
+                      <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] font-medium text-ink/60">
+                        {shift.departmentName}
+                      </span>
+                    )}
+                    {shift.role ? <span>· {shift.role}</span> : null}
                   </p>
                 </div>
               ))}
@@ -103,13 +111,18 @@ export default function RosterBoard({
               )}
             </div>
 
-            {canManage && (
+            {canManage && isWeekOpen && (
               <button
                 onClick={() => setOpenDay(dateIso)}
                 className="mt-3 w-full rounded-full border border-line px-2 py-1 text-xs hover:border-ink"
               >
                 + Shift
               </button>
+            )}
+            {canManage && !isWeekOpen && (
+              <p className="mt-3 text-[11px] text-ink/30">
+                Week gesloten — zet 'm open om shifts toe te voegen
+              </p>
             )}
 
             <p className="mt-3 text-[11px] text-ink/40">{availableCount} beschikbaar</p>

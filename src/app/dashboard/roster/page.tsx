@@ -20,7 +20,7 @@ export default async function RosterPage({
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
-        include: { user: true },
+        include: { user: true, department: true },
       }),
       prisma.availability.findMany({
         where: {
@@ -30,7 +30,7 @@ export default async function RosterPage({
       }),
       prisma.shift.findMany({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
-        include: { membership: { include: { user: true } } },
+        include: { membership: { include: { user: true, department: true } } },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       }),
       prisma.weekStatus.findUnique({
@@ -106,6 +106,7 @@ export default async function RosterPage({
           members={members.map((m) => ({
             membershipId: m.id,
             name: m.user.name ?? m.user.email ?? "Onbekend",
+            departmentName: m.department?.name ?? null,
           }))}
           shiftTemplates={shiftTemplates.map((t) => ({
             id: t.id,
@@ -129,8 +130,10 @@ export default async function RosterPage({
             role: s.role,
             membershipId: s.membershipId,
             memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+            departmentName: s.membership?.department?.name ?? null,
           }))}
           closedDates={closedDates}
+          isWeekOpen={isWeekOpen}
         />
       </div>
     </div>
