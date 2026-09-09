@@ -42,6 +42,12 @@ export default async function InvitePage({
             Deze uitnodiging is voor {invite.email}. Log uit en probeer
             opnieuw met dat account.
           </p>
+          <a
+            href={`/api/auth/signout?callbackUrl=/invite/${params.token}`}
+            className="mt-6 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper hover:bg-awning transition-colors"
+          >
+            Uitloggen
+          </a>
         </div>
       </main>
     );
