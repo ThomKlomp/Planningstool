@@ -1,6 +1,22 @@
 "use client";
 
+import { Suspense } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+
+function SignInButton() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
+  return (
+    <button
+      onClick={() => signIn("google", { callbackUrl })}
+      className="mt-6 w-full rounded-full bg-ink px-4 py-3 font-medium text-paper hover:bg-awning transition-colors"
+    >
+      Inloggen met Google
+    </button>
+  );
+}
 
 export default function SignInPage() {
   return (
@@ -10,13 +26,12 @@ export default function SignInPage() {
         <p className="mt-2 text-sm text-ink/60">
           Log in met je Google-account om bij je zaak te komen.
         </p>
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="mt-6 w-full rounded-full bg-ink px-4 py-3 font-medium text-paper hover:bg-awning transition-colors"
-        >
-          Inloggen met Google
-        </button>
+        <Suspense fallback={null}>
+          <SignInButton />
+        </Suspense>
       </div>
     </main>
   );
 }
+
+
