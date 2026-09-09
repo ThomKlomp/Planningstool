@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isWeekOpenByDefault } from "@/lib/week";
+import { isDateClosed } from "@/lib/closed-days";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
       }),
       prisma.company.findUnique({
         where: { id: membership.companyId },
-        select: { autoOpenWeeks: true },
+        select: { autoOpenWeeks: true, closedWeekdays: true },
       }),
       prisma.closedDay.findUnique({
         where: {
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    if (closedDay) {
+    if (closedDay || isDateClosed(new Date(date), company?.closedWeekdays ?? [], [])) {
       return NextResponse.json(
         { error: "De zaak is dicht op deze dag" },
         { status: 403 }

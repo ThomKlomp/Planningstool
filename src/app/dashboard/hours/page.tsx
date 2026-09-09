@@ -19,7 +19,7 @@ export default async function HoursPage({
   const rangeEnd = new Date();
   rangeEnd.setDate(rangeEnd.getDate() + 90);
 
-  const [timeEntries, closedDays] = await Promise.all([
+  const [timeEntries, closedDays, company] = await Promise.all([
     prisma.timeEntry.findMany({
       where: canManage
         ? {
@@ -39,7 +39,26 @@ export default async function HoursPage({
             date: { gte: rangeStart, lte: rangeEnd },
           },
         }),
+    canManage
+      ? Promise.resolve(null)
+      : prisma.company.findUnique({
+          where: { id: membership.companyId },
+          select: { closedWeekdays: true },
+        }),
   ]);
+
+  const closedDates = closedDays.map((c) => c.date.toISOString().slice(0, 10));
+  if (company?.closedWeekdays && company.closedWeekdays.length > 0) {
+    for (
+      let d = new Date(rangeStart);
+      d <= rangeEnd;
+      d.setDate(d.getDate() + 1)
+    ) {
+      if (company.closedWeekdays.includes(d.getDay())) {
+        closedDates.push(d.toISOString().slice(0, 10));
+      }
+    }
+  }
 
   return (
     <div className="max-w-3xl">
@@ -58,9 +77,7 @@ export default async function HoursPage({
 
       {!canManage && (
         <div className="mt-6">
-          <TimeEntryForm
-            closedDates={closedDays.map((c) => c.date.toISOString().slice(0, 10))}
-          />
+          <TimeEntryForm closedDates={closedDates} />
         </div>
       )}
 

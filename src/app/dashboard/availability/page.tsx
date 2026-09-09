@@ -4,6 +4,7 @@ import AvailabilityGrid from "./availability-grid";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
+import { isDateClosed } from "@/lib/closed-days";
 
 export default async function AvailabilityPage({
   searchParams,
@@ -49,7 +50,7 @@ export default async function AvailabilityPage({
       }),
       prisma.company.findUnique({
         where: { id: membership.companyId },
-        select: { autoOpenWeeks: true },
+        select: { autoOpenWeeks: true, closedWeekdays: true },
       }),
       prisma.closedDay.findMany({
         where: {
@@ -61,7 +62,11 @@ export default async function AvailabilityPage({
 
   const isWeekOpen =
     weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
-  const closedDates = closedDays.map((c) => c.date.toDateString());
+  const specificClosedDates = closedDays.map((c) => c.date.toDateString());
+  const closedWeekdays = company?.closedWeekdays ?? [];
+  const closedDates = week
+    .filter((d) => isDateClosed(d, closedWeekdays, specificClosedDates))
+    .map((d) => d.toDateString());
 
   return (
     <div>
@@ -75,6 +80,7 @@ export default async function AvailabilityPage({
         <WeekStatusToggle
           weekStart={weekStartIso}
           initialIsOpen={isWeekOpen}
+          hasOverride={Boolean(weekStatus)}
           canManage={canManage}
         />
       </div>
@@ -126,12 +132,12 @@ export default async function AvailabilityPage({
         <section className="mt-12">
           <h2 className="font-display text-xl">Team-beschikbaarheid</h2>
           <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
-            <table className="w-full text-sm">
+            <table className="w-full table-fixed text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink/40">
-                  <th className="px-4 py-3">Naam</th>
+                <tr className="border-b border-line text-xs uppercase tracking-wide text-ink/40">
+                  <th className="w-32 px-4 py-3 text-left">Naam</th>
                   {week.map((d) => (
-                    <th key={d.toISOString()} className="px-3 py-3">
+                    <th key={d.toISOString()} className="px-2 py-3 text-center">
                       {d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" })}
                     </th>
                   ))}
@@ -140,7 +146,9 @@ export default async function AvailabilityPage({
               <tbody>
                 {members.map((m) => (
                   <tr key={m.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 font-medium">{m.user.name ?? m.user.email}</td>
+                    <td className="truncate px-4 py-3 font-medium">
+                      {m.user.name ?? m.user.email}
+                    </td>
                     {week.map((d) => {
                       const dayEntries = teamEntries.filter(
                         (e) =>
@@ -148,11 +156,15 @@ export default async function AvailabilityPage({
                           e.date.toDateString() === d.toDateString()
                       );
                       return (
-                        <td key={d.toISOString()} className="px-3 py-3">
-                          {dayEntries.length === 0 ? (
-                            <StatusDot />
+                        <td key={d.toISOString()} className="px-2 py-3">
+                          {closedDates.includes(d.toDateString()) ? (
+                            <p className="text-center text-[10px] text-ink/30">Dicht</p>
+                          ) : dayEntries.length === 0 ? (
+                            <div className="flex justify-center">
+                              <StatusDot />
+                            </div>
                           ) : (
-                            <div className="flex justify-center gap-1">
+                            <div className="flex flex-wrap justify-center gap-1">
                               {dayEntries.map((e) => (
                                 <StatusDot key={e.id} status={e.status} note={e.note} />
                               ))}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import ShiftTemplatesManager from "./shift-templates-manager";
 import AutoOpenWeeksSetting from "./auto-open-weeks-setting";
 import ClosedDaysManager from "./closed-days-manager";
+import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
     }),
     prisma.company.findUnique({
       where: { id: membership.companyId },
-      select: { autoOpenWeeks: true },
+      select: { autoOpenWeeks: true, closedWeekdays: true },
     }),
     prisma.closedDay.findMany({
       where: { companyId: membership.companyId, date: { gte: new Date() } },
@@ -48,9 +49,20 @@ export default async function SettingsPage() {
       </section>
 
       <section className="mt-10">
+        <h2 className="font-display text-xl">Vaste sluitingsdagen</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Dagen dat de zaak structureel dicht is, bijvoorbeeld elke maandag
+          en dinsdag.
+        </p>
+        <div className="mt-4">
+          <ClosedWeekdaysSetting initialWeekdays={company?.closedWeekdays ?? []} />
+        </div>
+      </section>
+
+      <section className="mt-10">
         <h2 className="font-display text-xl">Gesloten dagen</h2>
         <p className="mt-1 text-sm text-ink/60">
-          Dagen dat de zaak dicht is (feestdag, vakantie). Deze dagen
+          Losse dagen dat de zaak dicht is (feestdag, vakantie). Deze dagen
           verdwijnen uit de datumprikker en het rooster, en er kunnen geen
           uren op ingediend worden.
         </p>

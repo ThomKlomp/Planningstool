@@ -14,14 +14,29 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json();
-  const autoOpenWeeks = Number(body?.autoOpenWeeks);
-  if (!Number.isInteger(autoOpenWeeks) || autoOpenWeeks < 0 || autoOpenWeeks > 12) {
-    return NextResponse.json({ error: "Ongeldige waarde (0-12)" }, { status: 400 });
+  const data: { autoOpenWeeks?: number; closedWeekdays?: number[] } = {};
+
+  if (body?.autoOpenWeeks !== undefined) {
+    const autoOpenWeeks = Number(body.autoOpenWeeks);
+    if (!Number.isInteger(autoOpenWeeks) || autoOpenWeeks < 0 || autoOpenWeeks > 12) {
+      return NextResponse.json({ error: "Ongeldige waarde (0-12)" }, { status: 400 });
+    }
+    data.autoOpenWeeks = autoOpenWeeks;
+  }
+
+  if (body?.closedWeekdays !== undefined) {
+    if (
+      !Array.isArray(body.closedWeekdays) ||
+      !body.closedWeekdays.every((d: unknown) => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6)
+    ) {
+      return NextResponse.json({ error: "Ongeldige weekdagen" }, { status: 400 });
+    }
+    data.closedWeekdays = body.closedWeekdays;
   }
 
   const company = await prisma.company.update({
     where: { id: membership.companyId },
-    data: { autoOpenWeeks },
+    data,
   });
 
   return NextResponse.json({ company });

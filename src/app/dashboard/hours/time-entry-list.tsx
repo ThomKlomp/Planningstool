@@ -102,7 +102,7 @@ export default function TimeEntryList({
                   Afkeuren
                 </button>
               </div>
-            ) : (
+            ) : !canManage && (entry.status === "QUERIED" || entry.status === "DRAFT") ? null : (
               <StatusBadge status={entry.status} />
             )}
           </div>
@@ -127,10 +127,10 @@ export default function TimeEntryList({
             </div>
           )}
 
-          {!canManage && entry.status === "QUERIED" && (
-            <QueriedEntryEditor
+          {!canManage && (entry.status === "QUERIED" || entry.status === "DRAFT") && (
+            <EditableEntryPanel
               entry={entry}
-              editing={editingId === entry.id}
+              editing={editingId === entry.id || entry.status === "DRAFT"}
               busy={busyId === entry.id}
               onStartEdit={() => setEditingId(entry.id)}
               onCancel={() => setEditingId(null)}
@@ -153,7 +153,7 @@ export default function TimeEntryList({
   );
 }
 
-function QueriedEntryEditor({
+function EditableEntryPanel({
   entry,
   editing,
   busy,
@@ -180,10 +180,20 @@ function QueriedEntryEditor({
   const [breakMinutes, setBreakMinutes] = useState(String(entry.breakMinutes));
   const [note, setNote] = useState(entry.note ?? "");
 
+  const isDraft = entry.status === "DRAFT";
+
   return (
-    <div className="mt-3 rounded-lg bg-amber/10 p-3">
-      <p className="text-xs font-medium text-amber-dark">Vraag van je manager:</p>
-      <p className="mt-1 text-sm text-ink/80">{entry.managerComment}</p>
+    <div className={`mt-3 rounded-lg p-3 ${isDraft ? "bg-awning/10" : "bg-amber/10"}`}>
+      {isDraft ? (
+        <p className="text-xs font-medium text-awning">
+          Vooraf ingevuld op basis van je shift — check de tijden en bevestig.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs font-medium text-amber-dark">Vraag van je manager:</p>
+          <p className="mt-1 text-sm text-ink/80">{entry.managerComment}</p>
+        </>
+      )}
 
       {!editing ? (
         <button
@@ -254,15 +264,17 @@ function QueriedEntryEditor({
               disabled={busy}
               className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-50"
             >
-              Opnieuw indienen
+              {isDraft ? "Bevestigen & indienen" : "Opnieuw indienen"}
             </button>
-            <button
-              onClick={onCancel}
-              disabled={busy}
-              className="rounded-full border border-line px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-            >
-              Annuleren
-            </button>
+            {!isDraft && (
+              <button
+                onClick={onCancel}
+                disabled={busy}
+                className="rounded-full border border-line px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                Annuleren
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -278,6 +290,8 @@ function StatusBadge({ status }: { status: string }) {
       ? "Afgekeurd"
       : status === "QUERIED"
       ? "Vraag gesteld"
+      : status === "DRAFT"
+      ? "Concept — nog te bevestigen"
       : "In behandeling";
   const classes =
     status === "APPROVED"
@@ -286,6 +300,8 @@ function StatusBadge({ status }: { status: string }) {
       ? "bg-red-50 text-red-600"
       : status === "QUERIED"
       ? "bg-amber/20 text-amber-dark"
+      : status === "DRAFT"
+      ? "bg-awning/10 text-awning"
       : "bg-amber/10 text-amber-dark";
   return (
     <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${classes}`}>

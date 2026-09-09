@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isDateClosed } from "@/lib/closed-days";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -45,12 +46,18 @@ export async function POST(req: Request) {
     );
   }
 
-  const closedDay = await prisma.closedDay.findUnique({
-    where: {
-      companyId_date: { companyId: membership.companyId, date: new Date(date) },
-    },
-  });
-  if (closedDay) {
+  const [closedDay, company] = await Promise.all([
+    prisma.closedDay.findUnique({
+      where: {
+        companyId_date: { companyId: membership.companyId, date: new Date(date) },
+      },
+    }),
+    prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: { closedWeekdays: true },
+    }),
+  ]);
+  if (closedDay || isDateClosed(new Date(date), company?.closedWeekdays ?? [], [])) {
     return NextResponse.json(
       { error: "De zaak was dicht op deze dag, uren kunnen hier niet op ingediend worden" },
       { status: 403 }

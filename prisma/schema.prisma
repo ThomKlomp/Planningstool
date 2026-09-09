@@ -76,6 +76,7 @@ model Company {
   shiftTemplates ShiftTemplate[]
   closedDays  ClosedDay[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
+  closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
 }
 
 // Dagen dat de zaak dicht is (vakantie, feestdag) — geen beschikbaarheid
@@ -227,6 +228,7 @@ model Shift {
 
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  timeEntry  TimeEntry?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -237,6 +239,7 @@ model Shift {
 // ---------- Urenregistratie ----------
 
 enum TimeEntryStatus {
+  DRAFT // vooraf ingevuld op basis van een ingeroosterde shift, medewerker moet nog bevestigen
   SUBMITTED
   APPROVED
   REJECTED
@@ -247,6 +250,7 @@ model TimeEntry {
   id           String          @id @default(cuid())
   companyId    String
   membershipId String
+  shiftId      String?         @unique // gekoppelde shift, indien vooraf ingevuld vanuit het rooster
   date         DateTime        @db.Date
   startTime    String
   endTime      String
@@ -259,6 +263,7 @@ model TimeEntry {
 
   company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  shift      Shift?     @relation(fields: [shiftId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

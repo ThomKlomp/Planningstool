@@ -1,6 +1,7 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault } from "@/lib/week";
+import { isDateClosed } from "@/lib/closed-days";
 import RosterBoard from "./roster-board";
 import RosterActions from "./roster-actions";
 import WeekStatusToggle from "../week-status-toggle";
@@ -43,7 +44,7 @@ export default async function RosterPage({
       }),
       prisma.company.findUnique({
         where: { id: membership.companyId },
-        select: { autoOpenWeeks: true },
+        select: { autoOpenWeeks: true, closedWeekdays: true },
       }),
       prisma.closedDay.findMany({
         where: {
@@ -55,7 +56,11 @@ export default async function RosterPage({
 
   const isWeekOpen =
     weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
-  const closedDates = closedDays.map((c) => c.date.toDateString());
+  const specificClosedDates = closedDays.map((c) => c.date.toDateString());
+  const closedWeekdays = company?.closedWeekdays ?? [];
+  const closedDates = week
+    .filter((d) => isDateClosed(d, closedWeekdays, specificClosedDates))
+    .map((d) => d.toDateString());
 
   return (
     <div>
@@ -71,6 +76,7 @@ export default async function RosterPage({
         <WeekStatusToggle
           weekStart={week[0].toISOString()}
           initialIsOpen={isWeekOpen}
+          hasOverride={Boolean(weekStatus)}
           canManage={canManage}
         />
       </div>

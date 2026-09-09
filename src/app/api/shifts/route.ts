@@ -62,5 +62,21 @@ export async function POST(req: Request) {
     },
   });
 
+  // Alvast een conceptregel bij Uren zetten zodat de medewerker 'm alleen
+  // nog hoeft te bevestigen/aan te passen, niet vanaf nul hoeft in te vullen.
+  if (membershipId) {
+    await prisma.timeEntry.create({
+      data: {
+        companyId: membership.companyId,
+        membershipId,
+        shiftId: shift.id,
+        date: new Date(date),
+        startTime,
+        endTime,
+        status: "DRAFT",
+      },
+    });
+  }
+
   return NextResponse.json({ shift });
 }

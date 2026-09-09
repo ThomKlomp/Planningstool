@@ -77,3 +77,30 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ weekStatus });
 }
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  }
+  const membership = session.user.memberships[0];
+  if (!membership || (membership.role !== "OWNER" && membership.role !== "MANAGER")) {
+    return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const weekStart = searchParams.get("weekStart");
+  if (!weekStart) {
+    return NextResponse.json({ error: "weekStart is verplicht" }, { status: 400 });
+  }
+
+  await prisma.weekStatus
+    .delete({
+      where: {
+        companyId_weekStart: { companyId: membership.companyId, weekStart: new Date(weekStart) },
+      },
+    })
+    .catch(() => null); // was toch al geen override ingesteld
+
+  return NextResponse.json({ ok: true });
+}
