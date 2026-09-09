@@ -72,6 +72,7 @@ model Company {
   invites     Invite[]
   shifts      Shift[]
   timeEntries TimeEntry[]
+  weeks       WeekStatus[]
 }
 
 enum Role {
@@ -136,7 +137,7 @@ model User {
 enum AvailabilityStatus {
   AVAILABLE
   UNAVAILABLE
-  PREFERRED // liever wel, voorkeursdag
+  UNSURE // weet ik nog niet
 }
 
 model Availability {
@@ -157,6 +158,22 @@ model Availability {
 
   @@unique([membershipId, date, daypart])
   @@index([date])
+}
+
+// Per company, per week: staat de beschikbaarheid-invoer open of heeft de
+// manager/eigenaar 'm gesloten (bv. omdat het rooster al vaststaat).
+// Geen record voor een week = standaard open.
+model WeekStatus {
+  id        String   @id @default(cuid())
+  companyId String
+  weekStart DateTime @db.Date // maandag van de betreffende week
+  isOpen    Boolean  @default(true)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, weekStart])
 }
 
 // ---------- Rooster ----------
