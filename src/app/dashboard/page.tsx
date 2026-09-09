@@ -65,9 +65,6 @@ export default async function DashboardOverviewPage() {
 
           {pendingInvites.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs uppercase tracking-wide text-ink/40">
-                Openstaande uitnodigingen
-              </p>
               <PendingInvitesList
                 invites={pendingInvites.map((i) => ({
                   id: i.id,
