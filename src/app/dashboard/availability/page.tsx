@@ -1,14 +1,16 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import AvailabilityGrid from "./availability-grid";
-import { getWeekDates } from "@/lib/week";
+import WeekStatusToggle from "../week-status-toggle";
+import { getWeekDates, getISOWeekNumber } from "@/lib/week";
 
 export default async function AvailabilityPage() {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = getWeekDates(new Date());
+  const weekStartIso = week[0].toISOString();
 
-  const [ownEntries, teamEntries, members] = await Promise.all([
+  const [ownEntries, teamEntries, members, weekStatus] = await Promise.all([
     prisma.availability.findMany({
       where: {
         membershipId: membership.membershipId,
@@ -30,14 +32,38 @@ export default async function AvailabilityPage() {
           include: { user: true },
         })
       : Promise.resolve([]),
+    prisma.weekStatus.findUnique({
+      where: {
+        companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
+      },
+    }),
   ]);
+
+  const isWeekOpen = weekStatus?.isOpen ?? true;
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Beschikbaarheid</h1>
-      <p className="mt-1 text-sm text-ink/60">
-        Geef per dag aan of je kunt werken deze week.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl">Beschikbaarheid</h1>
+          <p className="mt-1 text-sm text-ink/60">
+            Week {getISOWeekNumber(week[0])} — geef per dag aan of je kunt werken.
+          </p>
+        </div>
+        <WeekStatusToggle
+          weekStart={weekStartIso}
+          initialIsOpen={isWeekOpen}
+          canManage={canManage}
+        />
+      </div>
+
+      {!isWeekOpen && !canManage && (
+        <p className="mt-4 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
+          Deze week is gesloten — je kunt je beschikbaarheid niet meer
+          aanpassen. Neem contact op met je manager als er iets moet
+          wijzigen.
+        </p>
+      )}
 
       <div className="mt-6">
         <AvailabilityGrid
@@ -45,7 +71,9 @@ export default async function AvailabilityPage() {
           ownEntries={ownEntries.map((e) => ({
             date: e.date.toISOString(),
             status: e.status,
+            note: e.note,
           }))}
+          locked={!isWeekOpen && !canManage}
         />
       </div>
 
@@ -76,7 +104,7 @@ export default async function AvailabilityPage() {
                       );
                       return (
                         <td key={d.toISOString()} className="px-3 py-3">
-                          <StatusDot status={entry?.status} />
+                          <StatusDot status={entry?.status} note={entry?.note} />
                         </td>
                       );
                     })}
@@ -91,14 +119,19 @@ export default async function AvailabilityPage() {
   );
 }
 
-function StatusDot({ status }: { status?: string }) {
+function StatusDot({ status, note }: { status?: string; note?: string | null }) {
   const color =
     status === "AVAILABLE"
       ? "bg-awning"
-      : status === "PREFERRED"
+      : status === "UNSURE"
       ? "bg-amber"
       : status === "UNAVAILABLE"
       ? "bg-ink/20"
       : "bg-transparent border border-line";
-  return <span className={`inline-block h-3 w-3 rounded-full ${color}`} />;
+  return (
+    <span
+      className={`inline-block h-3 w-3 rounded-full ${color}`}
+      title={note ?? undefined}
+    />
+  );
 }

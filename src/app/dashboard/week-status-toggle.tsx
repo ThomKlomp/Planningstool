@@ -1,0 +1,61 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function WeekStatusToggle({
+  weekStart,
+  initialIsOpen,
+  canManage,
+}: {
+  weekStart: string;
+  initialIsOpen: boolean;
+  canManage: boolean;
+}) {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(initialIsOpen);
+  const [saving, setSaving] = useState(false);
+
+  async function toggle() {
+    const next = !isOpen;
+    setSaving(true);
+    setIsOpen(next);
+
+    await fetch("/api/week-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weekStart, isOpen: next }),
+    });
+
+    setSaving(false);
+    router.refresh();
+  }
+
+  if (!canManage) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+          isOpen ? "bg-awning/10 text-awning" : "bg-ink/10 text-ink/60"
+        }`}
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-awning" : "bg-ink/40"}`}
+        />
+        {isOpen ? "Beschikbaarheid open" : "Beschikbaarheid gesloten"}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={saving}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-opacity disabled:opacity-50 ${
+        isOpen ? "bg-awning/10 text-awning hover:bg-awning/20" : "bg-ink/10 text-ink/60 hover:bg-ink/20"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-awning" : "bg-ink/40"}`} />
+      {isOpen ? "Week open — klik om te sluiten" : "Week gesloten — klik om te openen"}
+    </button>
+  );
+}

@@ -3,20 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Status = "AVAILABLE" | "UNAVAILABLE" | "PREFERRED";
+type Status = "AVAILABLE" | "UNAVAILABLE" | "UNSURE";
 
 const STATUS_OPTIONS: { value: Status; label: string; classes: string }[] = [
-  { value: "AVAILABLE", label: "Kan werken", classes: "bg-awning text-white" },
-  { value: "PREFERRED", label: "Liever wel", classes: "bg-amber text-ink" },
-  { value: "UNAVAILABLE", label: "Kan niet", classes: "bg-ink/10 text-ink" },
+  { value: "AVAILABLE", label: "Ik kan", classes: "bg-awning text-white" },
+  { value: "UNSURE", label: "Weet ik nog niet", classes: "bg-amber text-ink" },
+  { value: "UNAVAILABLE", label: "Ik kan niet", classes: "bg-ink/10 text-ink" },
 ];
 
 export default function AvailabilityGrid({
   week,
   ownEntries,
+  locked = false,
 }: {
   week: string[];
-  ownEntries: { date: string; status: Status }[];
+  ownEntries: { date: string; status: Status; note?: string | null }[];
+  locked?: boolean;
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState<Record<string, Status | undefined>>(() => {
@@ -26,9 +28,16 @@ export default function AvailabilityGrid({
     }
     return map;
   });
+  const [notes, setNotes] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const e of ownEntries) {
+      if (e.note) map[new Date(e.date).toDateString()] = e.note;
+    }
+    return map;
+  });
   const [saving, setSaving] = useState<string | null>(null);
 
-  async function setStatus(dateIso: string, status: Status) {
+  async function save(dateIso: string, status: Status, note: string) {
     const key = new Date(dateIso).toDateString();
     setSaving(key);
     setEntries((prev) => ({ ...prev, [key]: status }));
@@ -36,7 +45,7 @@ export default function AvailabilityGrid({
     await fetch("/api/availability", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: dateIso, status }),
+      body: JSON.stringify({ date: dateIso, status, note: note || undefined }),
     });
 
     setSaving(null);
@@ -49,6 +58,7 @@ export default function AvailabilityGrid({
         const date = new Date(dateIso);
         const key = date.toDateString();
         const current = entries[key];
+        const note = notes[key] ?? "";
         return (
           <div
             key={dateIso}
@@ -62,16 +72,25 @@ export default function AvailabilityGrid({
               {STATUS_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => setStatus(dateIso, opt.value)}
-                  disabled={saving === key}
+                  onClick={() => save(dateIso, opt.value, note)}
+                  disabled={locked || saving === key}
                   className={`w-full rounded-full px-2 py-1 text-xs font-medium transition-opacity ${
                     current === opt.value ? opt.classes : "bg-paper text-ink/50"
-                  } ${saving === key ? "opacity-50" : "hover:opacity-80"}`}
+                  } ${locked ? "opacity-40" : saving === key ? "opacity-50" : "hover:opacity-80"}`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
+            <input
+              type="text"
+              value={note}
+              disabled={locked}
+              onChange={(e) => setNotes((prev) => ({ ...prev, [key]: e.target.value }))}
+              onBlur={() => current && save(dateIso, current, note)}
+              placeholder="Opmerking, bv. tijd"
+              className="mt-2 w-full rounded-lg border border-line px-2 py-1 text-center text-[11px] text-ink placeholder:text-ink/30 focus:border-awning focus:outline-none disabled:opacity-40"
+            />
           </div>
         );
       })}

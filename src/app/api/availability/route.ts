@@ -46,9 +46,29 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { date, status } = body ?? {};
+  const { date, status, note } = body ?? {};
   if (!date || !status) {
     return NextResponse.json({ error: "date en status zijn verplicht" }, { status: 400 });
+  }
+
+  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
+  if (!canManage) {
+    const weekStart = new Date(date);
+    const day = weekStart.getDay();
+    weekStart.setDate(weekStart.getDate() + (day === 0 ? -6 : 1 - day));
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekStatus = await prisma.weekStatus.findUnique({
+      where: {
+        companyId_weekStart: { companyId: membership.companyId, weekStart },
+      },
+    });
+    if (weekStatus && !weekStatus.isOpen) {
+      return NextResponse.json(
+        { error: "Deze week is gesloten voor het doorgeven van beschikbaarheid" },
+        { status: 403 }
+      );
+    }
   }
 
   const availability = await prisma.availability.upsert({
@@ -59,11 +79,12 @@ export async function POST(req: Request) {
         daypart: "", // hele dag, geen specifiek dagdeel
       },
     },
-    update: { status },
+    update: { status, note: note ?? null },
     create: {
       membershipId: membership.membershipId,
       date: new Date(date),
       status,
+      note: note || null,
     },
   });
 
