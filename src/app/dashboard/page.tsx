@@ -69,7 +69,12 @@ export default async function DashboardOverviewPage() {
                 Openstaande uitnodigingen
               </p>
               <PendingInvitesList
-                invites={pendingInvites.map((i) => ({ id: i.id, email: i.email, role: i.role }))}
+                invites={pendingInvites.map((i) => ({
+                  id: i.id,
+                  email: i.email,
+                  role: i.role,
+                  token: i.token,
+                }))}
               />
             </div>
           )}
