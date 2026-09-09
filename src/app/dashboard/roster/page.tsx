@@ -15,7 +15,7 @@ export default async function RosterPage({
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 
-  const [members, availabilities, shifts, weekStatus] = await Promise.all([
+  const [members, availabilities, shifts, weekStatus, shiftTemplates] = await Promise.all([
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
       include: { user: true },
@@ -35,6 +35,10 @@ export default async function RosterPage({
       where: {
         companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
       },
+    }),
+    prisma.shiftTemplate.findMany({
+      where: { companyId: membership.companyId },
+      orderBy: { startTime: "asc" },
     }),
   ]);
 
@@ -82,10 +86,19 @@ export default async function RosterPage({
             membershipId: m.id,
             name: m.user.name ?? m.user.email ?? "Onbekend",
           }))}
+          shiftTemplates={shiftTemplates.map((t) => ({
+            id: t.id,
+            name: t.name,
+            startTime: t.startTime,
+            endTime: t.endTime,
+            weekdays: t.weekdays,
+          }))}
           availabilities={availabilities.map((a) => ({
             membershipId: a.membershipId,
             date: a.date.toISOString(),
+            daypart: a.daypart,
             status: a.status,
+            note: a.note,
           }))}
           shifts={shifts.map((s) => ({
             id: s.id,
