@@ -2,12 +2,17 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import AvailabilityGrid from "./availability-grid";
 import WeekStatusToggle from "../week-status-toggle";
-import { getWeekDates, getISOWeekNumber } from "@/lib/week";
+import WeekNav from "../week-nav";
+import { resolveWeek } from "@/lib/week";
 
-export default async function AvailabilityPage() {
+export default async function AvailabilityPage({
+  searchParams,
+}: {
+  searchParams: { week?: string };
+}) {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
-  const week = getWeekDates(new Date());
+  const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();
 
   const [ownEntries, teamEntries, members, weekStatus] = await Promise.all([
@@ -47,7 +52,7 @@ export default async function AvailabilityPage() {
         <div>
           <h1 className="font-display text-3xl">Beschikbaarheid</h1>
           <p className="mt-1 text-sm text-ink/60">
-            Week {getISOWeekNumber(week[0])} — geef per dag aan of je kunt werken.
+            Geef per dag aan of je kunt werken.
           </p>
         </div>
         <WeekStatusToggle
@@ -55,6 +60,10 @@ export default async function AvailabilityPage() {
           initialIsOpen={isWeekOpen}
           canManage={canManage}
         />
+      </div>
+
+      <div className="mt-4">
+        <WeekNav basePath="/dashboard/availability" weekStart={week[0]} />
       </div>
 
       {!isWeekOpen && !canManage && (

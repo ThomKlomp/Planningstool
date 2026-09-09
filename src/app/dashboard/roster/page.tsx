@@ -1,13 +1,18 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import { getWeekDates, getISOWeekNumber } from "@/lib/week";
+import { resolveWeek, getISOWeekNumber } from "@/lib/week";
 import RosterBoard from "./roster-board";
 import WeekStatusToggle from "../week-status-toggle";
+import WeekNav from "../week-nav";
 
-export default async function RosterPage() {
+export default async function RosterPage({
+  searchParams,
+}: {
+  searchParams: { week?: string };
+}) {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
-  const week = getWeekDates(new Date());
+  const week = resolveWeek(searchParams?.week);
 
   const [members, availabilities, shifts, weekStatus] = await Promise.all([
     prisma.membership.findMany({
@@ -38,10 +43,9 @@ export default async function RosterPage() {
         <div>
           <h1 className="font-display text-3xl">Rooster</h1>
           <p className="mt-1 text-sm text-ink/60">
-            Week {getISOWeekNumber(week[0])}
             {canManage
-              ? " — beschikbaarheid van je team zie je direct terug, zo weet je bij het inplannen meteen wie kan."
-              : " — bekijk hier wie er wanneer werkt."}
+              ? "Beschikbaarheid van je team zie je direct terug, zo weet je bij het inplannen meteen wie kan."
+              : "Bekijk hier wie er wanneer werkt."}
           </p>
         </div>
         <WeekStatusToggle
@@ -49,6 +53,10 @@ export default async function RosterPage() {
           initialIsOpen={weekStatus?.isOpen ?? true}
           canManage={canManage}
         />
+      </div>
+
+      <div className="mt-4">
+        <WeekNav basePath="/dashboard/roster" weekStart={week[0]} />
       </div>
 
       <div className="mt-6">

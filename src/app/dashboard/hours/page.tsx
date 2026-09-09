@@ -2,18 +2,28 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import TimeEntryForm from "./time-entry-form";
 import TimeEntryList from "./time-entry-list";
+import WeekNav from "../week-nav";
+import { resolveWeek } from "@/lib/week";
 
-export default async function HoursPage() {
+export default async function HoursPage({
+  searchParams,
+}: {
+  searchParams: { week?: string };
+}) {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
+  const week = canManage ? resolveWeek(searchParams?.week) : null;
 
   const timeEntries = await prisma.timeEntry.findMany({
     where: canManage
-      ? { companyId: membership.companyId }
+      ? {
+          companyId: membership.companyId,
+          ...(week ? { date: { gte: week[0], lte: week[6] } } : {}),
+        }
       : { membershipId: membership.membershipId },
     include: { membership: { include: { user: true } } },
     orderBy: { date: "desc" },
-    take: 100,
+    take: canManage ? undefined : 100,
   });
 
   return (
@@ -24,6 +34,12 @@ export default async function HoursPage() {
           ? "Keur ingediende uren goed of stuur ze terug."
           : "Log je gewerkte uren, je manager keurt ze goed."}
       </p>
+
+      {canManage && week && (
+        <div className="mt-4">
+          <WeekNav basePath="/dashboard/hours" weekStart={week[0]} />
+        </div>
+      )}
 
       {!canManage && (
         <div className="mt-6">

@@ -22,3 +22,22 @@ export function getISOWeekNumber(date: Date): number {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
+
+/** Datum -> "YYYY-MM-DD", te gebruiken als URL query param. */
+export function toDateParam(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Bepaalt de weekdatums op basis van een optionele ?week=YYYY-MM-DD query
+ * param. Zonder (geldige) param wordt de huidige week gebruikt.
+ */
+export function resolveWeek(weekParam?: string): Date[] {
+  if (weekParam) {
+    const parsed = new Date(`${weekParam}T00:00:00`);
+    if (!isNaN(parsed.getTime())) {
+      return getWeekDates(parsed);
+    }
+  }
+  return getWeekDates(new Date());
+}
