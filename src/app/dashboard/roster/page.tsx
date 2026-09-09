@@ -2,6 +2,7 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import { resolveWeek, getISOWeekNumber } from "@/lib/week";
 import RosterBoard from "./roster-board";
+import RosterActions from "./roster-actions";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 
@@ -55,8 +56,22 @@ export default async function RosterPage({
         />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <WeekNav basePath="/dashboard/roster" weekStart={week[0]} />
+        {canManage && (
+          <RosterActions
+            weekStart={week[0].toISOString()}
+            weekLabel={`week ${getISOWeekNumber(week[0])}`}
+            shifts={shifts.map((s) => ({
+              id: s.id,
+              date: s.date.toISOString(),
+              startTime: s.startTime,
+              endTime: s.endTime,
+              role: s.role,
+              memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+            }))}
+          />
+        )}
       </div>
 
       <div className="mt-6">

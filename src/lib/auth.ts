@@ -1,7 +1,9 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -10,28 +12,59 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
+    CredentialsProvider({
+      id: "credentials",
+      name: "E-mail",
+      credentials: {
+        email: { label: "E-mail", type: "email" },
+        password: { label: "Wachtwoord", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email?.toLowerCase().trim();
+        const password = credentials?.password;
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) return null;
+
+        const valid = await verifyPassword(password, user.passwordHash);
+        if (!valid) return null;
+
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
+      },
+    }),
   ],
+  // Credentials-login werkt in NextAuth alleen met JWT-sessies, niet met
+  // database-sessies. We slaan daarom alleen de user-id in de JWT op, en
+  // vragen bij elke request de actuele memberships/platform-admin-status
+  // vers uit de database op in de session-callback hieronder — zo blijft
+  // een rolwijziging (bv. via het adminportaal) direct zichtbaar, ook al
+  // gebruiken we JWT-sessies.
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
   pages: {
     signIn: "/signin",
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      const userId = token.id as string | undefined;
+      if (session.user && userId) {
+        session.user.id = userId;
 
-        // Check of deze user platform-admin is (voor het interne admin-portaal).
         const platformAdmin = await prisma.platformAdmin.findUnique({
-          where: { userId: user.id },
+          where: { userId },
         });
         session.user.isPlatformAdmin = Boolean(platformAdmin);
 
-        // Haal alle memberships (bedrijf + rol) op zodat we die overal kunnen gebruiken
-        // zonder telkens opnieuw te query'en.
         const memberships = await prisma.membership.findMany({
-          where: { userId: user.id },
+          where: { userId },
           include: { company: true },
         });
         session.user.memberships = memberships.map((m) => ({

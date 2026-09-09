@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, emailLayout } from "@/lib/email";
+
+function roleLabel(role: string) {
+  return role === "MANAGER" ? "manager" : "medewerker";
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -32,8 +37,31 @@ export async function POST(req: Request) {
     },
   });
 
-  // TODO: verstuur hier een e-mail met de invite-link, bv. via Resend of Postmark.
   const inviteUrl = `${process.env.NEXTAUTH_URL ?? ""}/invite/${invite.token}`;
 
-  return NextResponse.json({ invite, inviteUrl });
+  const emailResult = await sendEmail({
+    to: email,
+    subject: `Uitnodiging voor ${membership.companyName}`,
+    html: emailLayout(
+      `Je bent uitgenodigd bij ${membership.companyName}`,
+      `
+        <p>Je bent uitgenodigd om als ${roleLabel(role)} mee te werken bij
+        <strong>${membership.companyName}</strong>.</p>
+        <p style="margin-top: 20px;">
+          <a href="${inviteUrl}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
+            Uitnodiging bekijken
+          </a>
+        </p>
+        <p style="margin-top: 20px; color: #999; font-size: 12px;">
+          Werkt de knop niet? Kopieer deze link: ${inviteUrl}
+        </p>
+      `
+    ),
+  });
+
+  return NextResponse.json({
+    invite,
+    inviteUrl,
+    emailSent: !("skipped" in emailResult),
+  });
 }

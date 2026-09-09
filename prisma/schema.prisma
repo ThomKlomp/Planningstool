@@ -122,6 +122,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  passwordHash  String? // alleen gezet voor accounts die met e-mail+wachtwoord zijn aangemaakt
 
   accounts Account[]
   sessions Session[]
@@ -203,6 +204,7 @@ enum TimeEntryStatus {
   SUBMITTED
   APPROVED
   REJECTED
+  QUERIED // manager heeft een vraag, medewerker moet aanpassen en opnieuw indienen
 }
 
 model TimeEntry {
@@ -215,6 +217,7 @@ model TimeEntry {
   breakMinutes Int             @default(0)
   status       TimeEntryStatus @default(SUBMITTED)
   note         String?
+  managerComment String? // vraag/opmerking van de manager bij status QUERIED
   reviewedById String? // membershipId van de manager die goed-/afkeurde
   reviewedAt   DateTime?
 

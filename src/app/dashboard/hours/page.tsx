@@ -58,6 +58,7 @@ export default async function HoursPage({
             breakMinutes: e.breakMinutes,
             status: e.status,
             note: e.note,
+            managerComment: e.managerComment,
             memberName: e.membership.user.name ?? e.membership.user.email ?? "Onbekend",
           }))}
         />

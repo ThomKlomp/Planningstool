@@ -8,14 +8,14 @@ export default function InviteForm() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"EMPLOYEE" | "MANAGER">("EMPLOYEE");
   const [loading, setLoading] = useState(false);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [result, setResult] = useState<{ inviteUrl: string; emailSent: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setInviteUrl(null);
+    setResult(null);
 
     const res = await fetch("/api/invites", {
       method: "POST",
@@ -31,7 +31,7 @@ export default function InviteForm() {
       return;
     }
 
-    setInviteUrl(data.inviteUrl);
+    setResult({ inviteUrl: data.inviteUrl, emailSent: data.emailSent });
     setEmail("");
     setLoading(false);
     router.refresh();
@@ -70,10 +70,17 @@ export default function InviteForm() {
       </button>
 
       {error && <p className="w-full text-sm text-red-600">{error}</p>}
-      {inviteUrl && (
+      {result && (
         <p className="w-full text-sm text-awning">
-          Uitnodiging aangemaakt. Link (later automatisch per e-mail):{" "}
-          <span className="break-all font-mono text-xs">{inviteUrl}</span>
+          {result.emailSent ? (
+            "Uitnodiging verstuurd per e-mail."
+          ) : (
+            <>
+              Uitnodiging aangemaakt, maar e-mail kon niet verstuurd worden.
+              Deel deze link handmatig:{" "}
+              <span className="break-all font-mono text-xs">{result.inviteUrl}</span>
+            </>
+          )}
         </p>
       )}
     </form>
