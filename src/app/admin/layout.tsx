@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import SignOutButton from "@/components/sign-out-button";
 
 export default async function AdminLayout({
   children,
@@ -20,14 +21,32 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-paper text-ink">
       <header className="border-b border-line bg-white px-4 py-5 sm:px-8">
-        <p className="font-display text-xl">Adminportaal</p>
-        <p className="text-xs text-ink/50">
-          Intern overzicht — niet zichtbaar voor klanten.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-display text-xl">Adminportaal</p>
+            <p className="text-xs text-ink/50">
+              Intern overzicht — niet zichtbaar voor klanten.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+            <span className="hidden max-w-[14rem] truncate text-xs text-ink/50 sm:inline">
+              {session.user.email}
+            </span>
+            <SignOutButton />
+          </div>
+        </div>
         <nav className="mt-4 flex gap-1 overflow-x-auto text-sm">
           <AdminNavLink href="/admin">Overzicht</AdminNavLink>
           <AdminNavLink href="/admin/companies">Zaken</AdminNavLink>
           <AdminNavLink href="/admin/users">Gebruikers</AdminNavLink>
+          {session.user.memberships.length > 0 && (
+            <Link
+              href="/dashboard"
+              className="ml-auto shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/50 hover:bg-paper hover:text-ink"
+            >
+              ← Terug naar dashboard
+            </Link>
+          )}
         </nav>
       </header>
       <main className="px-4 py-8 sm:px-8">{children}</main>
