@@ -72,7 +72,7 @@ export default function TimeEntryList({
                 })}
               </p>
               <p className="text-xs text-ink/50">
-                {entry.startTime}–{entry.endTime}
+                {entry.startTime}–{entry.endTime || "?"}
                 {entry.breakMinutes > 0 ? ` · ${entry.breakMinutes} min pauze` : ""}
                 {entry.note ? ` · ${entry.note}` : ""}
               </p>
@@ -223,12 +223,17 @@ function EditableEntryPanel({
             />
           </div>
           <div>
-            <label className="block text-[11px] text-ink/60">Tot</label>
+            <label className="block text-[11px] text-ink/60">
+              Tot{isDraft && <span className="text-awning"> · vul in</span>}
+            </label>
             <input
               type="time"
+              required={isDraft}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="mt-1 rounded-lg border border-line px-2 py-1 text-xs"
+              className={`mt-1 rounded-lg border px-2 py-1 text-xs ${
+                isDraft && !endTime ? "border-awning" : "border-line"
+              }`}
             />
           </div>
           <div>
@@ -261,7 +266,7 @@ function EditableEntryPanel({
                   note,
                 })
               }
-              disabled={busy}
+              disabled={busy || (isDraft && !endTime)}
               className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-paper disabled:opacity-50"
             >
               {isDraft ? "Bevestigen & indienen" : "Opnieuw indienen"}

@@ -33,7 +33,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   });
 
   // Conceptregel bij Uren meebeheren, maar alleen zolang de medewerker 'm
-  // nog niet zelf heeft bevestigd/aangepast (status nog DRAFT).
+  // nog niet zelf heeft bevestigd/aangepast (status nog DRAFT). Eindtijd
+  // laten we bewust met rust — die vult de medewerker zelf in.
   if (existing.timeEntry && existing.timeEntry.status === "DRAFT") {
     if (!shift.membershipId) {
       // Niemand meer toegewezen: concept verwijderen.
@@ -45,14 +46,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         data: {
           membershipId: shift.membershipId,
           startTime: shift.startTime,
-          endTime: shift.endTime,
         },
       });
     } else {
-      // Zelfde medewerker, tijden kunnen gewijzigd zijn.
+      // Zelfde medewerker, starttijd kan gewijzigd zijn.
       await prisma.timeEntry.update({
         where: { id: existing.timeEntry.id },
-        data: { startTime: shift.startTime, endTime: shift.endTime },
+        data: { startTime: shift.startTime },
       });
     }
   } else if (!existing.timeEntry && shift.membershipId) {
@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         shiftId: shift.id,
         date: shift.date,
         startTime: shift.startTime,
-        endTime: shift.endTime,
+        endTime: "",
         status: "DRAFT",
       },
     });

@@ -64,6 +64,8 @@ export async function POST(req: Request) {
 
   // Alvast een conceptregel bij Uren zetten zodat de medewerker 'm alleen
   // nog hoeft te bevestigen/aan te passen, niet vanaf nul hoeft in te vullen.
+  // Eindtijd bewust leeg: voorkomt dat iemand per ongeluk doorklikt met de
+  // geplande eindtijd terwijl er misschien eerder/later gewerkt is.
   if (membershipId) {
     await prisma.timeEntry.create({
       data: {
@@ -72,7 +74,7 @@ export async function POST(req: Request) {
         shiftId: shift.id,
         date: new Date(date),
         startTime,
-        endTime,
+        endTime: "",
         status: "DRAFT",
       },
     });
