@@ -1,6 +1,6 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import { resolveWeek, getISOWeekNumber } from "@/lib/week";
+import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault } from "@/lib/week";
 import RosterBoard from "./roster-board";
 import RosterActions from "./roster-actions";
 import WeekStatusToggle from "../week-status-toggle";
@@ -15,32 +15,47 @@ export default async function RosterPage({
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 
-  const [members, availabilities, shifts, weekStatus, shiftTemplates] = await Promise.all([
-    prisma.membership.findMany({
-      where: { companyId: membership.companyId },
-      include: { user: true },
-    }),
-    prisma.availability.findMany({
-      where: {
-        membership: { companyId: membership.companyId },
-        date: { gte: week[0], lte: week[6] },
-      },
-    }),
-    prisma.shift.findMany({
-      where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
-      include: { membership: { include: { user: true } } },
-      orderBy: [{ date: "asc" }, { startTime: "asc" }],
-    }),
-    prisma.weekStatus.findUnique({
-      where: {
-        companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
-      },
-    }),
-    prisma.shiftTemplate.findMany({
-      where: { companyId: membership.companyId },
-      orderBy: { startTime: "asc" },
-    }),
-  ]);
+  const [members, availabilities, shifts, weekStatus, shiftTemplates, company, closedDays] =
+    await Promise.all([
+      prisma.membership.findMany({
+        where: { companyId: membership.companyId },
+        include: { user: true },
+      }),
+      prisma.availability.findMany({
+        where: {
+          membership: { companyId: membership.companyId },
+          date: { gte: week[0], lte: week[6] },
+        },
+      }),
+      prisma.shift.findMany({
+        where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
+        include: { membership: { include: { user: true } } },
+        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      }),
+      prisma.weekStatus.findUnique({
+        where: {
+          companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
+        },
+      }),
+      prisma.shiftTemplate.findMany({
+        where: { companyId: membership.companyId },
+        orderBy: { startTime: "asc" },
+      }),
+      prisma.company.findUnique({
+        where: { id: membership.companyId },
+        select: { autoOpenWeeks: true },
+      }),
+      prisma.closedDay.findMany({
+        where: {
+          companyId: membership.companyId,
+          date: { gte: week[0], lte: week[6] },
+        },
+      }),
+    ]);
+
+  const isWeekOpen =
+    weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
+  const closedDates = closedDays.map((c) => c.date.toDateString());
 
   return (
     <div>
@@ -55,7 +70,7 @@ export default async function RosterPage({
         </div>
         <WeekStatusToggle
           weekStart={week[0].toISOString()}
-          initialIsOpen={weekStatus?.isOpen ?? true}
+          initialIsOpen={isWeekOpen}
           canManage={canManage}
         />
       </div>
@@ -109,6 +124,7 @@ export default async function RosterPage({
             membershipId: s.membershipId,
             memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
           }))}
+          closedDates={closedDates}
         />
       </div>
     </div>

@@ -74,6 +74,23 @@ model Company {
   timeEntries TimeEntry[]
   weeks       WeekStatus[]
   shiftTemplates ShiftTemplate[]
+  closedDays  ClosedDay[]
+  autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
+}
+
+// Dagen dat de zaak dicht is (vakantie, feestdag) — geen beschikbaarheid
+// nodig, geen shifts, en uren kunnen er niet op ingediend worden.
+model ClosedDay {
+  id        String   @id @default(cuid())
+  companyId String
+  date      DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+  @@index([companyId])
 }
 
 // Standaard shifts die de eigenaar/manager instelt (bv. "Middagshift
@@ -187,6 +204,7 @@ model WeekStatus {
   companyId String
   weekStart DateTime @db.Date // maandag van de betreffende week
   isOpen    Boolean  @default(true)
+  notifiedAt DateTime? // wanneer de "week is open"-mail voor deze week verstuurd is
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 

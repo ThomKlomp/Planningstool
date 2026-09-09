@@ -45,6 +45,18 @@ export async function POST(req: Request) {
     );
   }
 
+  const closedDay = await prisma.closedDay.findUnique({
+    where: {
+      companyId_date: { companyId: membership.companyId, date: new Date(date) },
+    },
+  });
+  if (closedDay) {
+    return NextResponse.json(
+      { error: "De zaak was dicht op deze dag, uren kunnen hier niet op ingediend worden" },
+      { status: 403 }
+    );
+  }
+
   const timeEntry = await prisma.timeEntry.create({
     data: {
       companyId: membership.companyId,

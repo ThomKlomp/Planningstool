@@ -37,6 +37,7 @@ export default function RosterBoard({
   availabilities,
   shifts,
   shiftTemplates,
+  closedDates = [],
 }: {
   canManage: boolean;
   week: string[];
@@ -44,6 +45,7 @@ export default function RosterBoard({
   availabilities: Availability[];
   shifts: Shift[];
   shiftTemplates: ShiftTemplate[];
+  closedDates?: string[];
 }) {
   const router = useRouter();
   const [openDay, setOpenDay] = useState<string | null>(null);
@@ -53,6 +55,21 @@ export default function RosterBoard({
       {week.map((dateIso) => {
         const date = new Date(dateIso);
         const dayKey = date.toDateString();
+
+        if (closedDates.includes(dayKey)) {
+          return (
+            <div
+              key={dateIso}
+              className="rounded-xl border border-line bg-ink/5 p-3 text-center"
+            >
+              <p className="text-xs uppercase tracking-wide text-ink/40">
+                {date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" })}
+              </p>
+              <p className="mt-6 text-xs font-medium text-ink/40">Gesloten</p>
+            </div>
+          );
+        }
+
         const dayShifts = shifts.filter((s) => new Date(s.date).toDateString() === dayKey);
         const availableCount = members.filter((m) =>
           availabilities.some(

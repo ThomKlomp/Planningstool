@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import AvailabilityGrid from "./availability-grid";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
-import { resolveWeek } from "@/lib/week";
+import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
 
 export default async function AvailabilityPage({
   searchParams,
@@ -15,40 +15,53 @@ export default async function AvailabilityPage({
   const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();
 
-  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates] = await Promise.all([
-    prisma.availability.findMany({
-      where: {
-        membershipId: membership.membershipId,
-        date: { gte: week[0], lte: week[6] },
-      },
-    }),
-    canManage
-      ? prisma.availability.findMany({
-          where: {
-            membership: { companyId: membership.companyId },
-            date: { gte: week[0], lte: week[6] },
-          },
-          include: { membership: { include: { user: true } } },
-        })
-      : Promise.resolve([]),
-    canManage
-      ? prisma.membership.findMany({
-          where: { companyId: membership.companyId },
-          include: { user: true },
-        })
-      : Promise.resolve([]),
-    prisma.weekStatus.findUnique({
-      where: {
-        companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
-      },
-    }),
-    prisma.shiftTemplate.findMany({
-      where: { companyId: membership.companyId },
-      orderBy: { startTime: "asc" },
-    }),
-  ]);
+  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates, company, closedDays] =
+    await Promise.all([
+      prisma.availability.findMany({
+        where: {
+          membershipId: membership.membershipId,
+          date: { gte: week[0], lte: week[6] },
+        },
+      }),
+      canManage
+        ? prisma.availability.findMany({
+            where: {
+              membership: { companyId: membership.companyId },
+              date: { gte: week[0], lte: week[6] },
+            },
+            include: { membership: { include: { user: true } } },
+          })
+        : Promise.resolve([]),
+      canManage
+        ? prisma.membership.findMany({
+            where: { companyId: membership.companyId },
+            include: { user: true },
+          })
+        : Promise.resolve([]),
+      prisma.weekStatus.findUnique({
+        where: {
+          companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] },
+        },
+      }),
+      prisma.shiftTemplate.findMany({
+        where: { companyId: membership.companyId },
+        orderBy: { startTime: "asc" },
+      }),
+      prisma.company.findUnique({
+        where: { id: membership.companyId },
+        select: { autoOpenWeeks: true },
+      }),
+      prisma.closedDay.findMany({
+        where: {
+          companyId: membership.companyId,
+          date: { gte: week[0], lte: week[6] },
+        },
+      }),
+    ]);
 
-  const isWeekOpen = weekStatus?.isOpen ?? true;
+  const isWeekOpen =
+    weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
+  const closedDates = closedDays.map((c) => c.date.toDateString());
 
   return (
     <div>
@@ -104,6 +117,7 @@ export default async function AvailabilityPage({
             status: e.status,
             note: e.note,
           }))}
+          closedDates={closedDates}
           locked={!isWeekOpen && !canManage}
         />
       </div>
@@ -165,7 +179,7 @@ function StatusDot({ status, note }: { status?: string; note?: string | null }) 
       : status === "UNSURE"
       ? "bg-amber"
       : status === "UNAVAILABLE"
-      ? "bg-ink/20"
+      ? "bg-red-500"
       : "bg-transparent border border-line";
   return (
     <span

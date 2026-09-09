@@ -41,3 +41,17 @@ export function resolveWeek(weekParam?: string): Date[] {
   }
   return getWeekDates(new Date());
 }
+
+/**
+ * Bepaalt of een week standaard open staat wanneer er geen expliciete
+ * WeekStatus is ingesteld door een manager. Standaard is een week DICHT,
+ * behalve als hij binnen het "automatisch open"-venster valt (bv. de
+ * huidige week + de komende N weken, ingesteld per bedrijf).
+ */
+export function isWeekOpenByDefault(weekStart: Date, autoOpenWeeks: number): boolean {
+  const currentWeekStart = getWeekDates(new Date())[0];
+  const diffWeeks = Math.round(
+    (weekStart.getTime() - currentWeekStart.getTime()) / (7 * 86400000)
+  );
+  return diffWeeks >= 0 && diffWeeks < autoOpenWeeks;
+}

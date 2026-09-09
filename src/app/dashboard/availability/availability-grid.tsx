@@ -18,18 +18,20 @@ type OwnEntry = { date: string; daypart: string; status: Status; note?: string |
 const STATUS_OPTIONS: { value: Status; label: string; classes: string }[] = [
   { value: "AVAILABLE", label: "Ik kan", classes: "bg-awning text-white" },
   { value: "UNSURE", label: "Weet ik nog niet", classes: "bg-amber text-ink" },
-  { value: "UNAVAILABLE", label: "Ik kan niet", classes: "bg-ink/10 text-ink" },
+  { value: "UNAVAILABLE", label: "Ik kan niet", classes: "bg-red-500 text-white" },
 ];
 
 export default function AvailabilityGrid({
   week,
   ownEntries,
   shiftTemplates,
+  closedDates = [],
   locked = false,
 }: {
   week: string[];
   ownEntries: OwnEntry[];
   shiftTemplates: ShiftTemplate[];
+  closedDates?: string[];
   locked?: boolean;
 }) {
   const router = useRouter();
@@ -68,6 +70,22 @@ export default function AvailabilityGrid({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-7">
       {week.map((dateIso) => {
         const date = new Date(dateIso);
+
+        if (closedDates.includes(date.toDateString())) {
+          return (
+            <div
+              key={dateIso}
+              className="rounded-xl border border-line bg-ink/5 px-3 py-3 text-center"
+            >
+              <p className="text-xs uppercase tracking-wide text-ink/40">
+                {date.toLocaleDateString("nl-NL", { weekday: "short" })}
+              </p>
+              <p className="font-display text-lg text-ink/50">{date.getDate()}</p>
+              <p className="mt-4 text-xs font-medium text-ink/40">Gesloten</p>
+            </div>
+          );
+        }
+
         const dayTemplates = shiftTemplates.filter((t) => t.weekdays.includes(date.getDay()));
         const shifts =
           dayTemplates.length > 0

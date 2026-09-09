@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isWeekOpenByDefault } from "@/lib/week";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,17 +20,25 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "weekStart is verplicht" }, { status: 400 });
   }
 
-  const weekStatus = await prisma.weekStatus.findUnique({
-    where: {
-      companyId_weekStart: {
-        companyId: membership.companyId,
-        weekStart: new Date(weekStart),
+  const [weekStatus, company] = await Promise.all([
+    prisma.weekStatus.findUnique({
+      where: {
+        companyId_weekStart: {
+          companyId: membership.companyId,
+          weekStart: new Date(weekStart),
+        },
       },
-    },
-  });
+    }),
+    prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: { autoOpenWeeks: true },
+    }),
+  ]);
 
-  // Geen record = standaard open.
-  return NextResponse.json({ isOpen: weekStatus?.isOpen ?? true });
+  const isOpen =
+    weekStatus?.isOpen ?? isWeekOpenByDefault(new Date(weekStart), company?.autoOpenWeeks ?? 2);
+
+  return NextResponse.json({ isOpen });
 }
 
 export async function POST(req: Request) {

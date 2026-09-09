@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function TimeEntryForm() {
+export default function TimeEntryForm({ closedDates = [] }: { closedDates?: string[] }) {
   const router = useRouter();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startTime, setStartTime] = useState("17:00");
@@ -11,16 +11,28 @@ export default function TimeEntryForm() {
   const [breakMinutes, setBreakMinutes] = useState("0");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isClosed = closedDates.includes(date);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isClosed) return;
     setSaving(true);
+    setError(null);
 
-    await fetch("/api/time-entries", {
+    const res = await fetch("/api/time-entries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date, startTime, endTime, breakMinutes, note }),
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Er ging iets mis.");
+      setSaving(false);
+      return;
+    }
 
     setSaving(false);
     setNote("");
@@ -76,11 +88,18 @@ export default function TimeEntryForm() {
       </Field>
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || isClosed}
         className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
       >
         {saving ? "Bezig..." : "Uren indienen"}
       </button>
+
+      {isClosed && (
+        <p className="w-full text-sm text-red-600">
+          De zaak was dicht op deze dag — hier kun je geen uren op indienen.
+        </p>
+      )}
+      {error && <p className="w-full text-sm text-red-600">{error}</p>}
     </form>
   );
 }

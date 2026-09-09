@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isWeekOpenByDefault } from "@/lib/week";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -59,12 +60,33 @@ export async function POST(req: Request) {
     weekStart.setDate(weekStart.getDate() + (day === 0 ? -6 : 1 - day));
     weekStart.setHours(0, 0, 0, 0);
 
-    const weekStatus = await prisma.weekStatus.findUnique({
-      where: {
-        companyId_weekStart: { companyId: membership.companyId, weekStart },
-      },
-    });
-    if (weekStatus && !weekStatus.isOpen) {
+    const [weekStatus, company, closedDay] = await Promise.all([
+      prisma.weekStatus.findUnique({
+        where: {
+          companyId_weekStart: { companyId: membership.companyId, weekStart },
+        },
+      }),
+      prisma.company.findUnique({
+        where: { id: membership.companyId },
+        select: { autoOpenWeeks: true },
+      }),
+      prisma.closedDay.findUnique({
+        where: {
+          companyId_date: { companyId: membership.companyId, date: new Date(date) },
+        },
+      }),
+    ]);
+
+    if (closedDay) {
+      return NextResponse.json(
+        { error: "De zaak is dicht op deze dag" },
+        { status: 403 }
+      );
+    }
+
+    const isOpen =
+      weekStatus?.isOpen ?? isWeekOpenByDefault(weekStart, company?.autoOpenWeeks ?? 2);
+    if (!isOpen) {
       return NextResponse.json(
         { error: "Deze week is gesloten voor het doorgeven van beschikbaarheid" },
         { status: 403 }

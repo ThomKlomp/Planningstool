@@ -14,17 +14,32 @@ export default async function HoursPage({
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = canManage ? resolveWeek(searchParams?.week) : null;
 
-  const timeEntries = await prisma.timeEntry.findMany({
-    where: canManage
-      ? {
-          companyId: membership.companyId,
-          ...(week ? { date: { gte: week[0], lte: week[6] } } : {}),
-        }
-      : { membershipId: membership.membershipId },
-    include: { membership: { include: { user: true } } },
-    orderBy: { date: "desc" },
-    take: canManage ? undefined : 100,
-  });
+  const rangeStart = new Date();
+  rangeStart.setDate(rangeStart.getDate() - 14);
+  const rangeEnd = new Date();
+  rangeEnd.setDate(rangeEnd.getDate() + 90);
+
+  const [timeEntries, closedDays] = await Promise.all([
+    prisma.timeEntry.findMany({
+      where: canManage
+        ? {
+            companyId: membership.companyId,
+            ...(week ? { date: { gte: week[0], lte: week[6] } } : {}),
+          }
+        : { membershipId: membership.membershipId },
+      include: { membership: { include: { user: true } } },
+      orderBy: { date: "desc" },
+      take: canManage ? undefined : 100,
+    }),
+    canManage
+      ? Promise.resolve([])
+      : prisma.closedDay.findMany({
+          where: {
+            companyId: membership.companyId,
+            date: { gte: rangeStart, lte: rangeEnd },
+          },
+        }),
+  ]);
 
   return (
     <div className="max-w-3xl">
@@ -43,7 +58,9 @@ export default async function HoursPage({
 
       {!canManage && (
         <div className="mt-6">
-          <TimeEntryForm />
+          <TimeEntryForm
+            closedDates={closedDays.map((c) => c.date.toISOString().slice(0, 10))}
+          />
         </div>
       )}
 

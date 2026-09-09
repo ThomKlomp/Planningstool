@@ -27,7 +27,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_DOT: Record<string, string> = {
   AVAILABLE: "bg-awning",
   UNSURE: "bg-amber",
-  UNAVAILABLE: "bg-ink/20",
+  UNAVAILABLE: "bg-red-500",
 };
 
 export default function DayPanel({
