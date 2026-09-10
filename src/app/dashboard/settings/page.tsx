@@ -95,7 +95,7 @@ export default async function SettingsPage() {
         </p>
         <div className="mt-4">
           <DepartmentsManager
-            initialDepartments={departments.map((d) => ({ id: d.id, name: d.name }))}
+            initialDepartments={departments.map((d) => ({ id: d.id, name: d.name, color: d.color }))}
             members={members.map((m) => ({
               membershipId: m.id,
               name: m.user.name ?? m.user.email ?? "Onbekend",

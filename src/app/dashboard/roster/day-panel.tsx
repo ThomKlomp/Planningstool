@@ -9,7 +9,12 @@ type Availability = {
   status: string;
   note: string | null;
 };
-type Member = { membershipId: string; name: string; departmentName: string | null };
+type Member = {
+  membershipId: string;
+  name: string;
+  departmentName: string | null;
+  departmentColor: string | null;
+};
 type ShiftTemplate = {
   id: string;
   name: string;
@@ -102,7 +107,10 @@ export default function DayPanel({
                   <p className="flex items-center gap-1.5 text-sm font-medium">
                     <span>{m.name}</span>
                     {m.departmentName && (
-                      <span className="rounded-full bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink/50">
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                        style={{ backgroundColor: m.departmentColor ?? "#1B1B18" }}
+                      >
                         {m.departmentName}
                       </span>
                     )}

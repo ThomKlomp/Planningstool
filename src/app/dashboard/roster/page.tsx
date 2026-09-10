@@ -107,6 +107,7 @@ export default async function RosterPage({
             membershipId: m.id,
             name: m.user.name ?? m.user.email ?? "Onbekend",
             departmentName: m.department?.name ?? null,
+            departmentColor: m.department?.color ?? null,
           }))}
           shiftTemplates={shiftTemplates.map((t) => ({
             id: t.id,
@@ -131,6 +132,7 @@ export default async function RosterPage({
             membershipId: s.membershipId,
             memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
             departmentName: s.membership?.department?.name ?? null,
+            departmentColor: s.membership?.department?.color ?? null,
           }))}
           closedDates={closedDates}
           isWeekOpen={isWeekOpen}
