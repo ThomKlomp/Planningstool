@@ -8,10 +8,12 @@ export async function sendEmail({
   to,
   subject,
   html,
+  replyTo,
 }: {
   to: string | string[];
   subject: string;
   html: string;
+  replyTo?: string;
 }) {
   if (!resend) {
     // Geen RESEND_API_KEY ingesteld: log het in plaats van te versturen,
@@ -20,7 +22,13 @@ export async function sendEmail({
     return { skipped: true };
   }
 
-  const result = await resend.emails.send({ from: FROM, to, subject, html });
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html,
+    ...(replyTo ? { replyTo } : {}),
+  });
   return result;
 }
 

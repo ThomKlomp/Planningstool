@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import ChatWidget from "@/components/chat-widget";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -20,14 +23,22 @@ export const metadata: Metadata = {
     "Beschikbaarheid, rooster en uren op één plek. Gemaakt voor kleinere horecazaken.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions).catch(() => null);
+
   return (
     <html lang="nl" className={`${fraunces.variable} ${plex.variable}`}>
-      <body className="font-body">{children}</body>
+      <body className="font-body">
+        {children}
+        <ChatWidget
+          defaultName={session?.user?.name ?? ""}
+          defaultEmail={session?.user?.email ?? ""}
+        />
+      </body>
     </html>
   );
 }
