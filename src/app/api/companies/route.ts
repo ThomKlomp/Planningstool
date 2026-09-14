@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { TRIAL_DAYS } from "@/lib/billing";
 
 function slugify(input: string) {
   return input
@@ -32,10 +33,13 @@ export async function POST(req: Request) {
     slug = `${baseSlug}-${attempt}`;
   }
 
+  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
   const company = await prisma.company.create({
     data: {
       name,
       slug,
+      trialEndsAt,
       memberships: {
         create: {
           userId: session.user.id,

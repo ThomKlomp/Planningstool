@@ -79,6 +79,14 @@ model Company {
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
   autoApproveHours Boolean @default(false) // ingediende uren worden automatisch goedgekeurd zonder managergoedkeuring
+
+  // ---------- Abonnement ----------
+  subscriptionStatus SubscriptionStatus @default(TRIALING)
+  billingInterval    BillingInterval?
+  trialEndsAt        DateTime?
+  currentPeriodEnd   DateTime?
+  mollieCustomerId     String?
+  mollieSubscriptionId String?
   shiftSwapRequests ShiftSwapRequest[]
   notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
@@ -138,6 +146,18 @@ enum Role {
   OWNER // eigenaar van de zaak, volledige rechten binnen de company
   MANAGER // maakt roosters, keurt uren goed
   EMPLOYEE // vult beschikbaarheid en uren in
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE // laatste betaling mislukt
+  CANCELED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
 }
 
 // Koppeltabel user <-> company, met rol. Eén user kan (in theorie) bij meerdere zaken werken.

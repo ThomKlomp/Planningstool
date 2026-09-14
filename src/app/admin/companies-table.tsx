@@ -5,6 +5,7 @@ type Company = {
   name: string;
   slug: string;
   createdAt: Date;
+  subscriptionStatus: string;
   _count: { memberships: number; shifts: number; timeEntries: number };
 };
 
@@ -16,6 +17,7 @@ export default function CompaniesTable({ companies }: { companies: Company[] }) 
           <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink/40">
             <th className="px-4 py-3">Naam</th>
             <th className="px-4 py-3">Slug</th>
+            <th className="px-4 py-3">Abonnement</th>
             <th className="px-4 py-3">Leden</th>
             <th className="px-4 py-3">Shifts</th>
             <th className="px-4 py-3">Urenregels</th>
@@ -34,6 +36,9 @@ export default function CompaniesTable({ companies }: { companies: Company[] }) 
                 </Link>
               </td>
               <td className="px-4 py-3 text-ink/60">{c.slug}</td>
+              <td className="px-4 py-3">
+                <SubscriptionBadge status={c.subscriptionStatus} />
+              </td>
               <td className="px-4 py-3">{c._count.memberships}</td>
               <td className="px-4 py-3">{c._count.shifts}</td>
               <td className="px-4 py-3">{c._count.timeEntries}</td>
@@ -44,7 +49,7 @@ export default function CompaniesTable({ companies }: { companies: Company[] }) 
           ))}
           {companies.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-4 py-6 text-center text-ink/40">
+              <td colSpan={7} className="px-4 py-6 text-center text-ink/40">
                 Geen zaken gevonden.
               </td>
             </tr>
@@ -52,5 +57,25 @@ export default function CompaniesTable({ companies }: { companies: Company[] }) 
         </tbody>
       </table>
     </div>
+  );
+}
+
+export function SubscriptionBadge({ status }: { status: string }) {
+  const label =
+    status === "ACTIVE"
+      ? "Actief"
+      : status === "TRIALING"
+      ? "Proef"
+      : status === "PAST_DUE"
+      ? "Mislukt"
+      : "Opgezegd";
+  const classes =
+    status === "ACTIVE"
+      ? "bg-awning/10 text-awning"
+      : status === "TRIALING"
+      ? "bg-amber/20 text-amber-dark"
+      : "bg-red-50 text-red-600";
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}>{label}</span>
   );
 }

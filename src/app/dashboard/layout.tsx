@@ -10,9 +10,19 @@ export default async function DashboardLayout({
 }) {
   const { session, membership } = await requireMembership();
 
-  const unreadCount = await prisma.notification.count({
-    where: { membershipId: membership.membershipId, read: false },
-  });
+  const [unreadCount, company] = await Promise.all([
+    prisma.notification.count({
+      where: { membershipId: membership.membershipId, read: false },
+    }),
+    prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: { subscriptionStatus: true, trialEndsAt: true },
+    }),
+  ]);
+
+  const trialDaysLeft = company?.trialEndsAt
+    ? Math.ceil((company.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null;
 
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
@@ -52,7 +62,28 @@ export default async function DashboardLayout({
           <SignOutButton />
         </div>
       </aside>
-      <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+      <div className="flex-1">
+        {membership.role === "OWNER" &&
+          company &&
+          (company.subscriptionStatus === "PAST_DUE" ||
+            company.subscriptionStatus === "CANCELED" ||
+            (company.subscriptionStatus === "TRIALING" &&
+              trialDaysLeft !== null &&
+              trialDaysLeft <= 3)) && (
+            <div className="border-b border-amber/40 bg-amber/10 px-4 py-2.5 text-sm sm:px-8">
+              <Link href="/dashboard/settings/billing" className="text-amber-dark hover:underline">
+                {company.subscriptionStatus === "PAST_DUE"
+                  ? "De laatste betaling is mislukt — regel dit om toegang te houden →"
+                  : company.subscriptionStatus === "CANCELED"
+                  ? "Je abonnement is opgezegd — kies een plan om door te gaan →"
+                  : trialDaysLeft !== null && trialDaysLeft <= 0
+                  ? "Je proefperiode is afgelopen — kies een abonnement →"
+                  : `Nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode — kies alvast een abonnement →`}
+              </Link>
+            </div>
+          )}
+        <main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+      </div>
     </div>
   );
 }

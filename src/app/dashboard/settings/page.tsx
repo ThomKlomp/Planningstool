@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import ShiftTemplatesManager from "./shift-templates-manager";
@@ -53,6 +54,14 @@ export default async function SettingsPage() {
       <p className="mt-1 text-sm text-ink/60">
         Basisinstellingen voor {membership.companyName}.
       </p>
+      {membership.role === "OWNER" && (
+        <Link
+          href="/dashboard/settings/billing"
+          className="mt-3 inline-block rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
+        >
+          Facturering →
+        </Link>
+      )}
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Beschikbaarheid automatisch openen</h2>
