@@ -31,6 +31,8 @@ export default async function SettingsPage() {
         showCompanyRosterToEmployees: true,
         autoApproveShiftSwaps: true,
         autoApproveHours: true,
+        subscriptionStatus: true,
+        trialEndsAt: true,
       },
     }),
     prisma.closedDay.findMany({
@@ -48,19 +50,33 @@ export default async function SettingsPage() {
     }),
   ]);
 
+  const trialDaysLeft = company?.trialEndsAt
+    ? Math.max(
+        0,
+        Math.ceil((company.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+      )
+    : null;
+
   return (
     <div className="max-w-2xl">
       <h1 className="font-display text-3xl">Instellingen</h1>
       <p className="mt-1 text-sm text-ink/60">
         Basisinstellingen voor {membership.companyName}.
       </p>
+
       {membership.role === "OWNER" && (
-        <Link
-          href="/dashboard/settings/billing"
-          className="mt-3 inline-block rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
-        >
-          Facturering →
-        </Link>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/settings/billing"
+            className="inline-block rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
+          >
+            Facturering →
+          </Link>
+          <SubscriptionStatusBadge
+            status={company?.subscriptionStatus ?? "TRIALING"}
+            trialDaysLeft={trialDaysLeft}
+          />
+        </div>
       )}
 
       <section className="mt-10">
@@ -175,5 +191,48 @@ export default async function SettingsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function SubscriptionStatusBadge({
+  status,
+  trialDaysLeft,
+}: {
+  status: string;
+  trialDaysLeft: number | null;
+}) {
+  const config: Record<string, { label: string; className: string }> = {
+    ACTIVE: {
+      label: "Actief",
+      className: "border-awning/30 bg-awning/10 text-awning",
+    },
+    TRIALING: {
+      label:
+        trialDaysLeft !== null
+          ? trialDaysLeft > 0
+            ? `Proefperiode — nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"}`
+            : "Proefperiode afgelopen"
+          : "Proefperiode",
+      className: "border-amber/30 bg-amber/10 text-amber-dark",
+    },
+    PAST_DUE: {
+      label: "Fout met betaling",
+      className: "border-red-200 bg-red-50 text-red-600",
+    },
+    CANCELED: {
+      label: "Niet actief",
+      className: "border-line bg-ink/5 text-ink/50",
+    },
+  };
+
+  const { label, className } = config[status] ?? config.TRIALING;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${className}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {label}
+    </span>
   );
 }
