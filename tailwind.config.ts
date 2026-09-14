@@ -15,7 +15,7 @@ const config: Config = {
         line: "#DDD5C7",
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "serif"],
+        display: ["var(--font-space-grotesk)", "sans-serif"],
         body: ["var(--font-plex)", "sans-serif"],
       },
     },

@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { Space_Grotesk, IBM_Plex_Sans } from "next/font/google";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ChatWidget from "@/components/chat-widget";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-fraunces",
-  weight: ["400", "500", "600"],
+  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
 });
 
 const plex = IBM_Plex_Sans({
@@ -31,7 +31,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions).catch(() => null);
 
   return (
-    <html lang="nl" className={`${fraunces.variable} ${plex.variable}`}>
+    <html lang="nl" className={`${spaceGrotesk.variable} ${plex.variable}`}>
       <body className="font-body">
         {children}
         <ChatWidget
