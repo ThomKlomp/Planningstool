@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import BillingActions from "./billing-actions";
+import BillingActions from "../billing-actions";
 import {
   PRICE_MONTHLY_EXCL,
   PRICE_MONTHLY_INCL,
