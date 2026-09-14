@@ -151,8 +151,8 @@ export default function TimeEntryList({
                   setEditingId(null);
                   router.refresh();
                 }}
-            />
-          )}
+              />
+            )}
         </li>
       ))}
     </ul>
@@ -198,7 +198,7 @@ function EditableEntryPanel({
     >
       {isDraft && (
         <p className="text-xs font-medium text-awning">
-          Vooraf ingevuld op basis van je shift — check de tijden en bevestig.
+          Vooraf ingevuld op basis van je shift, check de tijden en bevestig.
         </p>
       )}
       {isQueried && (
@@ -209,7 +209,7 @@ function EditableEntryPanel({
       )}
       {isSubmitted && (
         <p className="text-xs font-medium text-ink/50">
-          In behandeling — je kunt dit nog aanpassen zolang je manager het
+          In behandeling, je kunt dit nog aanpassen zolang je manager het
           niet heeft goedgekeurd.
         </p>
       )}
@@ -315,7 +315,7 @@ function StatusBadge({ status }: { status: string }) {
       : status === "QUERIED"
       ? "Vraag gesteld"
       : status === "DRAFT"
-      ? "Concept — nog te bevestigen"
+      ? "Concept, nog te bevestigen"
       : "In behandeling";
   const classes =
     status === "APPROVED"

@@ -123,7 +123,7 @@ export default async function SettingsPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">Teams</h2>
         <p className="mt-1 text-sm text-ink/60">
-          Deel je medewerkers in teams in, bijvoorbeeld Bediening en Keuken —
+          Deel je medewerkers in teams in, bijvoorbeeld Bediening en Keuken,
           dan zie je dat onderscheid terug op het rooster.
         </p>
         <div className="mt-4">
@@ -210,7 +210,7 @@ function SubscriptionStatusBadge({
       label:
         trialDaysLeft !== null
           ? trialDaysLeft > 0
-            ? `Proefperiode — nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"}`
+            ? `Proefperiode, nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"}`
             : "Proefperiode afgelopen"
           : "Proefperiode",
       className: "border-amber/30 bg-amber/10 text-amber-dark",
