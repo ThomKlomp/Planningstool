@@ -41,6 +41,12 @@ export async function POST(req: Request) {
         data: { mollieCustomerId: customerId },
       });
     }
+    if (!customerId) {
+      return NextResponse.json(
+        { error: "Kon geen Mollie-klant aanmaken" },
+        { status: 502 }
+      );
+    }
 
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
     const payment = await mollie.payments.create({
