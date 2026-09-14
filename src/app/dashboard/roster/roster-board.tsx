@@ -16,6 +16,13 @@ type Shift = {
   departmentColor: string | null;
 };
 
+type SwapRequest = {
+  id: string;
+  shiftId: string;
+  status: string;
+  offeredById: string;
+};
+
 type Availability = {
   membershipId: string;
   date: string;
@@ -46,6 +53,8 @@ export default function RosterBoard({
   shiftTemplates,
   closedDates = [],
   isWeekOpen = true,
+  viewerMembershipId,
+  swapRequests = [],
 }: {
   canManage: boolean;
   week: string[];
@@ -55,6 +64,8 @@ export default function RosterBoard({
   shiftTemplates: ShiftTemplate[];
   closedDates?: string[];
   isWeekOpen?: boolean;
+  viewerMembershipId?: string;
+  swapRequests?: SwapRequest[];
 }) {
   const router = useRouter();
   const [openDay, setOpenDay] = useState<string | null>(null);
@@ -97,23 +108,14 @@ export default function RosterBoard({
 
             <div className="mt-2 space-y-2">
               {dayShifts.map((shift) => (
-                <div key={shift.id} className="rounded-lg bg-paper px-2 py-2 text-xs">
-                  <p className="font-medium">
-                    {shift.startTime}–{shift.endTime}
-                  </p>
-                  <p className="flex items-center gap-1 text-ink/60">
-                    <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
-                    {shift.departmentName && (
-                      <span
-                        className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
-                        style={{ backgroundColor: shift.departmentColor ?? "#1B1B18" }}
-                      >
-                        {shift.departmentName}
-                      </span>
-                    )}
-                    {shift.role ? <span>· {shift.role}</span> : null}
-                  </p>
-                </div>
+                <ShiftCard
+                  key={shift.id}
+                  shift={shift}
+                  canManage={canManage}
+                  viewerMembershipId={viewerMembershipId}
+                  swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
+                  onChanged={() => router.refresh()}
+                />
               ))}
               {dayShifts.length === 0 && (
                 <p className="text-xs text-ink/40">Geen shifts</p>
@@ -153,6 +155,118 @@ export default function RosterBoard({
             router.refresh();
           }}
         />
+      )}
+    </div>
+  );
+}
+
+function ShiftCard({
+  shift,
+  canManage,
+  viewerMembershipId,
+  swapRequest,
+  onChanged,
+}: {
+  shift: Shift;
+  canManage: boolean;
+  viewerMembershipId?: string;
+  swapRequest?: SwapRequest;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const isOwnShift = !canManage && viewerMembershipId && shift.membershipId === viewerMembershipId;
+  const isOthersOpenOffer =
+    !canManage &&
+    swapRequest?.status === "OPEN" &&
+    viewerMembershipId &&
+    swapRequest.offeredById !== viewerMembershipId;
+
+  async function offer() {
+    setBusy(true);
+    await fetch(`/api/shifts/${shift.id}/offer`, { method: "POST" });
+    setBusy(false);
+    onChanged();
+  }
+
+  async function cancelOffer() {
+    if (!swapRequest) return;
+    setBusy(true);
+    await fetch(`/api/shifts/${shift.id}/offer`, { method: "DELETE" });
+    setBusy(false);
+    onChanged();
+  }
+
+  async function claim() {
+    if (!swapRequest) return;
+    if (!confirm("Deze dienst overnemen of ruilen?")) return;
+    setBusy(true);
+    await fetch(`/api/shift-swaps/${swapRequest.id}/claim`, { method: "POST" });
+    setBusy(false);
+    onChanged();
+  }
+
+  return (
+    <div className="rounded-lg bg-paper px-2 py-2 text-xs">
+      <p className="font-medium">
+        {shift.startTime}–{shift.endTime}
+      </p>
+      <p className="flex flex-wrap items-center gap-1 text-ink/60">
+        <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
+        {shift.departmentName && (
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+            style={{ backgroundColor: shift.departmentColor ?? "#1B1B18" }}
+          >
+            {shift.departmentName}
+          </span>
+        )}
+        {shift.role ? <span>· {shift.role}</span> : null}
+      </p>
+
+      {isOwnShift && !swapRequest && (
+        <button
+          onClick={offer}
+          disabled={busy}
+          className="mt-1.5 w-full rounded-full border border-line bg-white px-2 py-1 text-[11px] font-medium hover:border-ink disabled:opacity-50"
+        >
+          Aanbieden ter overname/ruil
+        </button>
+      )}
+
+      {isOwnShift && swapRequest?.status === "OPEN" && (
+        <div className="mt-1.5 space-y-1">
+          <p className="rounded-full bg-amber/20 px-2 py-1 text-center text-[11px] font-medium text-amber-dark">
+            Aangeboden
+          </p>
+          <button
+            onClick={cancelOffer}
+            disabled={busy}
+            className="w-full text-center text-[11px] text-ink/50 hover:underline disabled:opacity-50"
+          >
+            Intrekken
+          </button>
+        </div>
+      )}
+
+      {isOwnShift && swapRequest?.status === "PENDING_APPROVAL" && (
+        <p className="mt-1.5 rounded-full bg-amber/20 px-2 py-1 text-center text-[11px] font-medium text-amber-dark">
+          Wacht op goedkeuring
+        </p>
+      )}
+
+      {isOthersOpenOffer && (
+        <div className="mt-1.5 space-y-1">
+          <p className="rounded-full bg-awning/10 px-2 py-1 text-center text-[11px] font-medium text-awning">
+            Beschikbaar voor overname
+          </p>
+          <button
+            onClick={claim}
+            disabled={busy}
+            className="w-full rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
+          >
+            {busy ? "Bezig..." : "Overnemen"}
+          </button>
+        </div>
       )}
     </div>
   );

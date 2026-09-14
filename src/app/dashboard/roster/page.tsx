@@ -5,6 +5,7 @@ import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault, toDateParam } from 
 import { isDateClosed } from "@/lib/closed-days";
 import RosterBoard from "./roster-board";
 import RosterActions from "./roster-actions";
+import PendingSwapApprovals from "./pending-swap-approvals";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 
@@ -19,7 +20,7 @@ export default async function RosterPage({
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 
-  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays] =
+  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
@@ -59,7 +60,28 @@ export default async function RosterPage({
           date: { gte: week[0], lte: week[6] },
         },
       }),
+      prisma.shiftSwapRequest.findMany({
+        where: {
+          companyId: membership.companyId,
+          status: { in: ["OPEN", "PENDING_APPROVAL"] },
+          shift: { date: { gte: week[0], lte: week[6] } },
+        },
+      }),
+      canManage
+        ? prisma.shiftSwapRequest.findMany({
+            where: { companyId: membership.companyId, status: "PENDING_APPROVAL" },
+            include: {
+              shift: true,
+            },
+            orderBy: { claimedAt: "asc" },
+          })
+        : Promise.resolve([]),
     ]);
+
+  // membershipId -> naam, handig om in de goedkeuringslijst te tonen.
+  const memberNameById = new Map(
+    membersRaw.map((m) => [m.id, m.user.name ?? m.user.email ?? "Onbekend"])
+  );
 
   // Sorteer op team-volgorde (zoals ingesteld bij Instellingen), leden zonder
   // team achteraan, daarbinnen op naam.
@@ -170,6 +192,22 @@ export default async function RosterPage({
         )}
       </div>
 
+      {canManage && pendingApprovals.length > 0 && (
+        <div className="mt-6">
+          <PendingSwapApprovals
+            requests={pendingApprovals.map((r) => ({
+              id: r.id,
+              date: r.shift.date.toISOString(),
+              startTime: r.shift.startTime,
+              endTime: r.shift.endTime,
+              role: r.shift.role,
+              offeredByName: memberNameById.get(r.offeredById) ?? "Onbekend",
+              claimedByName: r.claimedById ? memberNameById.get(r.claimedById) ?? "Onbekend" : "Onbekend",
+            }))}
+          />
+        </div>
+      )}
+
       {view === "team" && !ownDepartmentId ? (
         <p className="mt-6 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
           Je bent nog niet bij een team ingedeeld. Vraag je manager om je aan
@@ -179,6 +217,13 @@ export default async function RosterPage({
         <div className="mt-6">
           <RosterBoard
             canManage={canManage}
+            viewerMembershipId={membership.membershipId}
+            swapRequests={swapRequestsThisWeek.map((r) => ({
+              id: r.id,
+              shiftId: r.shiftId,
+              status: r.status,
+              offeredById: r.offeredById,
+            }))}
             week={week.map((d) => d.toISOString())}
             members={visibleMembers.map((m) => ({
               membershipId: m.id,

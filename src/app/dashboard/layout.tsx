@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
+import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
 
 export default async function DashboardLayout({
@@ -8,6 +9,10 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { session, membership } = await requireMembership();
+
+  const unreadCount = await prisma.notification.count({
+    where: { membershipId: membership.membershipId, read: false },
+  });
 
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
@@ -24,6 +29,14 @@ export default async function DashboardLayout({
             <NavLink href="/dashboard/availability">Beschikbaarheid</NavLink>
             <NavLink href="/dashboard/roster">Rooster</NavLink>
             <NavLink href="/dashboard/hours">Uren</NavLink>
+            <NavLink href="/dashboard/notifications">
+              Meldingen
+              {unreadCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
+                  {unreadCount}
+                </span>
+              )}
+            </NavLink>
             {(membership.role === "OWNER" || membership.role === "MANAGER") && (
               <NavLink href="/dashboard/settings">Instellingen</NavLink>
             )}

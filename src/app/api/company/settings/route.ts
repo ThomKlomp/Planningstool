@@ -18,6 +18,8 @@ export async function PATCH(req: Request) {
     autoOpenWeeks?: number;
     closedWeekdays?: number[];
     showCompanyRosterToEmployees?: boolean;
+    autoApproveShiftSwaps?: boolean;
+    autoApproveHours?: boolean;
   } = {};
 
   if (body?.autoOpenWeeks !== undefined) {
@@ -40,6 +42,14 @@ export async function PATCH(req: Request) {
 
   if (body?.showCompanyRosterToEmployees !== undefined) {
     data.showCompanyRosterToEmployees = Boolean(body.showCompanyRosterToEmployees);
+  }
+
+  if (body?.autoApproveShiftSwaps !== undefined) {
+    data.autoApproveShiftSwaps = Boolean(body.autoApproveShiftSwaps);
+  }
+
+  if (body?.autoApproveHours !== undefined) {
+    data.autoApproveHours = Boolean(body.autoApproveHours);
   }
 
   const company = await prisma.company.update({

@@ -77,6 +77,10 @@ model Company {
   closedDays  ClosedDay[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
+  autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
+  autoApproveHours Boolean @default(false) // ingediende uren worden automatisch goedgekeurd zonder managergoedkeuring
+  shiftSwapRequests ShiftSwapRequest[]
+  notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
   departments Department[]
 }
@@ -250,6 +254,7 @@ model Shift {
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
   timeEntry  TimeEntry?
+  swapRequest ShiftSwapRequest?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -257,7 +262,50 @@ model Shift {
   @@index([companyId, date])
 }
 
-// ---------- Urenregistratie ----------
+// ---------- Overnemen / ruilen van diensten ----------
+
+enum ShiftSwapStatus {
+  OPEN // aangeboden, wachtend op iemand die 'm overneemt
+  PENDING_APPROVAL // iemand heeft 'm geclaimd, wacht op manager
+  APPROVED
+  REJECTED
+  CANCELLED // ingetrokken door de aanbieder voordat iemand claimde
+}
+
+model ShiftSwapRequest {
+  id            String          @id @default(cuid())
+  companyId     String
+  shiftId       String          @unique // één actief aanbod per shift
+  offeredById   String // membershipId van wie de dienst aanbiedt
+  claimedById   String? // membershipId van wie 'm overneemt
+  claimedAt     DateTime?
+  reviewedById  String? // membershipId van de manager die goed-/afkeurde
+  reviewedAt    DateTime?
+  status        ShiftSwapStatus @default(OPEN)
+  createdAt     DateTime        @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shift   Shift   @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+}
+
+// ---------- Meldingen ----------
+
+model Notification {
+  id           String   @id @default(cuid())
+  companyId    String
+  membershipId String // voor wie deze melding is
+  title        String
+  body         String?
+  link         String? // relatief pad binnen de app, bv. /dashboard/roster
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([membershipId, read])
+}
 
 enum TimeEntryStatus {
   DRAFT // vooraf ingevuld op basis van een ingeroosterde shift, medewerker moet nog bevestigen

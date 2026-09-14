@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     }),
     prisma.company.findUnique({
       where: { id: membership.companyId },
-      select: { closedWeekdays: true },
+      select: { closedWeekdays: true, autoApproveHours: true },
     }),
   ]);
   if (closedDay || isDateClosed(new Date(date), company?.closedWeekdays ?? [], [])) {
@@ -73,7 +73,8 @@ export async function POST(req: Request) {
       endTime,
       breakMinutes: breakMinutes ? Number(breakMinutes) : 0,
       note: note || null,
-      status: "SUBMITTED",
+      status: company?.autoApproveHours ? "APPROVED" : "SUBMITTED",
+      reviewedAt: company?.autoApproveHours ? new Date() : null,
     },
   });
 

@@ -51,6 +51,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // in behandeling, of met een vraag erbij) en dient 'm (opnieuw) in.
   const editableStatuses = ["DRAFT", "SUBMITTED", "QUERIED"];
   if (isOwnEntry && editableStatuses.includes(timeEntry.status)) {
+    const company = await prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: { autoApproveHours: true },
+    });
     const { date, startTime, endTime, breakMinutes, note } = body;
     const updated = await prisma.timeEntry.update({
       where: { id: params.id },
@@ -60,7 +64,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         endTime: endTime || undefined,
         breakMinutes: breakMinutes !== undefined ? Number(breakMinutes) : undefined,
         note: note ?? undefined,
-        status: "SUBMITTED",
+        status: company?.autoApproveHours ? "APPROVED" : "SUBMITTED",
+        reviewedAt: company?.autoApproveHours ? new Date() : timeEntry.reviewedAt,
       },
     });
     return NextResponse.json({ timeEntry: updated });

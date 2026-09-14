@@ -7,6 +7,7 @@ import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
+import AutoApprovalSettings from "./auto-approval-settings";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -27,6 +28,8 @@ export default async function SettingsPage() {
         autoOpenWeeks: true,
         closedWeekdays: true,
         showCompanyRosterToEmployees: true,
+        autoApproveShiftSwaps: true,
+        autoApproveHours: true,
       },
     }),
     prisma.closedDay.findMany({
@@ -124,6 +127,20 @@ export default async function SettingsPage() {
         <div className="mt-4">
           <RosterVisibilitySetting
             initialValue={company?.showCompanyRosterToEmployees ?? true}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Automatisch goedkeuren</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Standaard beoordeel jij elke overname/ruil en elke ingediende
+          urenregel zelf. Hier kun je dat automatiseren.
+        </p>
+        <div className="mt-4">
+          <AutoApprovalSettings
+            initialShiftSwaps={company?.autoApproveShiftSwaps ?? false}
+            initialHours={company?.autoApproveHours ?? false}
           />
         </div>
       </section>
