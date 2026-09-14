@@ -14,7 +14,11 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json();
-  const data: { autoOpenWeeks?: number; closedWeekdays?: number[] } = {};
+  const data: {
+    autoOpenWeeks?: number;
+    closedWeekdays?: number[];
+    showCompanyRosterToEmployees?: boolean;
+  } = {};
 
   if (body?.autoOpenWeeks !== undefined) {
     const autoOpenWeeks = Number(body.autoOpenWeeks);
@@ -32,6 +36,10 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Ongeldige weekdagen" }, { status: 400 });
     }
     data.closedWeekdays = body.closedWeekdays;
+  }
+
+  if (body?.showCompanyRosterToEmployees !== undefined) {
+    data.showCompanyRosterToEmployees = Boolean(body.showCompanyRosterToEmployees);
   }
 
   const company = await prisma.company.update({

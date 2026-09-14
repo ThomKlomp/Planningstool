@@ -13,7 +13,7 @@ const PALETTE = [
   "#475569",
 ];
 
-type Department = { id: string; name: string; color: string };
+type Department = { id: string; name: string; color: string; order: number };
 type Member = { membershipId: string; name: string; departmentId: string | null };
 
 export default function DepartmentsManager({
@@ -23,7 +23,9 @@ export default function DepartmentsManager({
   initialDepartments: Department[];
   members: Member[];
 }) {
-  const [departments, setDepartments] = useState(initialDepartments);
+  const [departments, setDepartments] = useState(
+    [...initialDepartments].sort((a, b) => a.order - b.order)
+  );
   const [assignments, setAssignments] = useState<Record<string, string | null>>(() => {
     const map: Record<string, string | null> = {};
     for (const m of members) map[m.membershipId] = m.departmentId;
@@ -69,6 +71,26 @@ export default function DepartmentsManager({
     setBusyId(null);
   }
 
+  async function move(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= departments.length) return;
+
+    const reordered = [...departments];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    setDepartments(reordered);
+
+    // Volgorde-waardes gelijktrekken met de nieuwe positie in de lijst.
+    await Promise.all(
+      reordered.map((d, i) =>
+        fetch(`/api/departments/${d.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: i }),
+        })
+      )
+    );
+  }
+
   async function assignMember(membershipId: string, departmentId: string) {
     setAssignments((prev) => ({ ...prev, [membershipId]: departmentId || null }));
     await fetch(`/api/team-members/${membershipId}`, {
@@ -82,7 +104,7 @@ export default function DepartmentsManager({
     <div className="space-y-4">
       {departments.length > 0 && (
         <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm">
-          {departments.map((d) => (
+          {departments.map((d, i) => (
             <li key={d.id} className="flex items-center justify-between px-4 py-2.5">
               <span className="flex items-center gap-2 font-medium">
                 <span
@@ -91,13 +113,33 @@ export default function DepartmentsManager({
                 />
                 {d.name}
               </span>
-              <button
-                onClick={() => removeDepartment(d.id)}
-                disabled={busyId === d.id}
-                className="text-xs text-red-600 hover:underline disabled:opacity-50"
-              >
-                Verwijderen
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => move(i, -1)}
+                    disabled={i === 0}
+                    className="rounded border border-line px-1.5 py-0.5 text-xs text-ink/50 hover:text-ink disabled:opacity-30"
+                    aria-label="Omhoog"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => move(i, 1)}
+                    disabled={i === departments.length - 1}
+                    className="rounded border border-line px-1.5 py-0.5 text-xs text-ink/50 hover:text-ink disabled:opacity-30"
+                    aria-label="Omlaag"
+                  >
+                    ↓
+                  </button>
+                </div>
+                <button
+                  onClick={() => removeDepartment(d.id)}
+                  disabled={busyId === d.id}
+                  className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                >
+                  Verwijderen
+                </button>
+              </div>
             </li>
           ))}
         </ul>

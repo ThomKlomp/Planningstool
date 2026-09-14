@@ -15,7 +15,7 @@ export async function GET() {
 
   const departments = await prisma.department.findMany({
     where: { companyId: membership.companyId },
-    orderBy: { name: "asc" },
+    orderBy: { order: "asc" },
   });
 
   return NextResponse.json({ departments });
@@ -50,8 +50,21 @@ export async function POST(req: Request) {
   }
 
   const department = await prisma.department.create({
-    data: { companyId: membership.companyId, name, color },
+    data: {
+      companyId: membership.companyId,
+      name,
+      color,
+      order: await nextOrder(membership.companyId),
+    },
   });
 
   return NextResponse.json({ department });
+}
+
+async function nextOrder(companyId: string) {
+  const last = await prisma.department.findFirst({
+    where: { companyId },
+    orderBy: { order: "desc" },
+  });
+  return (last?.order ?? -1) + 1;
 }

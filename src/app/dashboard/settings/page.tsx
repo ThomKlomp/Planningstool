@@ -6,6 +6,7 @@ import AutoOpenWeeksSetting from "./auto-open-weeks-setting";
 import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
+import RosterVisibilitySetting from "./roster-visibility-setting";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -22,7 +23,11 @@ export default async function SettingsPage() {
     }),
     prisma.company.findUnique({
       where: { id: membership.companyId },
-      select: { autoOpenWeeks: true, closedWeekdays: true },
+      select: {
+        autoOpenWeeks: true,
+        closedWeekdays: true,
+        showCompanyRosterToEmployees: true,
+      },
     }),
     prisma.closedDay.findMany({
       where: { companyId: membership.companyId, date: { gte: new Date() } },
@@ -30,7 +35,7 @@ export default async function SettingsPage() {
     }),
     prisma.department.findMany({
       where: { companyId: membership.companyId },
-      orderBy: { name: "asc" },
+      orderBy: { order: "asc" },
     }),
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
@@ -95,12 +100,30 @@ export default async function SettingsPage() {
         </p>
         <div className="mt-4">
           <DepartmentsManager
-            initialDepartments={departments.map((d) => ({ id: d.id, name: d.name, color: d.color }))}
+            initialDepartments={departments.map((d) => ({
+              id: d.id,
+              name: d.name,
+              color: d.color,
+              order: d.order,
+            }))}
             members={members.map((m) => ({
               membershipId: m.id,
               name: m.user.name ?? m.user.email ?? "Onbekend",
               departmentId: m.departmentId,
             }))}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Rooster-zichtbaarheid</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Bepaal of medewerkers het volledige bedrijfsrooster mogen zien, of
+          alleen hun eigen team en eigen diensten.
+        </p>
+        <div className="mt-4">
+          <RosterVisibilitySetting
+            initialValue={company?.showCompanyRosterToEmployees ?? true}
           />
         </div>
       </section>

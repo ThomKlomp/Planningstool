@@ -76,6 +76,7 @@ model Company {
   shiftTemplates ShiftTemplate[]
   closedDays  ClosedDay[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
+  showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
   departments Department[]
 }
@@ -88,6 +89,7 @@ model Department {
   companyId String
   name      String
   color     String   @default("#3F6E5B")
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
   company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)

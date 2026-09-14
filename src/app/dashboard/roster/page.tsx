@@ -1,22 +1,25 @@
+import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault } from "@/lib/week";
+import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault, toDateParam } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
 import RosterBoard from "./roster-board";
 import RosterActions from "./roster-actions";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 
+type View = "company" | "team" | "personal";
+
 export default async function RosterPage({
   searchParams,
 }: {
-  searchParams: { week?: string };
+  searchParams: { week?: string; view?: string };
 }) {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 
-  const [members, availabilities, shifts, weekStatus, shiftTemplates, company, closedDays] =
+  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
@@ -44,7 +47,11 @@ export default async function RosterPage({
       }),
       prisma.company.findUnique({
         where: { id: membership.companyId },
-        select: { autoOpenWeeks: true, closedWeekdays: true },
+        select: {
+          autoOpenWeeks: true,
+          closedWeekdays: true,
+          showCompanyRosterToEmployees: true,
+        },
       }),
       prisma.closedDay.findMany({
         where: {
@@ -54,6 +61,17 @@ export default async function RosterPage({
       }),
     ]);
 
+  // Sorteer op team-volgorde (zoals ingesteld bij Instellingen), leden zonder
+  // team achteraan, daarbinnen op naam.
+  const members = [...membersRaw].sort((a, b) => {
+    const orderA = a.department?.order ?? Number.POSITIVE_INFINITY;
+    const orderB = b.department?.order ?? Number.POSITIVE_INFINITY;
+    if (orderA !== orderB) return orderA - orderB;
+    const nameA = a.user.name ?? a.user.email ?? "";
+    const nameB = b.user.name ?? b.user.email ?? "";
+    return nameA.localeCompare(nameB);
+  });
+
   const isWeekOpen =
     weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
   const specificClosedDates = closedDays.map((c) => c.date.toDateString());
@@ -61,6 +79,34 @@ export default async function RosterPage({
   const closedDates = week
     .filter((d) => isDateClosed(d, closedWeekdays, specificClosedDates))
     .map((d) => d.toDateString());
+
+  const showCompanyRoster = company?.showCompanyRosterToEmployees ?? true;
+  const ownDepartmentId =
+    members.find((m) => m.id === membership.membershipId)?.departmentId ?? null;
+
+  const requestedView = searchParams?.view;
+  const view: View = canManage
+    ? "company"
+    : requestedView === "team" || requestedView === "personal"
+    ? requestedView
+    : showCompanyRoster
+    ? "company"
+    : "team";
+
+  let visibleMembers = members;
+  let visibleShifts = shiftsRaw;
+
+  if (view === "team") {
+    visibleMembers = members.filter((m) => m.departmentId && m.departmentId === ownDepartmentId);
+    visibleShifts = shiftsRaw.filter(
+      (s) => s.membership?.departmentId && s.membership.departmentId === ownDepartmentId
+    );
+  } else if (view === "personal") {
+    visibleMembers = members.filter((m) => m.id === membership.membershipId);
+    visibleShifts = shiftsRaw.filter((s) => s.membershipId === membership.membershipId);
+  }
+
+  const weekParam = toDateParam(week[0]);
 
   return (
     <div>
@@ -81,13 +127,38 @@ export default async function RosterPage({
         />
       </div>
 
+      {!canManage && (
+        <div className="mt-4 flex gap-1 overflow-x-auto text-sm">
+          {showCompanyRoster && (
+            <RosterViewTab
+              active={view === "company"}
+              href={`/dashboard/roster?week=${weekParam}&view=company`}
+            >
+              Bedrijf
+            </RosterViewTab>
+          )}
+          <RosterViewTab
+            active={view === "team"}
+            href={`/dashboard/roster?week=${weekParam}&view=team`}
+          >
+            Mijn team
+          </RosterViewTab>
+          <RosterViewTab
+            active={view === "personal"}
+            href={`/dashboard/roster?week=${weekParam}&view=personal`}
+          >
+            Mijn rooster
+          </RosterViewTab>
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <WeekNav basePath="/dashboard/roster" weekStart={week[0]} />
         {canManage && (
           <RosterActions
             weekStart={week[0].toISOString()}
             weekLabel={`week ${getISOWeekNumber(week[0])}`}
-            shifts={shifts.map((s) => ({
+            shifts={shiftsRaw.map((s) => ({
               id: s.id,
               date: s.date.toISOString(),
               startTime: s.startTime,
@@ -99,45 +170,73 @@ export default async function RosterPage({
         )}
       </div>
 
-      <div className="mt-6">
-        <RosterBoard
-          canManage={canManage}
-          week={week.map((d) => d.toISOString())}
-          members={members.map((m) => ({
-            membershipId: m.id,
-            name: m.user.name ?? m.user.email ?? "Onbekend",
-            departmentName: m.department?.name ?? null,
-            departmentColor: m.department?.color ?? null,
-          }))}
-          shiftTemplates={shiftTemplates.map((t) => ({
-            id: t.id,
-            name: t.name,
-            startTime: t.startTime,
-            endTime: t.endTime,
-            weekdays: t.weekdays,
-          }))}
-          availabilities={availabilities.map((a) => ({
-            membershipId: a.membershipId,
-            date: a.date.toISOString(),
-            daypart: a.daypart,
-            status: a.status,
-            note: a.note,
-          }))}
-          shifts={shifts.map((s) => ({
-            id: s.id,
-            date: s.date.toISOString(),
-            startTime: s.startTime,
-            endTime: s.endTime,
-            role: s.role,
-            membershipId: s.membershipId,
-            memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
-            departmentName: s.membership?.department?.name ?? null,
-            departmentColor: s.membership?.department?.color ?? null,
-          }))}
-          closedDates={closedDates}
-          isWeekOpen={isWeekOpen}
-        />
-      </div>
+      {view === "team" && !ownDepartmentId ? (
+        <p className="mt-6 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
+          Je bent nog niet bij een team ingedeeld. Vraag je manager om je aan
+          een team toe te voegen bij Instellingen.
+        </p>
+      ) : (
+        <div className="mt-6">
+          <RosterBoard
+            canManage={canManage}
+            week={week.map((d) => d.toISOString())}
+            members={visibleMembers.map((m) => ({
+              membershipId: m.id,
+              name: m.user.name ?? m.user.email ?? "Onbekend",
+              departmentName: m.department?.name ?? null,
+              departmentColor: m.department?.color ?? null,
+            }))}
+            shiftTemplates={shiftTemplates.map((t) => ({
+              id: t.id,
+              name: t.name,
+              startTime: t.startTime,
+              endTime: t.endTime,
+              weekdays: t.weekdays,
+            }))}
+            availabilities={availabilities.map((a) => ({
+              membershipId: a.membershipId,
+              date: a.date.toISOString(),
+              daypart: a.daypart,
+              status: a.status,
+              note: a.note,
+            }))}
+            shifts={visibleShifts.map((s) => ({
+              id: s.id,
+              date: s.date.toISOString(),
+              startTime: s.startTime,
+              endTime: s.endTime,
+              role: s.role,
+              membershipId: s.membershipId,
+              memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+              departmentName: s.membership?.department?.name ?? null,
+              departmentColor: s.membership?.department?.color ?? null,
+            }))}
+            closedDates={closedDates}
+            isWeekOpen={isWeekOpen}
+          />
+        </div>
+      )}
     </div>
+  );
+}
+
+function RosterViewTab({
+  active,
+  href,
+  children,
+}: {
+  active: boolean;
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 ${
+        active ? "bg-ink text-paper" : "text-ink/60 hover:bg-ink/5"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
