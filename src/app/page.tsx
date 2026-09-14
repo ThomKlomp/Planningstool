@@ -32,7 +32,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-6 max-w-md text-lg text-ink/70">
               Medewerkers geven hun beschikbaarheid door, jij zet er in een
-              paar klikken een rooster overheen — en aan het eind van de week
+              paar klikken een rooster overheen. Aan het eind van de week
               keur je de uren goed. Geen groepsapp vol foto's van een
               geprint rooster.
             </p>
@@ -64,7 +64,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-3xl px-6 py-14 text-center">
           <p className="font-display text-2xl leading-snug md:text-3xl">
             "Wie kan vrijdag?" in de groepsapp, een geel A4'tje op het
-            prikbord, en een spreadsheet die alleen jij begrijpt — dat wordt
+            prikbord, en een spreadsheet die alleen jij begrijpt: dat wordt
             één plek waar iedereen naar kijkt.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function HomePage() {
                 <span className="text-lg font-body text-paper/60"> / maand</span>
               </p>
               <p className="mt-1 text-sm text-paper/50">
-                excl. btw, of €100/jaar — 2 maanden gratis
+                excl. btw, of €100/jaar (2 maanden gratis)
               </p>
               <ul className="mt-6 space-y-2 text-sm text-paper/80">
                 <li>Onbeperkt medewerkers</li>

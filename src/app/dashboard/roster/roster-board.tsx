@@ -133,7 +133,7 @@ export default function RosterBoard({
             )}
             {canManage && !isWeekOpen && (
               <p className="mt-3 text-[11px] text-ink/30">
-                Week gesloten — zet 'm open om shifts toe te voegen
+                Week gesloten, zet 'm open om shifts toe te voegen
               </p>
             )}
 
@@ -259,7 +259,7 @@ function ShiftCard({
           )}
           {showNotified && swapRequest.notifiedNames.length === 0 && (
             <p className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/50">
-              Niemand had zich beschikbaar gemeld voor deze dag — app of bel
+              Niemand had zich beschikbaar gemeld voor deze dag, app of bel
               gerust zelf een collega.
             </p>
           )}

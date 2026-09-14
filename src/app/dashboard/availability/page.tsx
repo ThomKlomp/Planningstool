@@ -91,7 +91,7 @@ export default async function AvailabilityPage({
 
       {!isWeekOpen && !canManage && (
         <p className="mt-4 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
-          Deze week is gesloten — je kunt je beschikbaarheid niet meer
+          Deze week is gesloten. Je kunt je beschikbaarheid niet meer
           aanpassen. Neem contact op met je manager als er iets moet
           wijzigen.
         </p>
@@ -99,7 +99,7 @@ export default async function AvailabilityPage({
 
       {canManage && shiftTemplates.length === 0 && (
         <p className="mt-4 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
-          Nog geen standaard shifts ingesteld — medewerkers geven nu
+          Nog geen standaard shifts ingesteld. Medewerkers geven nu
           beschikbaarheid per hele dag door.{" "}
           <a href="/dashboard/settings" className="text-awning hover:underline">
             Shifts instellen →

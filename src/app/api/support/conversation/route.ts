@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     if (supportEmail) {
       await sendEmail({
         to: supportEmail,
-        subject: `Nieuwe chat geopend — ${name}`,
+        subject: `Nieuwe chat geopend door ${name}`,
         replyTo: email,
         html: emailLayout(
           "Er staat een nieuwe chat open",

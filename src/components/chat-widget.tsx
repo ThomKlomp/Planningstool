@@ -126,7 +126,7 @@ export default function ChatWidget({
           <div className="flex max-h-96 min-h-[10rem] flex-col gap-2 overflow-y-auto px-4 py-3">
             {!conversation && (
               <p className="text-xs text-ink/50">
-                Stuur ons een berichtje, we reageren zo snel mogelijk — je
+                Stuur ons een berichtje, we reageren zo snel mogelijk. Je
                 ziet het antwoord hier terug.
               </p>
             )}

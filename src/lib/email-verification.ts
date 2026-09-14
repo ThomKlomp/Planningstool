@@ -21,7 +21,7 @@ export async function sendVerificationEmail(email: string) {
 
   await sendEmail({
     to: email,
-    subject: "Bevestig je e-mailadres — Shiftje",
+    subject: "Shiftje: bevestig je e-mailadres",
     html: emailLayout(
       "Bevestig je e-mailadres",
       `

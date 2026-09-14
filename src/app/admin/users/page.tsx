@@ -52,11 +52,11 @@ export default async function AdminUsersPage({
           <tbody>
             {users.map((u) => (
               <tr key={u.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 font-medium">{u.name ?? "—"}</td>
+                <td className="px-4 py-3 font-medium">{u.name ?? "-"}</td>
                 <td className="px-4 py-3 text-ink/60">{u.email}</td>
                 <td className="px-4 py-3 text-ink/60">
                   {u.memberships.length === 0
-                    ? "—"
+                    ? "-"
                     : u.memberships.map((m) => m.company.name).join(", ")}
                 </td>
                 <td className="px-4 py-3">

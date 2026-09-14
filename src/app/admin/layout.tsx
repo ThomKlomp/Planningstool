@@ -25,7 +25,7 @@ export default async function AdminLayout({
           <div>
             <p className="font-display text-xl">Adminportaal</p>
             <p className="text-xs text-ink/50">
-              Intern overzicht — niet zichtbaar voor klanten.
+              Intern overzicht, niet zichtbaar voor klanten.
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">

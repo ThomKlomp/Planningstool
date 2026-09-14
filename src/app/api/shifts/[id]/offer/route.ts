@@ -59,7 +59,7 @@ export async function POST(
       day: "numeric",
       month: "long",
     })}`,
-    body: `${shift.startTime}–${shift.endTime}${shift.role ? ` · ${shift.role}` : ""} — beschikbaar voor overname of ruil.`,
+    body: `${shift.startTime}–${shift.endTime}${shift.role ? ` · ${shift.role}` : ""}, beschikbaar voor overname of ruil.`,
     link: "/dashboard/roster",
   });
 

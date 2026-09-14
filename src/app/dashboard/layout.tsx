@@ -26,7 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
-      <aside className="border-b border-line bg-white sm:flex sm:w-60 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r">
+      <aside className="border-b border-line bg-white sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
         <div>
           <div className="px-4 py-4 sm:px-4 sm:py-6">
             <p className="truncate font-display text-lg">{membership.companyName}</p>
@@ -73,12 +73,12 @@ export default async function DashboardLayout({
             <div className="border-b border-amber/40 bg-amber/10 px-4 py-2.5 text-sm sm:px-8">
               <Link href="/dashboard/settings/billing" className="text-amber-dark hover:underline">
                 {company.subscriptionStatus === "PAST_DUE"
-                  ? "De laatste betaling is mislukt — regel dit om toegang te houden →"
+                  ? "De laatste betaling is mislukt, regel dit om toegang te houden →"
                   : company.subscriptionStatus === "CANCELED"
-                  ? "Je abonnement is opgezegd — kies een plan om door te gaan →"
+                  ? "Je abonnement is opgezegd, kies een plan om door te gaan →"
                   : trialDaysLeft !== null && trialDaysLeft <= 0
-                  ? "Je proefperiode is afgelopen — kies een abonnement →"
-                  : `Nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode — kies alvast een abonnement →`}
+                  ? "Je proefperiode is afgelopen, kies een abonnement →"
+                  : `Nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode, kies alvast een abonnement →`}
               </Link>
             </div>
           )}

@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     .join("");
 
   const html = emailLayout(
-    `Rooster week ${getISOWeekNumber(week[0])} — ${membership.companyName}`,
+    `Rooster week ${getISOWeekNumber(week[0])} bij ${membership.companyName}`,
     shifts.length > 0
       ? `<table style="width: 100%; border-collapse: collapse; margin-top: 12px;">${rows}</table>`
       : `<p>Er staan nog geen shifts gepland voor deze week.</p>`
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
   const emailResult = await sendEmail({
     to: recipients,
-    subject: `Rooster week ${getISOWeekNumber(week[0])} — ${membership.companyName}`,
+    subject: `Rooster week ${getISOWeekNumber(week[0])} bij ${membership.companyName}`,
     html,
   });
 

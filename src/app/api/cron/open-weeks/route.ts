@@ -47,7 +47,7 @@ export async function GET(req: Request) {
     if (recipients.length > 0) {
       await sendEmail({
         to: recipients,
-        subject: `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open — ${company.name}`,
+        subject: `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open bij ${company.name}`,
         html: emailLayout(
           `Nieuwe week open bij ${company.name}`,
           `<p>Je kunt nu je beschikbaarheid doorgeven voor week ${getISOWeekNumber(

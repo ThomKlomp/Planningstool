@@ -80,7 +80,7 @@ export default async function AdminCompanyDetailPage({
       <section className="mt-10 rounded-xl border border-red-200 bg-red-50 p-4">
         <h2 className="font-display text-lg text-red-700">Gevarenzone</h2>
         <p className="mt-1 text-sm text-red-600/80">
-          Zaak verwijderen kan niet ongedaan worden gemaakt — alle leden,
+          Zaak verwijderen kan niet ongedaan worden gemaakt. Alle leden,
           shifts, uren en beschikbaarheid van deze zaak verdwijnen mee.
         </p>
         <div className="mt-3">
