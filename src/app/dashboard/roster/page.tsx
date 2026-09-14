@@ -223,6 +223,9 @@ export default async function RosterPage({
               shiftId: r.shiftId,
               status: r.status,
               offeredById: r.offeredById,
+              notifiedNames: r.notifiedMembershipIds.map(
+                (id) => memberNameById.get(id) ?? "Onbekend"
+              ),
             }))}
             week={week.map((d) => d.toISOString())}
             members={visibleMembers.map((m) => ({

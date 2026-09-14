@@ -31,14 +31,6 @@ export async function POST(
     return NextResponse.json({ error: "Deze dienst is al aangeboden" }, { status: 409 });
   }
 
-  const swapRequest = await prisma.shiftSwapRequest.create({
-    data: {
-      companyId: membership.companyId,
-      shiftId: shift.id,
-      offeredById: membership.membershipId,
-    },
-  });
-
   // Meld het bij iedereen die die dag beschikbaar staat (niet UNAVAILABLE),
   // behalve de aanbieder zelf.
   const availableThatDay = await prisma.availability.findMany({
@@ -51,6 +43,15 @@ export async function POST(
     select: { membershipId: true },
   });
   const recipientIds = [...new Set(availableThatDay.map((a) => a.membershipId))];
+
+  const swapRequest = await prisma.shiftSwapRequest.create({
+    data: {
+      companyId: membership.companyId,
+      shiftId: shift.id,
+      offeredById: membership.membershipId,
+      notifiedMembershipIds: recipientIds,
+    },
+  });
 
   await notify(membership.companyId, recipientIds, {
     title: `Dienst aangeboden op ${shift.date.toLocaleDateString("nl-NL", {

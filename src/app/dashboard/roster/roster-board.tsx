@@ -21,6 +21,7 @@ type SwapRequest = {
   shiftId: string;
   status: string;
   offeredById: string;
+  notifiedNames: string[];
 };
 
 type Availability = {
@@ -174,6 +175,7 @@ function ShiftCard({
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [showNotified, setShowNotified] = useState(false);
   const isOwnShift = !canManage && viewerMembershipId && shift.membershipId === viewerMembershipId;
   const isOthersOpenOffer =
     !canManage &&
@@ -238,6 +240,29 @@ function ShiftCard({
           <p className="rounded-full bg-amber/20 px-2 py-1 text-center text-[11px] font-medium text-amber-dark">
             Aangeboden
           </p>
+          <button
+            onClick={() => setShowNotified((v) => !v)}
+            className="w-full text-center text-[11px] text-ink/50 hover:underline"
+          >
+            {swapRequest.notifiedNames.length === 0
+              ? "Niemand geïnformeerd"
+              : `${swapRequest.notifiedNames.length} ${
+                  swapRequest.notifiedNames.length === 1 ? "collega" : "collega's"
+                } geïnformeerd`}
+          </button>
+          {showNotified && swapRequest.notifiedNames.length > 0 && (
+            <ul className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/60">
+              {swapRequest.notifiedNames.map((name, i) => (
+                <li key={i}>{name}</li>
+              ))}
+            </ul>
+          )}
+          {showNotified && swapRequest.notifiedNames.length === 0 && (
+            <p className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/50">
+              Niemand had zich beschikbaar gemeld voor deze dag — app of bel
+              gerust zelf een collega.
+            </p>
+          )}
           <button
             onClick={cancelOffer}
             disabled={busy}

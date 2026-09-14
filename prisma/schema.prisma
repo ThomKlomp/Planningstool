@@ -282,6 +282,7 @@ model ShiftSwapRequest {
   reviewedById  String? // membershipId van de manager die goed-/afkeurde
   reviewedAt    DateTime?
   status        ShiftSwapStatus @default(OPEN)
+  notifiedMembershipIds String[] @default([]) // wie een melding kreeg toen dit werd aangeboden
   createdAt     DateTime        @default(now())
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
