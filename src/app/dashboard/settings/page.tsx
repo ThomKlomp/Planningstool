@@ -9,6 +9,7 @@ import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
 import AutoApprovalSettings from "./auto-approval-settings";
+import JoinLink from "./join-link";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
     prisma.company.findUnique({
       where: { id: membership.companyId },
       select: {
+        slug: true,
         autoOpenWeeks: true,
         closedWeekdays: true,
         showCompanyRosterToEmployees: true,
@@ -77,6 +79,20 @@ export default async function SettingsPage() {
             trialDaysLeft={trialDaysLeft}
           />
         </div>
+      )}
+
+      {company?.slug && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl">Medewerkers uitnodigen via link</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Deel deze link met je team. Iedereen die 'm opent kan zelf inloggen
+            of een account aanmaken en sluit direct aan als medewerker, je
+            hoeft dan niet iedereen los uit te nodigen.
+          </p>
+          <div className="mt-4">
+            <JoinLink slug={company.slug} />
+          </div>
+        </section>
       )}
 
       <section className="mt-10">

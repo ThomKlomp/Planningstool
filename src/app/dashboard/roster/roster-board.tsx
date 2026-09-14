@@ -45,6 +45,21 @@ type ShiftTemplate = {
   weekdays: number[];
 };
 
+/** Groepeert de shifts van een dag per team, alfabetisch, met "Geen team" altijd als laatste. */
+function groupShiftsByDepartment(shifts: Shift[]): [string, Shift[]][] {
+  const groups = new Map<string, Shift[]>();
+  for (const shift of shifts) {
+    const key = shift.departmentName ?? "Geen team";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(shift);
+  }
+  return Array.from(groups.entries()).sort(([a], [b]) => {
+    if (a === "Geen team") return 1;
+    if (b === "Geen team") return -1;
+    return a.localeCompare(b);
+  });
+}
+
 export default function RosterBoard({
   canManage,
   week,
@@ -107,16 +122,25 @@ export default function RosterBoard({
               {date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" })}
             </p>
 
-            <div className="mt-2 space-y-2">
-              {dayShifts.map((shift) => (
-                <ShiftCard
-                  key={shift.id}
-                  shift={shift}
-                  canManage={canManage}
-                  viewerMembershipId={viewerMembershipId}
-                  swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
-                  onChanged={() => router.refresh()}
-                />
+            <div className="mt-2 space-y-3">
+              {groupShiftsByDepartment(dayShifts).map(([departmentName, deptShifts]) => (
+                <div key={departmentName}>
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-ink/40">
+                    {departmentName}
+                  </p>
+                  <div className="space-y-2">
+                    {deptShifts.map((shift) => (
+                      <ShiftCard
+                        key={shift.id}
+                        shift={shift}
+                        canManage={canManage}
+                        viewerMembershipId={viewerMembershipId}
+                        swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
+                        onChanged={() => router.refresh()}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
               {dayShifts.length === 0 && (
                 <p className="text-xs text-ink/40">Geen shifts</p>
@@ -214,14 +238,6 @@ function ShiftCard({
       </p>
       <p className="flex flex-wrap items-center gap-1 text-ink/60">
         <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
-        {shift.departmentName && (
-          <span
-            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
-            style={{ backgroundColor: shift.departmentColor ?? "#1B1B18" }}
-          >
-            {shift.departmentName}
-          </span>
-        )}
         {shift.role ? <span>· {shift.role}</span> : null}
       </p>
 

@@ -70,7 +70,7 @@ export default function WeekStatusToggle({
         }`}
       >
         <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-awning" : "bg-ink/40"}`} />
-        {isOpen ? "Week open — klik om te sluiten" : "Week gesloten — klik om te openen"}
+        {isOpen ? "Week open, klik om te sluiten" : "Week gesloten, klik om te openen"}
       </button>
       {overridden && (
         <button
