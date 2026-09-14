@@ -1,50 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+type Message = { id: string; sender: string; body: string; createdAt: string };
+type Conversation = { id: string; status: string; messages: Message[] } | null;
+
+const GUEST_TOKEN_KEY = "shiftje_guest_token";
 
 export default function ChatWidget({
   defaultName = "",
   defaultEmail = "",
+  isLoggedIn = false,
 }: {
   defaultName?: string;
   defaultEmail?: string;
+  isLoggedIn?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [conversation, setConversation] = useState<Conversation>(null);
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
-  const [message, setMessage] = useState("");
+  const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function guestToken() {
+    if (isLoggedIn) return null;
+    return typeof window !== "undefined" ? localStorage.getItem(GUEST_TOKEN_KEY) : null;
+  }
+
+  function authHeaders(): HeadersInit {
+    const token = guestToken();
+    return token ? { "x-guest-token": token } : {};
+  }
+
+  async function loadConversation() {
+    const res = await fetch("/api/support/conversation", { headers: authHeaders() });
+    if (res.ok) {
+      const data = await res.json();
+      setConversation(data.conversation);
+    }
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    if (open && !loaded) loadConversation();
+  }, [open, loaded]);
+
+  // Poll voor nieuwe berichten (bv. een antwoord) terwijl het venster open is.
+  useEffect(() => {
+    if (!open || !conversation) return;
+    const interval = setInterval(loadConversation, 6000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, conversation?.id]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation?.messages.length]);
+
+  async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
+    if (!draft.trim()) return;
     setSending(true);
     setError(null);
 
-    const res = await fetch("/api/support/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message }),
-    });
-
-    if (!res.ok) {
+    if (!conversation) {
+      // Eerste bericht: naam + e-mail zijn dan verplicht.
+      if (!name.trim() || !email.trim()) {
+        setError("Vul je naam en e-mail in.");
+        setSending(false);
+        return;
+      }
+      const res = await fetch("/api/support/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ name, email, message: draft }),
+      });
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Versturen mislukt, probeer het later opnieuw.");
-      setSending(false);
-      return;
+      if (!res.ok) {
+        setError(data.error ?? "Versturen mislukt.");
+        setSending(false);
+        return;
+      }
+      if (data.guestToken && typeof window !== "undefined") {
+        localStorage.setItem(GUEST_TOKEN_KEY, data.guestToken);
+      }
+      setConversation(data.conversation);
+    } else {
+      const res = await fetch(`/api/support/conversation/${conversation.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ message: draft }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Versturen mislukt.");
+        setSending(false);
+        return;
+      }
+      setConversation(data.conversation);
     }
 
-    setSent(true);
-    setMessage("");
+    setDraft("");
     setSending(false);
   }
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {open && (
-        <div className="mb-3 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-line bg-white p-4 shadow-xl">
-          <div className="flex items-center justify-between">
+        <div className="mb-3 flex w-80 max-w-[calc(100vw-2rem)] flex-col rounded-2xl border border-line bg-white shadow-xl">
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <p className="font-display text-lg">Hulp nodig?</p>
             <button
               onClick={() => setOpen(false)}
@@ -55,57 +123,73 @@ export default function ChatWidget({
             </button>
           </div>
 
-          {sent ? (
-            <div className="mt-3 rounded-lg bg-awning/10 px-3 py-3 text-sm text-awning">
-              Bedankt! Je bericht is verstuurd, we reageren zo snel mogelijk.
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-3 space-y-2">
+          <div className="flex max-h-96 min-h-[10rem] flex-col gap-2 overflow-y-auto px-4 py-3">
+            {!conversation && (
               <p className="text-xs text-ink/50">
-                Stuur ons een berichtje, we mailen je terug.
+                Stuur ons een berichtje, we reageren zo snel mogelijk — je
+                ziet het antwoord hier terug.
               </p>
+            )}
+            {conversation?.messages.map((m) => (
+              <div
+                key={m.id}
+                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                  m.sender === "SUPPORT"
+                    ? "bg-paper text-ink"
+                    : "ml-auto bg-ink text-paper"
+                }`}
+              >
+                <p className="whitespace-pre-wrap">{m.body}</p>
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </div>
+
+          <form onSubmit={sendMessage} className="space-y-2 border-t border-line px-4 py-3">
+            {!conversation && !isLoggedIn && (
+              <>
+                <input
+                  type="text"
+                  required
+                  placeholder="Je naam"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+                />
+                <input
+                  type="email"
+                  required
+                  placeholder="Je e-mailadres"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+                />
+              </>
+            )}
+            <div className="flex gap-2">
               <input
                 type="text"
                 required
-                placeholder="Je naam"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+                placeholder="Typ een bericht..."
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                className="flex-1 rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
               />
-              <input
-                type="email"
-                required
-                placeholder="Je e-mailadres"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
-              />
-              <textarea
-                required
-                placeholder="Waar kunnen we mee helpen?"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={3}
-                className="w-full resize-none rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
-              />
-              {error && <p className="text-xs text-red-600">{error}</p>}
               <button
                 type="submit"
                 disabled={sending}
-                className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning transition-colors disabled:opacity-50"
+                className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
               >
-                {sending ? "Bezig..." : "Versturen"}
+                {sending ? "..." : "Stuur"}
               </button>
-            </form>
-          )}
+            </div>
+            {error && <p className="text-xs text-red-600">{error}</p>}
+          </form>
         </div>
       )}
 
       <button
-        onClick={() => {
-          setOpen((v) => !v);
-          if (sent) setSent(false);
-        }}
+        onClick={() => setOpen((v) => !v)}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-paper shadow-lg hover:bg-awning transition-colors"
         aria-label={open ? "Chat sluiten" : "Chat openen"}
       >

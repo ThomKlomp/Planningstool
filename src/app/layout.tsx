@@ -37,6 +37,7 @@ export default async function RootLayout({
         <ChatWidget
           defaultName={session?.user?.name ?? ""}
           defaultEmail={session?.user?.email ?? ""}
+          isLoggedIn={Boolean(session?.user)}
         />
       </body>
     </html>

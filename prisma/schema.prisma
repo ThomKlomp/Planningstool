@@ -328,6 +328,36 @@ model Notification {
   @@index([membershipId, read])
 }
 
+// ---------- Support-chat (bolletje rechtsonder) ----------
+
+model SupportConversation {
+  id         String   @id @default(cuid())
+  userId     String? // ingelogde gebruiker, indien van toepassing
+  guestToken String?  @unique // willekeurige token voor niet-ingelogde bezoekers
+  guestName  String?
+  guestEmail String?
+  status     String   @default("OPEN") // OPEN of CLOSED
+  notifiedAt DateTime? // wanneer de "nieuwe chat"-mail voor het laatst verstuurd is
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  messages SupportMessage[]
+
+  @@index([userId])
+}
+
+model SupportMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  sender         String // "USER" of "SUPPORT"
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
 enum TimeEntryStatus {
   DRAFT // vooraf ingevuld op basis van een ingeroosterde shift, medewerker moet nog bevestigen
   SUBMITTED
