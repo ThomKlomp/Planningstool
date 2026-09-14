@@ -3,12 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
 import { PRICE_MONTHLY_INCL, PRICE_YEARLY_INCL } from "@/lib/billing";
 
-// Mollie stuurt hier een POST met alleen { id: "tr_..." } naartoe — de rest
-// van de betaalinformatie halen we zelf op bij Mollie (nooit vertrouwen op
-// wat in de webhook-body zelf staat, dat is bewust minimaal).
+// Mollie stuurt hier een POST naartoe met de betaalinformatie ALTIJD als
+// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON — een
+// veelgemaakte misvatting. We lezen 'm daarom als tekst en parsen zelf.
+// De rest van de betaalinformatie halen we op bij Mollie zelf (nooit
+// vertrouwen op wat er verder in de webhook-body staat).
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const paymentId = body?.id;
+  const raw = await req.text();
+  let paymentId: string | undefined;
+
+  const contentType = req.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    paymentId = JSON.parse(raw || "{}")?.id;
+  } else {
+    paymentId = new URLSearchParams(raw).get("id") ?? undefined;
+  }
+
   if (!paymentId) {
     return NextResponse.json({ error: "Geen payment id" }, { status: 400 });
   }
