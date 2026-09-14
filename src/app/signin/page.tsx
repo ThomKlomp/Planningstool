@@ -15,11 +15,15 @@ function SignInContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resent, setResent] = useState(false);
 
   async function handleCredentialsSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNeedsVerification(false);
+    setResent(false);
 
     const result = await signIn("credentials", {
       email,
@@ -27,6 +31,11 @@ function SignInContent() {
       redirect: false,
     });
 
+    if (result?.error === "EmailNotVerified") {
+      setNeedsVerification(true);
+      setLoading(false);
+      return;
+    }
     if (result?.error) {
       setError("E-mailadres of wachtwoord klopt niet.");
       setLoading(false);
@@ -35,6 +44,17 @@ function SignInContent() {
 
     router.push(callbackUrl);
     router.refresh();
+  }
+
+  async function resendVerification() {
+    setLoading(true);
+    await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    setLoading(false);
+    setResent(true);
   }
 
   return (
@@ -75,6 +95,23 @@ function SignInContent() {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {needsVerification && (
+          <div className="rounded-lg bg-amber/10 px-3 py-2 text-sm text-amber-dark">
+            <p>Bevestig eerst je e-mailadres — check je inbox voor de link.</p>
+            {resent ? (
+              <p className="mt-1 text-xs">Opnieuw verstuurd, check je inbox.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={resendVerification}
+                disabled={loading}
+                className="mt-1 text-xs underline hover:no-underline disabled:opacity-50"
+              >
+                Verstuur de link opnieuw
+              </button>
+            )}
+          </div>
+        )}
 
         <button
           type="submit"

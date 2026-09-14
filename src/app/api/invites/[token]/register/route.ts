@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { sendVerificationEmail } from "@/lib/email-verification";
 
 export async function POST(
   req: Request,
@@ -56,5 +57,7 @@ export async function POST(
     });
   });
 
-  return NextResponse.json({ ok: true });
+  await sendVerificationEmail(invite.email);
+
+  return NextResponse.json({ ok: true, requiresVerification: true });
 }

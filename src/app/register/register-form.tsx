@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 export default function RegisterForm() {
-  const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,20 +30,20 @@ export default function RegisterForm() {
       return;
     }
 
-    const signInResult = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    setSent(true);
+    setLoading(false);
+  }
 
-    if (signInResult?.error) {
-      setError("Account is aangemaakt, maar inloggen lukte niet. Probeer in te loggen.");
-      setLoading(false);
-      return;
-    }
-
-    router.push("/onboarding");
-    router.refresh();
+  if (sent) {
+    return (
+      <div className="mt-6 rounded-lg bg-awning/10 px-4 py-4 text-sm text-awning">
+        <p className="font-medium">Check je e-mail</p>
+        <p className="mt-1 text-awning/90">
+          We hebben een bevestigingslink gestuurd naar {email}. Klik daarop
+          om je account te activeren, en log daarna in.
+        </p>
+      </div>
+    );
   }
 
   return (
