@@ -18,7 +18,7 @@ const plex = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Shiftje — planning voor kleine horeca",
+  title: "Shiftje: planning voor kleine horeca",
   description:
     "Beschikbaarheid, rooster en uren op één plek. Gemaakt voor kleinere horecazaken.",
 };

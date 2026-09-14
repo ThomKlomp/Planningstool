@@ -75,7 +75,7 @@ export default function HomePage() {
         <div className="divide-y divide-line">
           <Feature
             title="Beschikbaarheid"
-            body="Medewerkers geven per dag of per shift aan of ze kunnen — net zo simpel als een datumprikker. Jij zet weken vooraf open, zodat er nooit een gat valt."
+            body="Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Jij zet weken vooraf open, zodat er nooit een gat valt."
           />
           <Feature
             title="Rooster"
@@ -87,7 +87,7 @@ export default function HomePage() {
           />
           <Feature
             title="Ruilen &amp; overnemen"
-            body="Een medewerker kan niet meer? Die biedt de dienst aan, een collega neemt 'm over, en jij geeft — als je dat wil — nog even je akkoord."
+            body="Een medewerker kan niet meer? Die biedt de dienst aan, een collega neemt 'm over, en jij geeft (als je dat wil) nog even je akkoord."
           />
           <Feature
             title="Uren"
@@ -151,7 +151,7 @@ function Feature({ title, body }: { title: string; body: string }) {
   );
 }
 
-/** Kleine, gestileerde weergave van een weekrooster — geen screenshot, gewoon opgebouwd uit divs. */
+/** Kleine, gestileerde weergave van een weekrooster: geen screenshot, gewoon opgebouwd uit divs. */
 function ScheduleMock() {
   const days = [
     { label: "Ma", shifts: [] as { time: string; color: string }[] },
