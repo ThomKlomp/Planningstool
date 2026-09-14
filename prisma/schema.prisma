@@ -210,6 +210,7 @@ model User {
 
   memberships   Membership[]
   platformAdmin PlatformAdmin?
+  supportConversations SupportConversation[]
 
   createdAt DateTime @default(now())
 }
@@ -342,6 +343,7 @@ model SupportConversation {
   updatedAt  DateTime @updatedAt
 
   messages SupportMessage[]
+  user     User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }
