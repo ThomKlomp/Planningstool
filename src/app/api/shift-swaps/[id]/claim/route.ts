@@ -39,7 +39,12 @@ export async function POST(
     select: { autoApproveShiftSwaps: true },
   });
 
-  if (company?.autoApproveShiftSwaps) {
+  // Een manager/eigenaar heeft sowieso goedkeuringsrecht, dus die hoeft niet
+  // via de wachtrij: dat zou anders betekenen dat ze hun eigen overname aan
+  // zichzelf moeten goedkeuren.
+  const isManager = membership.role === "OWNER" || membership.role === "MANAGER";
+
+  if (isManager || company?.autoApproveShiftSwaps) {
     const updated = await reassignShift(swapRequest, membership.membershipId);
     await notify(membership.companyId, [swapRequest.offeredById], {
       title: "Je aangeboden dienst is overgenomen",

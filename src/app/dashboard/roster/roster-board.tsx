@@ -216,11 +216,10 @@ function ShiftCard({
   const [busy, setBusy] = useState(false);
   const [showNotified, setShowNotified] = useState(false);
   const isOwnShift = !canManage && viewerMembershipId && shift.membershipId === viewerMembershipId;
-  const isOthersOpenOffer =
-    !canManage &&
-    swapRequest?.status === "OPEN" &&
-    viewerMembershipId &&
-    swapRequest.offeredById !== viewerMembershipId;
+  // Iedereen behalve de aanbieder zelf mag een openstaande dienst overnemen,
+  // dus ook een manager/eigenaar (die zag voorheen zelfs het label niet).
+  const canClaimOpenOffer =
+    swapRequest?.status === "OPEN" && viewerMembershipId && swapRequest.offeredById !== viewerMembershipId;
 
   async function offer() {
     setBusy(true);
@@ -316,7 +315,7 @@ function ShiftCard({
         </p>
       )}
 
-      {isOthersOpenOffer && (
+      {canClaimOpenOffer && (
         <div className="mt-1.5 space-y-1">
           <p className="rounded-full bg-awning/10 px-2 py-1 text-center text-[11px] font-medium text-awning">
             Beschikbaar voor overname
