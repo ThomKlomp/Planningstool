@@ -65,7 +65,7 @@ function buildGrid(members: Member[], shifts: Shift[], weekStart: string) {
 }
 
 function dayLabel(day: Date) {
-  const label = day.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric" });
+  const label = day.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -163,8 +163,8 @@ export default function RosterActions({
             body { font-family: Arial, sans-serif; color: #1B1B18; padding: 32px; }
             h1 { font-size: 20px; margin-bottom: 4px; }
             h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #3F6E5B; margin-top: 24px; margin-bottom: 6px; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-            th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #DDD5C7; overflow-wrap: break-word; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #DDD5C7; white-space: nowrap; }
             th { color: #1B1B1899; font-weight: 600; }
             td.name { font-weight: 600; }
             @media print { @page { margin: 14mm; } }
