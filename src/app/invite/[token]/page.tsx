@@ -40,6 +40,17 @@ export default async function InvitePage({
     );
   }
 
+  // Team is alleen relevant voor een medewerker-uitnodiging, en alleen als
+  // er ook daadwerkelijk meerdere teams zijn om uit te kiezen.
+  const departments =
+    invite.role === "EMPLOYEE"
+      ? await prisma.department.findMany({
+          where: { companyId: invite.companyId },
+          orderBy: { order: "asc" },
+          select: { id: true, name: true },
+        })
+      : [];
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -49,6 +60,7 @@ export default async function InvitePage({
         companyName={invite.company.name}
         role={roleLabel(invite.role)}
         email={invite.email}
+        departments={departments}
       />
     );
   }
@@ -82,6 +94,7 @@ export default async function InvitePage({
       role={roleLabel(invite.role)}
       askForName={isNewUser}
       suggestedName={session.user.name ?? ""}
+      departments={departments}
     />
   );
 }

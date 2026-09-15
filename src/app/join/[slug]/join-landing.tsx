@@ -2,22 +2,28 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import DepartmentSelect from "@/components/department-select";
 
 export default function JoinLanding({
   slug,
   companyName,
+  departments,
 }: {
   slug: string;
   companyName: string;
+  departments: { id: string; name: string }[];
 }) {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  const needsDepartmentChoice = departments.length > 1;
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +33,13 @@ export default function JoinLanding({
     const res = await fetch(`/api/join/${slug}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+        departmentId: departmentId || undefined,
+      }),
     });
 
     if (!res.ok) {
@@ -110,6 +122,14 @@ export default function JoinLanding({
                 />
               </div>
             </div>
+
+            {needsDepartmentChoice && (
+              <DepartmentSelect
+                departments={departments}
+                value={departmentId}
+                onChange={setDepartmentId}
+              />
+            )}
 
             <div>
               <label className="block text-xs text-ink/60">E-mailadres</label>

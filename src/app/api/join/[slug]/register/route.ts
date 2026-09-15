@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -28,6 +29,11 @@ export async function POST(
     );
   }
 
+  const resolved = await resolveDepartmentId(company.id, body?.departmentId);
+  if (resolved.error) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json(
@@ -50,7 +56,12 @@ export async function POST(
       },
     });
     await tx.membership.create({
-      data: { userId: user.id, companyId: company.id, role: "EMPLOYEE" },
+      data: {
+        userId: user.id,
+        companyId: company.id,
+        role: "EMPLOYEE",
+        departmentId: resolved.departmentId,
+      },
     });
   });
 

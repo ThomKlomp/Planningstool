@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import DepartmentSelect from "@/components/department-select";
 
 export default function AcceptInviteForm({
   token,
@@ -9,20 +10,25 @@ export default function AcceptInviteForm({
   role,
   askForName,
   suggestedName,
+  departments,
 }: {
   token: string;
   companyName: string;
   role: string;
   askForName: boolean;
   suggestedName: string;
+  departments: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState(suggestedName.split(" ")[0] ?? "");
   const [lastName, setLastName] = useState(
     suggestedName.split(" ").slice(1).join(" ")
   );
+  const [departmentId, setDepartmentId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const needsDepartmentChoice = departments.length > 1;
 
   async function handleAccept(e: React.FormEvent) {
     e.preventDefault();
@@ -32,9 +38,10 @@ export default function AcceptInviteForm({
     const res = await fetch(`/api/invites/${token}/accept`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        askForName ? { firstName, lastName } : {}
-      ),
+      body: JSON.stringify({
+        ...(askForName ? { firstName, lastName } : {}),
+        ...(needsDepartmentChoice ? { departmentId } : {}),
+      }),
     });
 
     if (!res.ok) {
@@ -92,6 +99,14 @@ export default function AcceptInviteForm({
                 </div>
               </div>
             </>
+          )}
+
+          {needsDepartmentChoice && (
+            <DepartmentSelect
+              departments={departments}
+              value={departmentId}
+              onChange={setDepartmentId}
+            />
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}

@@ -50,6 +50,7 @@ export default async function DashboardLayout({
             {(membership.role === "OWNER" || membership.role === "MANAGER") && (
               <NavLink href="/dashboard/settings">Instellingen</NavLink>
             )}
+            <NavLink href="/dashboard/account">Mijn account</NavLink>
             {session.user.isPlatformAdmin && (
               <NavLink href="/admin">Adminportaal</NavLink>
             )}

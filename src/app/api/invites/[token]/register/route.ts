@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -27,6 +28,15 @@ export async function POST(
     );
   }
 
+  let departmentId: string | null = null;
+  if (invite.role === "EMPLOYEE") {
+    const resolved = await resolveDepartmentId(invite.companyId, body?.departmentId);
+    if (resolved.error) {
+      return NextResponse.json({ error: resolved.error }, { status: 400 });
+    }
+    departmentId = resolved.departmentId;
+  }
+
   const existing = await prisma.user.findUnique({ where: { email: invite.email } });
   if (existing) {
     return NextResponse.json(
@@ -49,7 +59,12 @@ export async function POST(
       },
     });
     await tx.membership.create({
-      data: { userId: user.id, companyId: invite.companyId, role: invite.role },
+      data: {
+        userId: user.id,
+        companyId: invite.companyId,
+        role: invite.role,
+        departmentId,
+      },
     });
     await tx.invite.update({
       where: { id: invite.id },

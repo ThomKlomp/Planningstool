@@ -16,9 +16,9 @@ type ShiftTemplate = {
 type OwnEntry = { date: string; daypart: string; status: Status; note?: string | null };
 
 const STATUS_OPTIONS: { value: Status; label: string; classes: string }[] = [
-  { value: "AVAILABLE", label: "Ik kan", classes: "bg-awning text-white" },
+  { value: "AVAILABLE", label: "Beschikbaar", classes: "bg-awning text-white" },
   { value: "UNSURE", label: "Weet ik nog niet", classes: "bg-amber text-ink" },
-  { value: "UNAVAILABLE", label: "Ik kan niet", classes: "bg-red-500 text-white" },
+  { value: "UNAVAILABLE", label: "Niet beschikbaar", classes: "bg-red-500 text-white" },
 ];
 
 export default function AvailabilityGrid({

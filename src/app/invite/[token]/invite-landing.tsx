@@ -2,25 +2,32 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import DepartmentSelect from "@/components/department-select";
 
 export default function InviteLanding({
   token,
   companyName,
   role,
   email,
+  departments,
 }: {
   token: string;
   companyName: string;
   role: string;
   email: string;
+  departments: { id: string; name: string }[];
 }) {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  // Alleen daadwerkelijk om een keuze vragen als er iets te kiezen valt.
+  const needsDepartmentChoice = departments.length > 1;
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +41,7 @@ export default function InviteLanding({
         firstName,
         lastName,
         password,
+        departmentId: departmentId || undefined,
       }),
     });
 
@@ -130,6 +138,14 @@ export default function InviteLanding({
                 />
               </div>
             </div>
+
+            {needsDepartmentChoice && (
+              <DepartmentSelect
+                departments={departments}
+                value={departmentId}
+                onChange={setDepartmentId}
+              />
+            )}
 
             <div>
               <label className="block text-xs text-ink/60">

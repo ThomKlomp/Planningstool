@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -24,42 +25,35 @@ export async function POST(
   const firstName = (body?.firstName ?? "").trim();
   const lastName = (body?.lastName ?? "").trim();
 
-  const existing = await prisma.membership.findUnique({
-    where: {
-      userId_companyId: { userId: session.user.id, companyId: invite.companyId },
-    },
-  });
+  let departmentId: string | null = null;
+  if (invite.role === "EMPLOYEE") {
+    const resolved = await resolveDepartmentId(invite.companyId, body?.departmentId);
+    if (resolved.error) {
+      return NextResponse.json({ error: resolved.error }, { status: 400 });
+    }
+    departmentId = resolved.departmentId;
+  }
 
-  const operations = [];
-
-  if (firstName || lastName) {
-    operations.push(
-      prisma.user.update({
+  await prisma.$transaction(async (tx) => {
+    if (firstName || lastName) {
+      await tx.user.update({
         where: { id: session.user.id },
         data: { name: [firstName, lastName].filter(Boolean).join(" ") },
-      })
-    );
-  }
-
-  if (!existing) {
-    operations.push(
-      prisma.membership.create({
-        data: {
-          userId: session.user.id,
-          companyId: invite.companyId,
-          role: invite.role,
-        },
-      }),
-      prisma.invite.update({
-        where: { id: invite.id },
-        data: { acceptedAt: new Date() },
-      })
-    );
-  }
-
-  if (operations.length > 0) {
-    await prisma.$transaction(operations);
-  }
+      });
+    }
+    await tx.membership.create({
+      data: {
+        userId: session.user.id,
+        companyId: invite.companyId,
+        role: invite.role,
+        departmentId,
+      },
+    });
+    await tx.invite.update({
+      where: { id: invite.id },
+      data: { acceptedAt: new Date() },
+    });
+  });
 
   return NextResponse.json({ ok: true });
 }

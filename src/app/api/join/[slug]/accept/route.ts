@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -27,34 +28,39 @@ export async function POST(
     },
   });
 
-  const operations = [];
-
-  if (firstName || lastName) {
-    operations.push(
-      prisma.user.update({
+  // Al lid: niets nieuws aanmaken (en dus ook geen teamkeuze meer
+  // afdwingen), gewoon ok teruggeven zodat de pagina doorstuurt.
+  if (existing) {
+    if (firstName || lastName) {
+      await prisma.user.update({
         where: { id: session.user.id },
         data: { name: [firstName, lastName].filter(Boolean).join(" ") },
-      })
-    );
+      });
+    }
+    return NextResponse.json({ ok: true });
   }
 
-  // Al lid: niets nieuws aanmaken, gewoon ok teruggeven zodat de pagina
-  // gewoon doorstuurt naar het dashboard.
-  if (!existing) {
-    operations.push(
-      prisma.membership.create({
-        data: {
-          userId: session.user.id,
-          companyId: company.id,
-          role: "EMPLOYEE",
-        },
-      })
-    );
+  const resolved = await resolveDepartmentId(company.id, body?.departmentId);
+  if (resolved.error) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
 
-  if (operations.length > 0) {
-    await prisma.$transaction(operations);
-  }
+  await prisma.$transaction(async (tx) => {
+    if (firstName || lastName) {
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: { name: [firstName, lastName].filter(Boolean).join(" ") },
+      });
+    }
+    await tx.membership.create({
+      data: {
+        userId: session.user.id,
+        companyId: company.id,
+        role: "EMPLOYEE",
+        departmentId: resolved.departmentId,
+      },
+    });
+  });
 
   return NextResponse.json({ ok: true });
 }
