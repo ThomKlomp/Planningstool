@@ -282,11 +282,17 @@ function ShiftCard({
                 } geïnformeerd`}
           </button>
           {showNotified && swapRequest.notifiedNames.length > 0 && (
-            <ul className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/60">
-              {swapRequest.notifiedNames.map((name, i) => (
-                <li key={i}>{name}</li>
-              ))}
-            </ul>
+            <>
+              <ul className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/60">
+                {swapRequest.notifiedNames.map((name, i) => (
+                  <li key={i}>{name}</li>
+                ))}
+              </ul>
+              <p className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/50">
+                Staat iemand er niet bij? Die kun je natuurlijk gewoon zelf
+                appen of bellen.
+              </p>
+            </>
           )}
           {showNotified && swapRequest.notifiedNames.length === 0 && (
             <p className="rounded-lg bg-white px-2 py-1.5 text-[11px] text-ink/50">

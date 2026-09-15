@@ -33,13 +33,24 @@ export async function POST(
     return NextResponse.json({ error: "Deze dienst is al aangeboden" }, { status: 409 });
   }
 
-  // Meld het bij iedereen die die dag beschikbaar staat (niet UNAVAILABLE),
-  // behalve de aanbieder zelf.
+  // Eigen team van de aanbieder opzoeken, zodat we alleen teamgenoten
+  // informeren, niet de hele zaak. Geen team = alleen andere mensen zonder
+  // team, net als de teamindeling verder overal in de app.
+  const offeringMembership = await prisma.membership.findUnique({
+    where: { id: membership.membershipId },
+    select: { departmentId: true },
+  });
+
+  // Meld het bij teamgenoten die die dag beschikbaar staan (niet
+  // UNAVAILABLE), behalve de aanbieder zelf.
   const availableThatDay = await prisma.availability.findMany({
     where: {
       date: shift.date,
       status: { not: "UNAVAILABLE" },
-      membership: { companyId: membership.companyId },
+      membership: {
+        companyId: membership.companyId,
+        departmentId: offeringMembership?.departmentId ?? null,
+      },
       membershipId: { not: membership.membershipId },
     },
     select: { membershipId: true },
@@ -60,19 +71,19 @@ export async function POST(
   // die in een andere week valt.
   const shiftWeekStart = getWeekDates(shift.date)[0];
   const rosterLink = `/dashboard/roster?week=${toDateParam(shiftWeekStart)}`;
+  const rosterUrl = `${process.env.NEXTAUTH_URL ?? ""}${rosterLink}`;
+  const dateLabel = shift.date.toLocaleDateString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   await notify(membership.companyId, recipientIds, {
-    title: `Dienst aangeboden op ${shift.date.toLocaleDateString("nl-NL", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    })}`,
+    title: `Dienst aangeboden op ${dateLabel}`,
     body: `${shift.startTime}–${shift.endTime}${shift.role ? ` · ${shift.role}` : ""}, beschikbaar voor overname of ruil.`,
     link: rosterLink,
   });
 
-  // E-mail naar de collega's die 'm kunnen overnemen, en naar
-  // managers/eigenaren zodat zij ook weten dat er een dienst openstaat.
   const [recipientMembers, managerMembers] = await Promise.all([
     prisma.membership.findMany({
       where: { id: { in: recipientIds } },
@@ -88,20 +99,16 @@ export async function POST(
     }),
   ]);
 
+  const recipientNames = recipientMembers.map((m) => m.user.name ?? m.user.email ?? "Onbekend");
+
+  // 1. E-mail naar de teamgenoten die de dienst kunnen overnemen, en naar
+  // managers/eigenaren zodat zij ook weten dat er een dienst openstaat.
   const notifyEmails = new Set<string>();
   for (const m of [...recipientMembers, ...managerMembers]) {
     if (m.user.email) notifyEmails.add(m.user.email);
   }
-
   if (notifyEmails.size > 0) {
-    const dateLabel = shift.date.toLocaleDateString("nl-NL", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    const rosterUrl = `${process.env.NEXTAUTH_URL ?? ""}${rosterLink}`;
     const offeredByName = session.user.name ?? "Een collega";
-
     await sendEmail({
       to: session.user.email ?? Array.from(notifyEmails)[0],
       bcc: Array.from(notifyEmails),
@@ -115,6 +122,35 @@ export async function POST(
             <a href="${rosterUrl}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
               Bekijken in het rooster
             </a>
+          </p>
+        `
+      ),
+    });
+  }
+
+  // 2. Bevestiging naar de aanbieder zelf: wie precies is geïnformeerd, en
+  // de geruststelling dat iemand die er niet bij staat ook gewoon
+  // rechtstreeks te benaderen is.
+  if (session.user.email) {
+    const listHtml =
+      recipientNames.length > 0
+        ? `<ul style="margin: 12px 0; padding-left: 20px;">${recipientNames
+            .map((n) => `<li>${n}</li>`)
+            .join("")}</ul>`
+        : `<p style="margin-top: 12px;">Niemand van je team stond deze dag als beschikbaar geregistreerd.</p>`;
+
+    await sendEmail({
+      to: session.user.email,
+      subject: `Je dienst op ${dateLabel} is aangeboden`,
+      html: emailLayout(
+        "Je dienst is aangeboden",
+        `
+          <p>Je dienst op <strong>${dateLabel}</strong>
+          (${shift.startTime}–${shift.endTime}${shift.role ? `, ${shift.role}` : ""}) staat nu open voor overname.</p>
+          <p style="margin-top: 16px;">Deze teamgenoten zijn geïnformeerd, want zij staan die dag als beschikbaar geregistreerd:</p>
+          ${listHtml}
+          <p style="margin-top: 16px; color: #666;">
+            Staat iemand er niet bij, of wil je het extra zeker weten? Je kunt diegene natuurlijk gewoon zelf appen of bellen.
           </p>
         `
       ),
