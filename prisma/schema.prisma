@@ -98,6 +98,8 @@ model Company {
   vatNumber   String? // btw-nummer, optioneel (niet elke eenmanszaak heeft er een)
   address     String?
   postalCode  String?
+
+  discount CompanyDiscount?
 }
 
 // Teams/afdelingen binnen een zaak, bv. "Bediening", "Keuken". Een lid
@@ -399,4 +401,53 @@ model TimeEntry {
   updatedAt DateTime @updatedAt
 
   @@index([companyId, date])
+}
+
+// ---------- Kortingscodes ----------
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum DiscountDuration {
+  FOREVER
+  LIMITED_MONTHS
+}
+
+// Een kortingscode die via het adminportaal wordt aangemaakt.
+model DiscountCode {
+  id             String           @id @default(cuid())
+  code           String           @unique
+  type           DiscountType
+  value          Int              // 1-100 bij PERCENTAGE, centen bij FIXED_AMOUNT (bv. 500 = €5,00)
+  duration       DiscountDuration @default(FOREVER)
+  durationMonths Int?             // alleen relevant bij LIMITED_MONTHS
+  maxRedemptions Int?             // null = onbeperkt
+  timesRedeemed  Int              @default(0)
+  active         Boolean          @default(true)
+  expiresAt      DateTime?        // na deze datum niet meer in te wisselen
+  createdAt      DateTime         @default(now())
+
+  redemptions CompanyDiscount[]
+}
+
+// Vastlegging van welke zaak welke code heeft ingewisseld. Een zaak kan
+// maar 1 actieve korting tegelijk hebben. De velden type/value/duration
+// worden hier gekopieerd (een snapshot) zodat het wijzigen van de
+// oorspronkelijke DiscountCode een al ingewisselde korting niet met
+// terugwerkende kracht verandert.
+model CompanyDiscount {
+  id              String           @id @default(cuid())
+  companyId       String           @unique
+  discountCodeId  String
+  type            DiscountType
+  value           Int
+  duration        DiscountDuration
+  durationMonths  Int?             // oorspronkelijke duur (voor weergave), blijft staan
+  monthsRemaining Int?             // telt af bij LIMITED_MONTHS, null bij FOREVER
+  redeemedAt      DateTime         @default(now())
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  discountCode DiscountCode @relation(fields: [discountCodeId], references: [id])
 }
