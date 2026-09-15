@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AutoOpenWeeksSetting({ initialValue }: { initialValue: number }) {
+  const router = useRouter();
   const [value, setValue] = useState(initialValue);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -27,6 +29,10 @@ export default function AutoOpenWeeksSetting({ initialValue }: { initialValue: n
       return;
     }
     setSaved(true);
+    // Zonder dit blijven andere pagina's (bv. Beschikbaarheid, Rooster) de
+    // oude waarde tonen totdat er een volledige page refresh gebeurt, want
+    // Next.js cachet de server-rendered data van al bezochte routes.
+    router.refresh();
     setTimeout(() => setSaved(false), 2000);
   }
 
