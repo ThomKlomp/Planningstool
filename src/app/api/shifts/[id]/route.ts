@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
@@ -13,67 +16,100 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
   }
 
-  const existing = await prisma.shift.findUnique({
-    where: { id: params.id },
-    include: { timeEntry: true },
-  });
-  if (!existing || existing.companyId !== membership.companyId) {
+  const shift = await prisma.shift.findUnique({ where: { id: params.id } });
+  if (!shift || shift.companyId !== membership.companyId) {
     return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
   }
 
-  const body = await req.json();
-  const shift = await prisma.shift.update({
-    where: { id: params.id },
-    data: {
-      membershipId: body.membershipId ?? null,
-      startTime: body.startTime,
-      endTime: body.endTime,
-      role: body.role,
-    },
-  });
+  const body = await req.json().catch(() => ({}));
+  const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-  // Conceptregel bij Uren meebeheren, maar alleen zolang de medewerker 'm
-  // nog niet zelf heeft bevestigd/aangepast (status nog DRAFT). Eindtijd
-  // laten we bewust met rust — die vult de medewerker zelf in.
-  if (existing.timeEntry && existing.timeEntry.status === "DRAFT") {
-    if (!shift.membershipId) {
-      // Niemand meer toegewezen: concept verwijderen.
-      await prisma.timeEntry.delete({ where: { id: existing.timeEntry.id } });
-    } else if (shift.membershipId !== existing.timeEntry.membershipId) {
-      // Andere medewerker toegewezen: concept verhuist mee.
-      await prisma.timeEntry.update({
-        where: { id: existing.timeEntry.id },
-        data: {
-          membershipId: shift.membershipId,
-          startTime: shift.startTime,
-        },
-      });
-    } else {
-      // Zelfde medewerker, starttijd kan gewijzigd zijn.
-      await prisma.timeEntry.update({
-        where: { id: existing.timeEntry.id },
-        data: { startTime: shift.startTime },
-      });
+  const data: {
+    startTime?: string;
+    endTime?: string;
+    role?: string | null;
+    membershipId?: string | null;
+  } = {};
+
+  if (body?.startTime !== undefined) {
+    if (!timePattern.test(body.startTime)) {
+      return NextResponse.json({ error: "Ongeldige starttijd" }, { status: 400 });
     }
-  } else if (!existing.timeEntry && shift.membershipId) {
-    // Shift kreeg net een medewerker toegewezen: concept aanmaken.
-    await prisma.timeEntry.create({
-      data: {
-        companyId: membership.companyId,
-        membershipId: shift.membershipId,
-        shiftId: shift.id,
-        date: shift.date,
-        startTime: shift.startTime,
-        endTime: "",
-        status: "DRAFT",
-      },
-    });
+    data.startTime = body.startTime;
+  }
+  if (body?.endTime !== undefined) {
+    if (!timePattern.test(body.endTime)) {
+      return NextResponse.json({ error: "Ongeldige eindtijd" }, { status: 400 });
+    }
+    data.endTime = body.endTime;
+  }
+  if (body?.role !== undefined) {
+    const role = String(body.role ?? "").trim();
+    data.role = role || null;
   }
 
-  return NextResponse.json({ shift });
+  let newMembershipId: string | null | undefined = undefined;
+  if (body?.membershipId !== undefined) {
+    const requested = body.membershipId || null;
+    if (requested) {
+      const target = await prisma.membership.findUnique({ where: { id: requested } });
+      if (!target || target.companyId !== membership.companyId) {
+        return NextResponse.json({ error: "Ongeldige medewerker" }, { status: 400 });
+      }
+    }
+    data.membershipId = requested;
+    newMembershipId = requested;
+  }
+
+  const updated = await prisma.shift.update({
+    where: { id: shift.id },
+    data,
+  });
+
+  // Als de toegewezen medewerker wijzigt: een eventueel openstaand
+  // ruilverzoek voor deze shift klopt niet meer, dus die trekken we in.
+  // En een concept-urenregel verhuist mee naar de nieuwe medewerker (of
+  // wordt losgekoppeld als de shift nu weer open staat).
+  if (newMembershipId !== undefined && newMembershipId !== shift.membershipId) {
+    await prisma.shiftSwapRequest
+      .delete({ where: { shiftId: shift.id } })
+      .catch(() => null); // was toch al geen actief ruilverzoek
+
+    const timeEntry = await prisma.timeEntry.findUnique({ where: { shiftId: shift.id } });
+    if (timeEntry) {
+      if (newMembershipId && timeEntry.status === "DRAFT") {
+        await prisma.timeEntry.update({
+          where: { id: timeEntry.id },
+          data: { membershipId: newMembershipId },
+        });
+      } else if (!newMembershipId) {
+        await prisma.timeEntry.update({
+          where: { id: timeEntry.id },
+          data: { shiftId: null },
+        });
+      }
+    } else if (newMembershipId) {
+      await prisma.timeEntry.create({
+        data: {
+          companyId: shift.companyId,
+          membershipId: newMembershipId,
+          shiftId: shift.id,
+          date: shift.date,
+          startTime: updated.startTime,
+          endTime: "",
+          status: "DRAFT",
+        },
+      });
+    }
+  }
+
+  return NextResponse.json({ shift: updated });
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
@@ -83,17 +119,15 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
   }
 
-  const existing = await prisma.shift.findUnique({
-    where: { id: params.id },
-    include: { timeEntry: true },
-  });
-
-  // Gekoppelde conceptregel opruimen, maar alleen als de medewerker 'm nog
-  // niet zelf had bevestigd of aangepast.
-  if (existing?.timeEntry && existing.timeEntry.status === "DRAFT") {
-    await prisma.timeEntry.delete({ where: { id: existing.timeEntry.id } });
+  const shift = await prisma.shift.findUnique({ where: { id: params.id } });
+  if (!shift || shift.companyId !== membership.companyId) {
+    return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
   }
 
-  await prisma.shift.delete({ where: { id: params.id } });
+  // Een eventuele urenregel blijft gewoon bestaan (raakt alleen ontkoppeld
+  // van de shift, via onDelete: SetNull), een eventueel ruilverzoek wordt
+  // automatisch mee opgeruimd (onDelete: Cascade).
+  await prisma.shift.delete({ where: { id: shift.id } });
+
   return NextResponse.json({ ok: true });
 }

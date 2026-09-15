@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DayPanel from "./day-panel";
+import ShiftEditPanel from "./shift-edit-panel";
 
 type Shift = {
   id: string;
@@ -89,6 +90,7 @@ export default function RosterBoard({
 }) {
   const router = useRouter();
   const [openDay, setOpenDay] = useState<string | null>(null);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
@@ -152,6 +154,7 @@ export default function RosterBoard({
                         viewerMembershipId={viewerMembershipId}
                         swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
                         onChanged={() => router.refresh()}
+                        onEdit={() => setEditingShift(shift)}
                       />
                     ))}
                   </div>
@@ -196,6 +199,18 @@ export default function RosterBoard({
           }}
         />
       )}
+
+      {editingShift && (
+        <ShiftEditPanel
+          shift={editingShift}
+          members={members}
+          onClose={() => setEditingShift(null)}
+          onDone={() => {
+            setEditingShift(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -206,12 +221,14 @@ function ShiftCard({
   viewerMembershipId,
   swapRequest,
   onChanged,
+  onEdit,
 }: {
   shift: Shift;
   canManage: boolean;
   viewerMembershipId?: string;
   swapRequest?: SwapRequest;
   onChanged: () => void;
+  onEdit?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [showNotified, setShowNotified] = useState(false);
@@ -236,24 +253,39 @@ function ShiftCard({
     onChanged();
   }
 
-  async function claim() {
+  async function claim(asSwap: boolean) {
     if (!swapRequest) return;
-    if (!confirm("Deze dienst overnemen of ruilen?")) return;
     setBusy(true);
-    await fetch(`/api/shift-swaps/${swapRequest.id}/claim`, { method: "POST" });
+    await fetch(`/api/shift-swaps/${swapRequest.id}/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ asSwap }),
+    });
     setBusy(false);
     onChanged();
   }
 
   return (
     <div className="rounded-lg bg-paper px-2 py-2 text-xs">
-      <p className="font-medium">
-        {shift.startTime}–{shift.endTime}
-      </p>
-      <p className="flex flex-wrap items-center gap-1 text-ink/60">
-        <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
-        {shift.role ? <span>· {shift.role}</span> : null}
-      </p>
+      <div className="flex items-start justify-between gap-1">
+        <div>
+          <p className="font-medium">
+            {shift.startTime}–{shift.endTime}
+          </p>
+          <p className="flex flex-wrap items-center gap-1 text-ink/60">
+            <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
+            {shift.role ? <span>· {shift.role}</span> : null}
+          </p>
+        </div>
+        {canManage && onEdit && (
+          <button
+            onClick={onEdit}
+            className="shrink-0 text-[10px] text-ink/40 hover:text-ink hover:underline"
+          >
+            Bewerken
+          </button>
+        )}
+      </div>
 
       {isOwnShift && !swapRequest && (
         <button
@@ -320,13 +352,23 @@ function ShiftCard({
           <p className="rounded-full bg-awning/10 px-2 py-1 text-center text-[11px] font-medium text-awning">
             Beschikbaar voor overname
           </p>
-          <button
-            onClick={claim}
-            disabled={busy}
-            className="w-full rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
-          >
-            {busy ? "Bezig..." : "Overnemen"}
-          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={() => claim(false)}
+              disabled={busy}
+              className="flex-1 rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
+            >
+              {busy ? "Bezig..." : "Overnemen"}
+            </button>
+            <button
+              onClick={() => claim(true)}
+              disabled={busy}
+              className="flex-1 rounded-full border border-line px-2 py-1 text-[11px] font-medium hover:border-ink disabled:opacity-50"
+              title="Vraagt de aanbieder om iets terug te ruilen, spreek dit verder samen af"
+            >
+              {busy ? "Bezig..." : "Ruilen"}
+            </button>
+          </div>
         </div>
       )}
     </div>
