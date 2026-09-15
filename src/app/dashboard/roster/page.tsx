@@ -180,6 +180,11 @@ export default async function RosterPage({
           <RosterActions
             weekStart={week[0].toISOString()}
             weekLabel={`week ${getISOWeekNumber(week[0])}`}
+            members={members.map((m) => ({
+              membershipId: m.id,
+              name: m.user.name ?? m.user.email ?? "Onbekend",
+              departmentName: m.department?.name ?? null,
+            }))}
             shifts={shiftsRaw.map((s) => ({
               id: s.id,
               date: s.date.toISOString(),
@@ -187,6 +192,7 @@ export default async function RosterPage({
               endTime: s.endTime,
               role: s.role,
               memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+              membershipId: s.membershipId,
               departmentName: s.membership?.department?.name ?? null,
             }))}
           />

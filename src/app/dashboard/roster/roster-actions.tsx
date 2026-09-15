@@ -9,16 +9,75 @@ type Shift = {
   endTime: string;
   role: string | null;
   memberName: string | null;
+  membershipId: string | null;
   departmentName: string | null;
 };
+
+type Member = {
+  membershipId: string;
+  name: string;
+  departmentName: string | null;
+};
+
+type GridRow = { membershipId: string | null; name: string };
+
+/** Bouwt de teams/medewerkers-rijen en de 7 dagdatums van de week. */
+function buildGrid(members: Member[], shifts: Shift[], weekStart: string) {
+  const start = new Date(`${weekStart.slice(0, 10)}T00:00:00`);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+
+  const groups = new Map<string, GridRow[]>();
+  for (const m of members) {
+    const key = m.departmentName ?? "Geen team";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push({ membershipId: m.membershipId, name: m.name });
+  }
+
+  // Openstaande (nog niet toegewezen) shifts krijgen een eigen rij onder "Geen team".
+  if (shifts.some((s) => !s.membershipId)) {
+    const key = "Geen team";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push({ membershipId: null, name: "Nog niet toegewezen" });
+  }
+
+  const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
+    if (a === "Geen team") return 1;
+    if (b === "Geen team") return -1;
+    return a.localeCompare(b);
+  });
+
+  function cellFor(membershipId: string | null, day: Date) {
+    return shifts
+      .filter(
+        (s) =>
+          s.membershipId === membershipId &&
+          new Date(s.date).toDateString() === day.toDateString()
+      )
+      .map((s) => `${s.startTime}-${s.endTime}`)
+      .join("; ");
+  }
+
+  return { days, sortedGroups, cellFor };
+}
+
+function dayLabel(day: Date) {
+  const label = day.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 export default function RosterActions({
   weekStart,
   weekLabel,
+  members,
   shifts,
 }: {
   weekStart: string;
   weekLabel: string;
+  members: Member[];
   shifts: Shift[];
 }) {
   const [sending, setSending] = useState(false);
@@ -46,35 +105,16 @@ export default function RosterActions({
   }
 
   function downloadCsv() {
-    const header = "Datum,Tijd,Medewerker,Functie";
+    const { days, sortedGroups, cellFor } = buildGrid(members, shifts, weekStart);
+    const csvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
-    // Zelfde groepering als op het scherm: per team, "Geen team" als laatste.
-    const groups = new Map<string, Shift[]>();
-    for (const s of shifts) {
-      const key = s.departmentName ?? "Geen team";
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(s);
-    }
-    const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
-      if (a === "Geen team") return 1;
-      if (b === "Geen team") return -1;
-      return a.localeCompare(b);
-    });
+    const lines = [["", ...days.map(dayLabel)].map(csvField).join(",")];
 
-    const lines = [header];
-    for (const [departmentName, deptShifts] of sortedGroups) {
-      lines.push(`"${departmentName}"`);
-      const sorted = [...deptShifts].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-      for (const s of sorted) {
-        const date = new Date(s.date).toLocaleDateString("nl-NL");
-        const who = s.memberName ?? "Nog niet toegewezen";
-        lines.push(
-          [date, `${s.startTime}-${s.endTime}`, who, s.role ?? ""]
-            .map((field) => `"${field.replace(/"/g, '""')}"`)
-            .join(",")
-        );
+    for (const [departmentName, rows] of sortedGroups) {
+      lines.push([departmentName].map(csvField).join(","));
+      for (const row of rows) {
+        const cells = days.map((d) => cellFor(row.membershipId, d));
+        lines.push([row.name, ...cells].map(csvField).join(","));
       }
     }
 
@@ -88,47 +128,24 @@ export default function RosterActions({
   }
 
   function downloadPdf() {
-    // Zelfde groepering als op het scherm en in de CSV.
-    const groups = new Map<string, Shift[]>();
-    for (const s of shifts) {
-      const key = s.departmentName ?? "Geen team";
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(s);
-    }
-    const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
-      if (a === "Geen team") return 1;
-      if (b === "Geen team") return -1;
-      return a.localeCompare(b);
-    });
+    const { days, sortedGroups, cellFor } = buildGrid(members, shifts, weekStart);
 
-    const sections = sortedGroups
-      .map(([departmentName, deptShifts]) => {
-        const sorted = [...deptShifts].sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        const rows = sorted
-          .map((s) => {
-            const date = new Date(s.date).toLocaleDateString("nl-NL", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            });
-            const who = s.memberName ?? "Nog niet toegewezen";
-            return `<tr>
-              <td>${escapeHtml(date)}</td>
-              <td>${escapeHtml(s.startTime)}–${escapeHtml(s.endTime)}</td>
-              <td>${escapeHtml(who)}</td>
-              <td>${escapeHtml(s.role ?? "")}</td>
-            </tr>`;
+    const tables = sortedGroups
+      .map(([departmentName, rows]) => {
+        const headerCells = days.map((d) => `<th>${escapeHtml(dayLabel(d))}</th>`).join("");
+        const bodyRows = rows
+          .map((row) => {
+            const cells = days
+              .map((d) => `<td>${escapeHtml(cellFor(row.membershipId, d))}</td>`)
+              .join("");
+            return `<tr><td class="name">${escapeHtml(row.name)}</td>${cells}</tr>`;
           })
           .join("");
         return `
           <h2>${escapeHtml(departmentName)}</h2>
           <table>
-            <thead>
-              <tr><th>Datum</th><th>Tijd</th><th>Medewerker</th><th>Functie</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
+            <thead><tr><th></th>${headerCells}</tr></thead>
+            <tbody>${bodyRows}</tbody>
           </table>
         `;
       })
@@ -146,15 +163,16 @@ export default function RosterActions({
             body { font-family: Arial, sans-serif; color: #1B1B18; padding: 32px; }
             h1 { font-size: 20px; margin-bottom: 4px; }
             h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #3F6E5B; margin-top: 24px; margin-bottom: 6px; }
-            table { width: 100%; border-collapse: collapse; font-size: 13px; }
-            th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #DDD5C7; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+            th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #DDD5C7; overflow-wrap: break-word; }
             th { color: #1B1B1899; font-weight: 600; }
-            @media print { @page { margin: 16mm; } }
+            td.name { font-weight: 600; }
+            @media print { @page { margin: 14mm; } }
           </style>
         </head>
         <body>
           <h1>Rooster, ${escapeHtml(weekLabel)}</h1>
-          ${sections || "<p>Geen shifts deze week.</p>"}
+          ${tables || "<p>Geen medewerkers om te tonen.</p>"}
         </body>
       </html>`);
     win.document.close();

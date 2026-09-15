@@ -1,6 +1,7 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import TeamSection from "./team-section";
+import MemberList from "./member-list";
 
 export default async function DashboardOverviewPage() {
   const { membership } = await requireMembership();
@@ -42,19 +43,17 @@ export default async function DashboardOverviewPage() {
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Team</h2>
-        <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-white">
-          {members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="text-sm font-medium">{m.user.name ?? m.user.email}</p>
-                <p className="text-xs text-ink/50">{m.user.email}</p>
-              </div>
-              <span className="text-xs uppercase tracking-wide text-ink/40">
-                {m.role}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <MemberList
+          initialMembers={members.map((m) => ({
+            id: m.id,
+            name: m.user.name ?? m.user.email ?? "Onbekend",
+            email: m.user.email ?? "",
+            role: m.role,
+          }))}
+          canManage={canManage}
+          viewerRole={membership.role}
+          viewerMembershipId={membership.membershipId}
+        />
       </section>
 
       {canManage && (
