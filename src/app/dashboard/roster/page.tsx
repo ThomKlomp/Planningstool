@@ -187,6 +187,7 @@ export default async function RosterPage({
               endTime: s.endTime,
               role: s.role,
               memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+              departmentName: s.membership?.department?.name ?? null,
             }))}
           />
         )}

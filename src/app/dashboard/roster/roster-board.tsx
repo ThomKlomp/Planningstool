@@ -46,18 +46,22 @@ type ShiftTemplate = {
 };
 
 /** Groepeert de shifts van een dag per team, alfabetisch, met "Geen team" altijd als laatste. */
-function groupShiftsByDepartment(shifts: Shift[]): [string, Shift[]][] {
-  const groups = new Map<string, Shift[]>();
+function groupShiftsByDepartment(
+  shifts: Shift[]
+): { name: string; color: string | null; shifts: Shift[] }[] {
+  const groups = new Map<string, { color: string | null; shifts: Shift[] }>();
   for (const shift of shifts) {
     const key = shift.departmentName ?? "Geen team";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(shift);
+    if (!groups.has(key)) groups.set(key, { color: shift.departmentColor, shifts: [] });
+    groups.get(key)!.shifts.push(shift);
   }
-  return Array.from(groups.entries()).sort(([a], [b]) => {
-    if (a === "Geen team") return 1;
-    if (b === "Geen team") return -1;
-    return a.localeCompare(b);
-  });
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => {
+      if (a === "Geen team") return 1;
+      if (b === "Geen team") return -1;
+      return a.localeCompare(b);
+    })
+    .map(([name, data]) => ({ name, color: data.color, shifts: data.shifts }));
 }
 
 export default function RosterBoard({
@@ -123,13 +127,24 @@ export default function RosterBoard({
             </p>
 
             <div className="mt-2 space-y-3">
-              {groupShiftsByDepartment(dayShifts).map(([departmentName, deptShifts]) => (
-                <div key={departmentName}>
-                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-ink/40">
-                    {departmentName}
+              {groupShiftsByDepartment(dayShifts).map((group) => (
+                <div key={group.name}>
+                  <p
+                    className={`mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      group.color ? "" : "text-ink/40"
+                    }`}
+                    style={group.color ? { color: group.color } : undefined}
+                  >
+                    {group.color && (
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: group.color }}
+                      />
+                    )}
+                    {group.name}
                   </p>
                   <div className="space-y-2">
-                    {deptShifts.map((shift) => (
+                    {group.shifts.map((shift) => (
                       <ShiftCard
                         key={shift.id}
                         shift={shift}
