@@ -310,6 +310,7 @@ model ShiftSwapRequest {
   reviewedById  String? // membershipId van de manager die goed-/afkeurde
   reviewedAt    DateTime?
   status        ShiftSwapStatus @default(OPEN)
+  claimedAsSwap Boolean         @default(false) // true = "Ruilen" gekozen bij overnemen, false = gewoon "Overnemen"
   notifiedMembershipIds String[] @default([]) // wie een melding kreeg toen dit werd aangeboden
   createdAt     DateTime        @default(now())
 
