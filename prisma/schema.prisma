@@ -91,6 +91,13 @@ model Company {
   notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
   departments Department[]
+
+  // ---------- Bedrijfsgegevens (voor facturering) ----------
+  billingName String? // officiële bedrijfsnaam, kan afwijken van "name" hierboven
+  kvkNumber   String?
+  vatNumber   String? // btw-nummer, optioneel (niet elke eenmanszaak heeft er een)
+  address     String?
+  postalCode  String?
 }
 
 // Teams/afdelingen binnen een zaak, bv. "Bediening", "Keuken". Een lid
@@ -110,7 +117,7 @@ model Department {
   @@index([companyId])
 }
 
-// Dagen dat de zaak dicht is (vakantie, feestdag) — geen beschikbaarheid
+// Dagen dat de zaak dicht is (vakantie, feestdag), geen beschikbaarheid
 // nodig, geen shifts, en uren kunnen er niet op ingediend worden.
 model ClosedDay {
   id        String   @id @default(cuid())
