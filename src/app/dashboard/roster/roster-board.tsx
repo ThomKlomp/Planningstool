@@ -288,9 +288,6 @@ function ShiftCard({
             {shift.role ? <span>· {shift.role}</span> : null}
           </p>
         </div>
-        {canManage && onEdit && (
-          <span className="shrink-0 text-[10px] text-ink/30">Bewerken</span>
-        )}
       </div>
 
       {isOwnShift && !swapRequest && (
