@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 
-type Member = { id: string; name: string; email: string; role: string };
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  departmentName: string | null;
+  departmentColor: string | null;
+};
 
 export default function MemberList({
   initialMembers,
@@ -52,32 +59,67 @@ export default function MemberList({
     }
   }
 
+  const groups = new Map<string, Member[]>();
+  for (const m of members) {
+    const key = m.departmentName ?? "Geen team";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(m);
+  }
+  const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
+    if (a === "Geen team") return 1;
+    if (b === "Geen team") return -1;
+    return a.localeCompare(b);
+  });
+
+  // Alleen groeperen als er daadwerkelijk teams zijn ingesteld, anders
+  // gewoon één platte lijst tonen zonder onnodig "Geen team"-kopje erboven.
+  const hasDepartments = members.some((m) => m.departmentName);
+  const sections: [string, Member[]][] = hasDepartments ? sortedGroups : [["", members]];
+
   return (
     <div>
-      <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-white">
-        {members.map((m) => (
-          <li key={m.id} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium">{m.name}</p>
-              <p className="text-xs text-ink/50">{m.email}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs uppercase tracking-wide text-ink/40">
-                {m.role}
-              </span>
-              {canRemove(m) && (
-                <button
-                  onClick={() => removeMember(m)}
-                  disabled={busyId === m.id}
-                  className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                >
-                  Verwijderen
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {sections.map(([departmentName, groupMembers], i) => {
+        const color = groupMembers.find((m) => m.departmentColor)?.departmentColor ?? null;
+        return (
+          <div key={departmentName || "all"} className={i > 0 ? "mt-4" : ""}>
+            {hasDepartments && (
+              <p
+                className={`mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${
+                  color ? "" : "text-ink/40"
+                }`}
+                style={color ? { color } : undefined}
+              >
+                {color && (
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+                )}
+                {departmentName}
+              </p>
+            )}
+            <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+              {groupMembers.map((m) => (
+                <li key={m.id} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">{m.name}</p>
+                    <p className="text-xs text-ink/50">{m.email}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs uppercase tracking-wide text-ink/40">{m.role}</span>
+                    {canRemove(m) && (
+                      <button
+                        onClick={() => removeMember(m)}
+                        disabled={busyId === m.id}
+                        className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        Verwijderen
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
