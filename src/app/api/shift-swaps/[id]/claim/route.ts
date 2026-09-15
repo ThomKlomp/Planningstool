@@ -185,6 +185,7 @@ export async function POST(
   const managerEmails = managers.map((m) => m.user.email).filter((e): e is string => Boolean(e));
   if (managerEmails.length > 0) {
     await sendEmail({
+      to: `${membership.companySlug}@shiftje.nl`,
       bcc: managerEmails,
       subject: asSwap
         ? `Ruilverzoek wacht op goedkeuring, ${dateLabel}`

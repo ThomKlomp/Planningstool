@@ -110,6 +110,10 @@ export async function POST(
   if (notifyEmails.size > 0) {
     const offeredByName = session.user.name ?? "Een collega";
     await sendEmail({
+      // Alleen bcc versturen kan niet zonder een "aan"-veld bij de meeste
+      // providers: dit is bewust een nep-adres dat nergens op aankomt, zodat
+      // niemand per ongeluk denkt dat een medewerker dit als "aan" ontving.
+      to: `${membership.companySlug}@shiftje.nl`,
       bcc: Array.from(notifyEmails),
       subject: `Dienst aangeboden, ${dateLabel} bij ${membership.companyName}`,
       html: emailLayout(

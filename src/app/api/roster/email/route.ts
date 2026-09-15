@@ -164,6 +164,7 @@ export async function POST(req: Request) {
 
     const result = await sendEmail({
       from: ROSTER_FROM,
+      to: `${membership.companySlug}@shiftje.nl`,
       bcc: emails,
       subject,
       html,
