@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import BillingActions from "../billing-actions";
+import CompanyDetailsSetting from "../company-details-setting";
 import {
   PRICE_MONTHLY_EXCL,
   PRICE_MONTHLY_INCL,
@@ -24,6 +25,11 @@ export default async function BillingPage() {
       billingInterval: true,
       trialEndsAt: true,
       currentPeriodEnd: true,
+      billingName: true,
+      kvkNumber: true,
+      vatNumber: true,
+      address: true,
+      postalCode: true,
     },
   });
 
@@ -31,6 +37,13 @@ export default async function BillingPage() {
   const trialDaysLeft = company?.trialEndsAt
     ? Math.max(0, Math.ceil((company.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : 0;
+
+  const billingDetailsComplete = Boolean(
+    company?.billingName &&
+      company?.kvkNumber &&
+      company?.address &&
+      company?.postalCode
+  );
 
   return (
     <div className="max-w-2xl">
@@ -48,25 +61,55 @@ export default async function BillingPage() {
 
       {(status === "TRIALING" || status === "CANCELED" || status === "PAST_DUE") && (
         <section className="mt-8">
-          <h2 className="font-display text-xl">Kies je abonnement</h2>
-          <p className="mt-1 text-sm text-ink/60">
-            Eén vast bedrag per zaak, ongeacht het aantal medewerkers.
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <PlanCard
-              title="Maandelijks"
-              price={`${formatEuro(PRICE_MONTHLY_EXCL)} / maand`}
-              subtext={`${formatEuro(PRICE_MONTHLY_INCL)} incl. btw`}
-              interval="MONTHLY"
-            />
-            <PlanCard
-              title="Jaarlijks"
-              price={`${formatEuro(PRICE_YEARLY_EXCL)} / jaar`}
-              subtext={`${formatEuro(PRICE_YEARLY_INCL)} incl. btw · 2 maanden gratis`}
-              interval="YEARLY"
-              highlight
-            />
-          </div>
+          {!billingDetailsComplete ? (
+            <>
+              <h2 className="font-display text-xl">Eerst je bedrijfsgegevens</h2>
+              <p className="mt-1 text-sm text-ink/60">
+                Nodig voor de factuur. Vul in ieder geval je bedrijfsnaam,
+                KVK-nummer, adres en postcode in, dan kun je daarna een
+                abonnement kiezen. Het BTW-nummer is optioneel.
+              </p>
+              <div className="mt-4">
+                <CompanyDetailsSetting
+                  initialValue={{
+                    billingName: company?.billingName ?? "",
+                    kvkNumber: company?.kvkNumber ?? "",
+                    vatNumber: company?.vatNumber ?? "",
+                    address: company?.address ?? "",
+                    postalCode: company?.postalCode ?? "",
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display text-xl">Kies je abonnement</h2>
+              <p className="mt-1 text-sm text-ink/60">
+                Eén vast bedrag per zaak, ongeacht het aantal medewerkers.
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <PlanCard
+                  title="Maandelijks"
+                  price={`${formatEuro(PRICE_MONTHLY_EXCL)} / maand`}
+                  subtext={`${formatEuro(PRICE_MONTHLY_INCL)} incl. btw`}
+                  interval="MONTHLY"
+                />
+                <PlanCard
+                  title="Jaarlijks"
+                  price={`${formatEuro(PRICE_YEARLY_EXCL)} / jaar`}
+                  subtext={`${formatEuro(PRICE_YEARLY_INCL)} incl. btw · 2 maanden gratis`}
+                  interval="YEARLY"
+                  highlight
+                />
+              </div>
+              <a
+                href="/dashboard/settings/billing"
+                className="mt-3 inline-block text-xs text-ink/50 hover:underline"
+              >
+                Bedrijfsgegevens aanpassen
+              </a>
+            </>
+          )}
         </section>
       )}
 

@@ -20,6 +20,11 @@ export async function PATCH(req: Request) {
     showCompanyRosterToEmployees?: boolean;
     autoApproveShiftSwaps?: boolean;
     autoApproveHours?: boolean;
+    billingName?: string | null;
+    kvkNumber?: string | null;
+    vatNumber?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
   } = {};
 
   if (body?.autoOpenWeeks !== undefined) {
@@ -50,6 +55,15 @@ export async function PATCH(req: Request) {
 
   if (body?.autoApproveHours !== undefined) {
     data.autoApproveHours = Boolean(body.autoApproveHours);
+  }
+
+  // Bedrijfsgegevens: lege strings opslaan als null, zodat een leeg veld
+  // consistent "niet ingevuld" betekent.
+  for (const field of ["billingName", "kvkNumber", "vatNumber", "address", "postalCode"] as const) {
+    if (body?.[field] !== undefined) {
+      const value = String(body[field]).trim();
+      data[field] = value || null;
+    }
   }
 
   const company = await prisma.company.update({

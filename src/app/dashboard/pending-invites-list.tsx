@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 type Invite = { id: string; email: string; role: string; token: string };
 
-export default function PendingInvitesList({ invites: initialInvites }: { invites: Invite[] }) {
-  const router = useRouter();
-  const [invites, setInvites] = useState(initialInvites);
+export default function PendingInvitesList({
+  invites,
+  onCancelled,
+}: {
+  invites: Invite[];
+  onCancelled: (id: string) => void;
+}) {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function cancelInvite(id: string, token: string, email: string) {
@@ -15,15 +18,15 @@ export default function PendingInvitesList({ invites: initialInvites }: { invite
 
     setBusyId(id);
     // Optimistisch verwijderen: meteen uit beeld, niet wachten op de server.
-    setInvites((prev) => prev.filter((i) => i.id !== id));
+    onCancelled(id);
 
     const res = await fetch(`/api/invites/${token}`, { method: "DELETE" });
     setBusyId(null);
 
     if (!res.ok) {
-      // Mislukt: zet 'm terug en laat de echte data alsnog ophalen.
-      setInvites(initialInvites);
-      router.refresh();
+      // Kon niet intrekken: de pagina toont 'm nu ten onrechte niet meer.
+      // Simpelste herstel: de gebruiker vragen de pagina te verversen.
+      alert("Intrekken is niet gelukt. Ververs de pagina en probeer het opnieuw.");
     }
   }
 

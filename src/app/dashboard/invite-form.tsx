@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function InviteForm() {
+type Invite = { id: string; email: string; role: string; token: string };
+
+export default function InviteForm({
+  onInvited,
+}: {
+  onInvited?: (invite: Invite) => void;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"EMPLOYEE" | "MANAGER">("EMPLOYEE");
@@ -32,6 +38,9 @@ export default function InviteForm() {
     }
 
     setResult({ inviteUrl: data.inviteUrl, emailSent: data.emailSent });
+    if (data.invite) {
+      onInvited?.(data.invite);
+    }
     setEmail("");
     setLoading(false);
     router.refresh();

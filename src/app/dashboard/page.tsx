@@ -1,7 +1,6 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import InviteForm from "./invite-form";
-import PendingInvitesList from "./pending-invites-list";
+import TeamSection from "./team-section";
 
 export default async function DashboardOverviewPage() {
   const { membership } = await requireMembership();
@@ -59,23 +58,14 @@ export default async function DashboardOverviewPage() {
       </section>
 
       {canManage && (
-        <section className="mt-10">
-          <h2 className="font-display text-xl">Medewerker uitnodigen</h2>
-          <InviteForm />
-
-          {pendingInvites.length > 0 && (
-            <div className="mt-4">
-              <PendingInvitesList
-                invites={pendingInvites.map((i) => ({
-                  id: i.id,
-                  email: i.email,
-                  role: i.role,
-                  token: i.token,
-                }))}
-              />
-            </div>
-          )}
-        </section>
+        <TeamSection
+          initialPendingInvites={pendingInvites.map((i) => ({
+            id: i.id,
+            email: i.email,
+            role: i.role,
+            token: i.token,
+          }))}
+        />
       )}
     </div>
   );

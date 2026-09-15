@@ -10,6 +10,7 @@ import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
 import AutoApprovalSettings from "./auto-approval-settings";
 import JoinLink from "./join-link";
+import CompanyDetailsSetting from "./company-details-setting";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
@@ -35,6 +36,11 @@ export default async function SettingsPage() {
         autoApproveHours: true,
         subscriptionStatus: true,
         trialEndsAt: true,
+        billingName: true,
+        kvkNumber: true,
+        vatNumber: true,
+        address: true,
+        postalCode: true,
       },
     }),
     prisma.closedDay.findMany({
@@ -80,6 +86,25 @@ export default async function SettingsPage() {
           />
         </div>
       )}
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Bedrijfsgegevens</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Nodig voor je facturen. Vul deze in ieder geval in voordat je een
+          betaald abonnement afsluit.
+        </p>
+        <div className="mt-4">
+          <CompanyDetailsSetting
+            initialValue={{
+              billingName: company?.billingName ?? "",
+              kvkNumber: company?.kvkNumber ?? "",
+              vatNumber: company?.vatNumber ?? "",
+              address: company?.address ?? "",
+              postalCode: company?.postalCode ?? "",
+            }}
+          />
+        </div>
+      </section>
 
       {company?.slug && (
         <section className="mt-10">

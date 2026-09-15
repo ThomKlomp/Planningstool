@@ -87,6 +87,81 @@ export default function RosterActions({
     URL.revokeObjectURL(url);
   }
 
+  function downloadPdf() {
+    // Zelfde groepering als op het scherm en in de CSV.
+    const groups = new Map<string, Shift[]>();
+    for (const s of shifts) {
+      const key = s.departmentName ?? "Geen team";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(s);
+    }
+    const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
+      if (a === "Geen team") return 1;
+      if (b === "Geen team") return -1;
+      return a.localeCompare(b);
+    });
+
+    const sections = sortedGroups
+      .map(([departmentName, deptShifts]) => {
+        const sorted = [...deptShifts].sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        const rows = sorted
+          .map((s) => {
+            const date = new Date(s.date).toLocaleDateString("nl-NL", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+            const who = s.memberName ?? "Nog niet toegewezen";
+            return `<tr>
+              <td>${escapeHtml(date)}</td>
+              <td>${escapeHtml(s.startTime)}–${escapeHtml(s.endTime)}</td>
+              <td>${escapeHtml(who)}</td>
+              <td>${escapeHtml(s.role ?? "")}</td>
+            </tr>`;
+          })
+          .join("");
+        return `
+          <h2>${escapeHtml(departmentName)}</h2>
+          <table>
+            <thead>
+              <tr><th>Datum</th><th>Tijd</th><th>Medewerker</th><th>Functie</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      })
+      .join("");
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+
+    win.document.write(`<!DOCTYPE html>
+      <html lang="nl">
+        <head>
+          <meta charset="utf-8" />
+          <title>Rooster ${escapeHtml(weekLabel)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #1B1B18; padding: 32px; }
+            h1 { font-size: 20px; margin-bottom: 4px; }
+            h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #3F6E5B; margin-top: 24px; margin-bottom: 6px; }
+            table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #DDD5C7; }
+            th { color: #1B1B1899; font-weight: 600; }
+            @media print { @page { margin: 16mm; } }
+          </style>
+        </head>
+        <body>
+          <h1>Rooster, ${escapeHtml(weekLabel)}</h1>
+          ${sections || "<p>Geen shifts deze week.</p>"}
+        </body>
+      </html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
@@ -102,7 +177,20 @@ export default function RosterActions({
       >
         Downloaden (CSV)
       </button>
+      <button
+        onClick={downloadPdf}
+        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
+      >
+        Downloaden (PDF)
+      </button>
       {message && <span className="text-xs text-ink/50">{message}</span>}
     </div>
   );
+}
+
+function escapeHtml(input: string) {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
