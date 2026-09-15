@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
 import { PRICE_MONTHLY_INCL, PRICE_YEARLY_INCL } from "@/lib/billing";
+import { applyDiscount } from "@/lib/discount";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -20,12 +21,17 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const interval = body?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
-  const amountValue = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
+  const baseAmount = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
 
-  const company = await prisma.company.findUnique({ where: { id: membership.companyId } });
+  const company = await prisma.company.findUnique({
+    where: { id: membership.companyId },
+    include: { discount: true },
+  });
   if (!company) {
     return NextResponse.json({ error: "Zaak niet gevonden" }, { status: 404 });
   }
+
+  const amountValue = applyDiscount(baseAmount, company.discount);
 
   try {
     let customerId = company.mollieCustomerId;
@@ -52,7 +58,7 @@ export async function POST(req: Request) {
     const payment = await mollie.payments.create({
       customerId,
       amount: { currency: "EUR", value: amountValue.toFixed(2) },
-      description: `Shiftje abonnement — ${company.name} (${interval === "YEARLY" ? "jaarlijks" : "maandelijks"})`,
+      description: `Shiftje abonnement, ${company.name} (${interval === "YEARLY" ? "jaarlijks" : "maandelijks"})`,
       redirectUrl: `${baseUrl}/dashboard/settings/billing?status=pending`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
       sequenceType: "first",

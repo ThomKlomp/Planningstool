@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
 import { PRICE_MONTHLY_INCL, PRICE_YEARLY_INCL } from "@/lib/billing";
+import { applyDiscount } from "@/lib/discount";
 
 // Mollie stuurt hier een POST naartoe met de betaalinformatie ALTIJD als
-// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON — een
+// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON, een
 // veelgemaakte misvatting. We lezen 'm daarom als tekst en parsen zelf.
 // De rest van de betaalinformatie halen we op bij Mollie zelf (nooit
 // vertrouwen op wat er verder in de webhook-body staat).
@@ -37,23 +38,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    include: { discount: true },
+  });
   if (!company) {
     return NextResponse.json({ ok: true });
   }
 
   if (payment.status === "paid" && payment.sequenceType === "first") {
-    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie) —
-    // zet 'm om in een terugkerend abonnement.
+    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie),
+    // zet 'm om in een terugkerend abonnement, met het kortingsbedrag als
+    // de zaak een (niet-100%) kortingscode heeft ingewisseld.
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
-    const amountValue = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
+    const baseAmount = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
+    const amountValue = applyDiscount(baseAmount, company.discount);
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
 
     try {
       const subscription = await mollie.subscriptions.create(payment.customerId, {
         amount: { currency: "EUR", value: amountValue.toFixed(2) },
         interval: interval === "YEARLY" ? "12 months" : "1 month",
-        description: `Shiftje abonnement — ${company.name}`,
+        description: `Shiftje abonnement, ${company.name}`,
         webhookUrl: `${baseUrl}/api/webhooks/mollie`,
         metadata: { companyId: company.id, interval },
       });

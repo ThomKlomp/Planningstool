@@ -232,20 +232,24 @@ function ShiftCard({
 }) {
   const [busy, setBusy] = useState(false);
   const [showNotified, setShowNotified] = useState(false);
+  const [showSwapNote, setShowSwapNote] = useState(false);
+  const [swapNote, setSwapNote] = useState("");
   const isOwnShift = !canManage && viewerMembershipId && shift.membershipId === viewerMembershipId;
   // Iedereen behalve de aanbieder zelf mag een openstaande dienst overnemen,
   // dus ook een manager/eigenaar (die zag voorheen zelfs het label niet).
   const canClaimOpenOffer =
     swapRequest?.status === "OPEN" && viewerMembershipId && swapRequest.offeredById !== viewerMembershipId;
 
-  async function offer() {
+  async function offer(e: React.MouseEvent) {
+    e.stopPropagation();
     setBusy(true);
     await fetch(`/api/shifts/${shift.id}/offer`, { method: "POST" });
     setBusy(false);
     onChanged();
   }
 
-  async function cancelOffer() {
+  async function cancelOffer(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!swapRequest) return;
     setBusy(true);
     await fetch(`/api/shifts/${shift.id}/offer`, { method: "DELETE" });
@@ -253,20 +257,27 @@ function ShiftCard({
     onChanged();
   }
 
-  async function claim(asSwap: boolean) {
+  async function claim(asSwap: boolean, note?: string) {
     if (!swapRequest) return;
     setBusy(true);
     await fetch(`/api/shift-swaps/${swapRequest.id}/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ asSwap }),
+      body: JSON.stringify({ asSwap, note: note || undefined }),
     });
     setBusy(false);
+    setShowSwapNote(false);
+    setSwapNote("");
     onChanged();
   }
 
   return (
-    <div className="rounded-lg bg-paper px-2 py-2 text-xs">
+    <div
+      onClick={canManage ? onEdit : undefined}
+      className={`rounded-lg bg-paper px-2 py-2 text-xs ${
+        canManage && onEdit ? "cursor-pointer hover:bg-ink/5" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-1">
         <div>
           <p className="font-medium">
@@ -278,12 +289,7 @@ function ShiftCard({
           </p>
         </div>
         {canManage && onEdit && (
-          <button
-            onClick={onEdit}
-            className="shrink-0 text-[10px] text-ink/40 hover:text-ink hover:underline"
-          >
-            Bewerken
-          </button>
+          <span className="shrink-0 text-[10px] text-ink/30">Bewerken</span>
         )}
       </div>
 
@@ -303,7 +309,10 @@ function ShiftCard({
             Aangeboden
           </p>
           <button
-            onClick={() => setShowNotified((v) => !v)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowNotified((v) => !v);
+            }}
             className="w-full text-center text-[11px] text-ink/50 hover:underline"
           >
             {swapRequest.notifiedNames.length === 0
@@ -347,26 +356,65 @@ function ShiftCard({
         </p>
       )}
 
-      {canClaimOpenOffer && (
+      {canClaimOpenOffer && !showSwapNote && (
         <div className="mt-1.5 space-y-1">
           <p className="rounded-full bg-awning/10 px-2 py-1 text-center text-[11px] font-medium text-awning">
             Beschikbaar voor overname
           </p>
           <div className="flex gap-1">
             <button
-              onClick={() => claim(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                claim(false);
+              }}
               disabled={busy}
               className="flex-1 rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
             >
               {busy ? "Bezig..." : "Overnemen"}
             </button>
             <button
-              onClick={() => claim(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSwapNote(true);
+              }}
               disabled={busy}
               className="flex-1 rounded-full border border-line px-2 py-1 text-[11px] font-medium hover:border-ink disabled:opacity-50"
-              title="Vraagt de aanbieder om iets terug te ruilen, spreek dit verder samen af"
+              title="Al je eigen diensten worden meegemaild, de aanbieder kiest zelf wat 'm uitkomt"
             >
-              {busy ? "Bezig..." : "Ruilen"}
+              Ruilen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {canClaimOpenOffer && showSwapNote && (
+        <div className="mt-1.5 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          <p className="text-[11px] text-ink/50">
+            Al je eigen diensten gaan automatisch mee in de mail, de
+            aanbieder zoekt er zelf iets uit. Wil je specifiek iets
+            voorstellen, kan dat hieronder (optioneel):
+          </p>
+          <input
+            type="text"
+            value={swapNote}
+            onChange={(e) => setSwapNote(e.target.value)}
+            placeholder="Bv. het liefst mijn dienst van vrijdag"
+            className="w-full rounded-lg border border-line px-2 py-1 text-[11px] focus:border-awning focus:outline-none"
+          />
+          <div className="flex gap-1">
+            <button
+              onClick={() => claim(true, swapNote)}
+              disabled={busy}
+              className="flex-1 rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
+            >
+              {busy ? "Bezig..." : "Ruilverzoek versturen"}
+            </button>
+            <button
+              onClick={() => setShowSwapNote(false)}
+              disabled={busy}
+              className="rounded-full border border-line px-2 py-1 text-[11px] font-medium hover:border-ink disabled:opacity-50"
+            >
+              Terug
             </button>
           </div>
         </div>

@@ -5,6 +5,45 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { sendEmail, emailLayout } from "@/lib/email";
 
+function escapeHtml(input: string) {
+  return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Haalt iemands eigen aankomende diensten op en maakt er een HTML-lijst van. */
+async function ownUpcomingShiftsHtml(membershipId: string, excludeShiftId: string) {
+  const shifts = await prisma.shift.findMany({
+    where: {
+      membershipId,
+      id: { not: excludeShiftId },
+      date: { gte: new Date(new Date().toDateString()) },
+    },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    take: 30,
+  });
+
+  if (shifts.length === 0) {
+    return `<p style="margin-top: 12px; color: #666;">Deze persoon heeft verder geen aankomende diensten ingepland om voor terug te ruilen.</p>`;
+  }
+
+  const items = shifts
+    .map((s) => {
+      const label = s.date.toLocaleDateString("nl-NL", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      return `<li>${escapeHtml(label)}, ${escapeHtml(s.startTime)}–${escapeHtml(s.endTime)}${
+        s.role ? ` (${escapeHtml(s.role)})` : ""
+      }</li>`;
+    })
+    .join("");
+
+  return `
+    <p style="margin-top: 16px;">Diensten waar eventueel voor teruggeruild kan worden:</p>
+    <ul style="margin: 8px 0; padding-left: 20px;">${items}</ul>
+  `;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
@@ -20,6 +59,7 @@ export async function POST(
 
   const body = await req.json().catch(() => ({}));
   const asSwap = Boolean(body?.asSwap);
+  const note = typeof body?.note === "string" ? body.note.trim() : "";
 
   const swapRequest = await prisma.shiftSwapRequest.findUnique({
     where: { id: params.id },
@@ -76,6 +116,10 @@ export async function POST(
     });
 
     if (offerer?.user.email) {
+      const swapShiftsHtml = asSwap
+        ? await ownUpcomingShiftsHtml(membership.membershipId, swapRequest.shiftId)
+        : "";
+
       await sendEmail({
         to: offerer.user.email,
         subject: asSwap
@@ -87,10 +131,16 @@ export async function POST(
             ? `
               <p><strong>${claimerName}</strong> wil met je ruilen voor je dienst op
               <strong>${dateLabel}</strong> (${timeLabel}).</p>
-              <p style="margin-top: 12px;">
-                Dit is nog geen kant-en-klare ruil: Shiftje wisselt niet automatisch
-                een dienst terug. Spreek samen af welke dienst daarvoor terugkomt,
-                en zet die eventueel zelf ook open ter overname.
+              ${
+                note
+                  ? `<p style="margin-top: 12px;"><strong>Voorstel van ${claimerName}:</strong> ${escapeHtml(note)}</p>`
+                  : ""
+              }
+              ${swapShiftsHtml}
+              <p style="margin-top: 16px; color: #666;">
+                Shiftje wisselt niet automatisch een dienst terug: kies zelf uit
+                bovenstaande (of spreek iets anders af), en pas het rooster
+                daarna zelf aan of vraag je manager dit te doen.
               </p>
             `
             : `

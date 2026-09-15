@@ -3,6 +3,8 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import BillingActions from "../billing-actions";
 import CompanyDetailsSetting from "../company-details-setting";
+import DiscountCodeForm from "../discount-code-form";
+import { describeDiscount } from "@/lib/discount";
 import {
   PRICE_MONTHLY_EXCL,
   PRICE_MONTHLY_INCL,
@@ -30,6 +32,7 @@ export default async function BillingPage() {
       vatNumber: true,
       address: true,
       postalCode: true,
+      discount: true,
     },
   });
 
@@ -87,6 +90,17 @@ export default async function BillingPage() {
               <p className="mt-1 text-sm text-ink/60">
                 Eén vast bedrag per zaak, ongeacht het aantal medewerkers.
               </p>
+
+              <div className="mt-4">
+                {company?.discount ? (
+                  <p className="rounded-lg bg-awning/10 px-3 py-2 text-sm text-awning">
+                    Kortingscode toegepast: {describeDiscount(company.discount)}
+                  </p>
+                ) : (
+                  <DiscountCodeForm />
+                )}
+              </div>
+
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <PlanCard
                   title="Maandelijks"
