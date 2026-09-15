@@ -110,7 +110,6 @@ export async function POST(
   if (notifyEmails.size > 0) {
     const offeredByName = session.user.name ?? "Een collega";
     await sendEmail({
-      to: session.user.email ?? Array.from(notifyEmails)[0],
       bcc: Array.from(notifyEmails),
       subject: `Dienst aangeboden, ${dateLabel} bij ${membership.companyName}`,
       html: emailLayout(

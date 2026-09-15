@@ -12,23 +12,30 @@ export async function sendEmail({
   bcc,
   from,
 }: {
-  to: string | string[];
+  to?: string | string[];
   subject: string;
   html: string;
   replyTo?: string;
   bcc?: string | string[];
   from?: string;
 }) {
+  const resolvedFrom = from || FROM;
+  // Bij een pure BCC-verzending (iedereen anoniem in bcc, niemand als
+  // zichtbare "aan") is er alsnog een "to" nodig voor de meeste
+  // e-mailproviders: gebruik dan het eigen afzenderadres, zodat er nooit
+  // per ongeluk een echte ontvanger in het "aan"-veld terechtkomt.
+  const resolvedTo = to ?? resolvedFrom;
+
   if (!resend) {
     // Geen RESEND_API_KEY ingesteld: log het in plaats van te versturen,
     // zodat lokaal ontwikkelen zonder e-mailservice gewoon blijft werken.
-    console.log(`[email] RESEND_API_KEY ontbreekt, e-mail niet verstuurd naar ${to}: ${subject}`);
+    console.log(`[email] RESEND_API_KEY ontbreekt, e-mail niet verstuurd naar ${resolvedTo}: ${subject}`);
     return { skipped: true };
   }
 
   const result = await resend.emails.send({
-    from: from || FROM,
-    to,
+    from: resolvedFrom,
+    to: resolvedTo,
     subject,
     html,
     ...(replyTo ? { replyTo } : {}),

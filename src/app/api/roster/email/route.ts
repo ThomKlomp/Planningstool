@@ -164,7 +164,6 @@ export async function POST(req: Request) {
 
     const result = await sendEmail({
       from: ROSTER_FROM,
-      to: session!.user.email ?? ROSTER_FROM,
       bcc: emails,
       subject,
       html,
