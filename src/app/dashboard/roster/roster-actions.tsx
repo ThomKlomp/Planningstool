@@ -110,13 +110,14 @@ export default function RosterActions({
 
     const lines = [["", ...days.map(dayLabel)].map(csvField).join(",")];
 
-    for (const [departmentName, rows] of sortedGroups) {
+    sortedGroups.forEach(([departmentName, rows], i) => {
+      if (i > 0) lines.push(""); // witregel tussen teams
       lines.push([departmentName].map(csvField).join(","));
       for (const row of rows) {
         const cells = days.map((d) => cellFor(row.membershipId, d));
         lines.push([row.name, ...cells].map(csvField).join(","));
       }
-    }
+    });
 
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -130,10 +131,13 @@ export default function RosterActions({
   function downloadPdf() {
     const { days, sortedGroups, cellFor } = buildGrid(members, shifts, weekStart);
 
-    const tables = sortedGroups
+    const headerCells = days.map((d) => `<th>${escapeHtml(dayLabel(d))}</th>`).join("");
+    const bodyRows = sortedGroups
       .map(([departmentName, rows]) => {
-        const headerCells = days.map((d) => `<th>${escapeHtml(dayLabel(d))}</th>`).join("");
-        const bodyRows = rows
+        const teamRow = `<tr class="team"><td colspan="${days.length + 1}">${escapeHtml(
+          departmentName
+        )}</td></tr>`;
+        const memberRows = rows
           .map((row) => {
             const cells = days
               .map((d) => `<td>${escapeHtml(cellFor(row.membershipId, d))}</td>`)
@@ -141,13 +145,7 @@ export default function RosterActions({
             return `<tr><td class="name">${escapeHtml(row.name)}</td>${cells}</tr>`;
           })
           .join("");
-        return `
-          <h2>${escapeHtml(departmentName)}</h2>
-          <table>
-            <thead><tr><th></th>${headerCells}</tr></thead>
-            <tbody>${bodyRows}</tbody>
-          </table>
-        `;
+        return teamRow + memberRows;
       })
       .join("");
 
@@ -161,18 +159,21 @@ export default function RosterActions({
           <title>Rooster ${escapeHtml(weekLabel)}</title>
           <style>
             body { font-family: Arial, sans-serif; color: #1B1B18; padding: 32px; }
-            h1 { font-size: 20px; margin-bottom: 4px; }
-            h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #3F6E5B; margin-top: 24px; margin-bottom: 6px; }
+            h1 { font-size: 20px; margin-bottom: 16px; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
             th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #DDD5C7; white-space: nowrap; }
             th { color: #1B1B1899; font-weight: 600; }
             td.name { font-weight: 600; }
+            tr.team td { padding-top: 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #3F6E5B; font-weight: 700; border-bottom: none; }
             @media print { @page { margin: 14mm; } }
           </style>
         </head>
         <body>
           <h1>Rooster, ${escapeHtml(weekLabel)}</h1>
-          ${tables || "<p>Geen medewerkers om te tonen.</p>"}
+          <table>
+            <thead><tr><th></th>${headerCells}</tr></thead>
+            <tbody>${bodyRows || `<tr><td colspan="${days.length + 1}">Geen medewerkers om te tonen.</td></tr>`}</tbody>
+          </table>
         </body>
       </html>`);
     win.document.close();

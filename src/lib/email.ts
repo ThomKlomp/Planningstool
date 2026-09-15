@@ -9,11 +9,15 @@ export async function sendEmail({
   subject,
   html,
   replyTo,
+  bcc,
+  from,
 }: {
   to: string | string[];
   subject: string;
   html: string;
   replyTo?: string;
+  bcc?: string | string[];
+  from?: string;
 }) {
   if (!resend) {
     // Geen RESEND_API_KEY ingesteld: log het in plaats van te versturen,
@@ -23,11 +27,12 @@ export async function sendEmail({
   }
 
   const result = await resend.emails.send({
-    from: FROM,
+    from: from || FROM,
     to,
     subject,
     html,
     ...(replyTo ? { replyTo } : {}),
+    ...(bcc ? { bcc } : {}),
   });
   return result;
 }
@@ -38,6 +43,22 @@ export function emailLayout(title: string, bodyHtml: string) {
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
       <h1 style="font-size: 20px; color: #1B1B18; margin-bottom: 8px;">${title}</h1>
       <div style="color: #1B1B18; font-size: 14px; line-height: 1.6;">
+        ${bodyHtml}
+      </div>
+      <p style="margin-top: 32px; font-size: 12px; color: #999;">
+        Verstuurd via Shiftje.
+      </p>
+    </div>
+  `;
+}
+
+/** Wrapper zonder de max-width van 480px, voor content die breder moet
+ * zijn dan een normale tekst-e-mail (bv. een roostertabel met veel kolommen). */
+export function emailLayoutWide(title: string, bodyHtml: string) {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
+      <h1 style="font-size: 20px; color: #1B1B18; margin-bottom: 8px;">${title}</h1>
+      <div style="color: #1B1B18; font-size: 13px; line-height: 1.6;">
         ${bodyHtml}
       </div>
       <p style="margin-top: 32px; font-size: 12px; color: #999;">
