@@ -142,6 +142,7 @@ export default async function RosterPage({
           </p>
         </div>
         <WeekStatusToggle
+          key={week[0].toISOString()}
           weekStart={week[0].toISOString()}
           initialIsOpen={isWeekOpen}
           hasOverride={Boolean(weekStatus)}

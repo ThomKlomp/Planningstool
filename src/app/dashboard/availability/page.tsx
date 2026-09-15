@@ -78,6 +78,7 @@ export default async function AvailabilityPage({
           </p>
         </div>
         <WeekStatusToggle
+          key={weekStartIso}
           weekStart={weekStartIso}
           initialIsOpen={isWeekOpen}
           hasOverride={Boolean(weekStatus)}
@@ -109,6 +110,7 @@ export default async function AvailabilityPage({
 
       <div className="mt-6">
         <AvailabilityGrid
+          key={weekStartIso}
           week={week.map((d) => d.toISOString())}
           shiftTemplates={shiftTemplates.map((t) => ({
             id: t.id,
