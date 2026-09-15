@@ -30,6 +30,7 @@ export default async function DiscountCodesPage() {
             value: c.value,
             duration: c.duration,
             durationMonths: c.durationMonths,
+            applicableInterval: c.applicableInterval,
             maxRedemptions: c.maxRedemptions,
             timesRedeemed: c.timesRedeemed,
             active: c.active,

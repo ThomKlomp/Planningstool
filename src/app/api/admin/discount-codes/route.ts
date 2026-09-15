@@ -32,6 +32,9 @@ export async function POST(req: Request) {
   const code = String(body?.code ?? "").trim().toUpperCase();
   const type = body?.type === "FIXED_AMOUNT" ? "FIXED_AMOUNT" : "PERCENTAGE";
   const duration = body?.duration === "LIMITED_MONTHS" ? "LIMITED_MONTHS" : "FOREVER";
+  const applicableInterval = ["MONTHLY", "YEARLY", "BOTH"].includes(body?.applicableInterval)
+    ? body.applicableInterval
+    : "BOTH";
   const value = Number(body?.value);
   const durationMonths = body?.durationMonths ? Number(body.durationMonths) : null;
   const maxRedemptions = body?.maxRedemptions ? Number(body.maxRedemptions) : null;
@@ -52,6 +55,9 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+  if (expiresAt && isNaN(expiresAt.getTime())) {
+    return NextResponse.json({ error: "Ongeldige einddatum" }, { status: 400 });
+  }
 
   const existing = await prisma.discountCode.findUnique({ where: { code } });
   if (existing) {
@@ -65,6 +71,7 @@ export async function POST(req: Request) {
       value,
       duration,
       durationMonths: duration === "LIMITED_MONTHS" ? durationMonths : null,
+      applicableInterval,
       maxRedemptions,
       expiresAt,
     },

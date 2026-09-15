@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     // de zaak een (niet-100%) kortingscode heeft ingewisseld.
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
     const baseAmount = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
-    const amountValue = applyDiscount(baseAmount, company.discount);
+    const amountValue = applyDiscount(baseAmount, company.discount, interval);
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
 
     try {

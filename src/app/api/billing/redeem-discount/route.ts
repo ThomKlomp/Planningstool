@@ -79,6 +79,7 @@ export async function POST(req: Request) {
           value: discountCode.value,
           duration: discountCode.duration,
           durationMonths: discountCode.durationMonths,
+          applicableInterval: discountCode.applicableInterval,
           monthsRemaining: null, // al direct volledig verwerkt, niets meer af te tellen
         },
       }),
@@ -108,6 +109,7 @@ export async function POST(req: Request) {
         value: discountCode.value,
         duration: discountCode.duration,
         durationMonths: discountCode.durationMonths,
+        applicableInterval: discountCode.applicableInterval,
         monthsRemaining: discountCode.duration === "LIMITED_MONTHS" ? discountCode.durationMonths : null,
       },
     }),

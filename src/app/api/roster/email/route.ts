@@ -162,9 +162,11 @@ export async function POST(req: Request) {
       buildRosterTableHtml(week, members, shifts)
     );
 
+    const ownerEmail = allMembers.find((m) => m.role === "OWNER")?.email;
+
     const result = await sendEmail({
       from: ROSTER_FROM,
-      to: `${membership.companySlug}@shiftje.nl`,
+      to: ownerEmail || `${membership.companySlug}@shiftje.nl`,
       bcc: emails,
       subject,
       html,

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Zaak niet gevonden" }, { status: 404 });
   }
 
-  const amountValue = applyDiscount(baseAmount, company.discount);
+  const amountValue = applyDiscount(baseAmount, company.discount, interval);
 
   try {
     let customerId = company.mollieCustomerId;
