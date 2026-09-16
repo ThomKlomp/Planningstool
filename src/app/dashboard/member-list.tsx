@@ -16,11 +16,13 @@ export default function MemberList({
   canManage,
   viewerRole,
   viewerMembershipId,
+  isDemoCompany = false,
 }: {
   initialMembers: Member[];
   canManage: boolean;
   viewerRole: string;
   viewerMembershipId: string;
+  isDemoCompany?: boolean;
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -104,6 +106,16 @@ export default function MemberList({
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs uppercase tracking-wide text-ink/40">{m.role}</span>
+                    {isDemoCompany && m.id !== viewerMembershipId && (
+                      <a
+                        href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-awning hover:underline"
+                      >
+                        Inloggen als
+                      </a>
+                    )}
                     {canRemove(m) && (
                       <button
                         onClick={() => removeMember(m)}

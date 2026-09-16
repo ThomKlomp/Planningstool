@@ -111,6 +111,7 @@ export default async function DashboardOverviewPage() {
             canManage={canManage}
             viewerRole={membership.role}
             viewerMembershipId={membership.membershipId}
+            isDemoCompany={membership.companySlug === "demo"}
           />
         </div>
       </section>
