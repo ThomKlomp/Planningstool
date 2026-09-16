@@ -280,12 +280,12 @@ function ShiftCard({
     >
       <div className="flex items-start justify-between gap-1">
         <div>
-          <p className="font-medium">
-            {shift.startTime}–{shift.endTime}
-          </p>
-          <p className="flex flex-wrap items-center gap-1 text-ink/60">
+          <p className="flex flex-wrap items-center gap-1 font-medium">
             <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
-            {shift.role ? <span>· {shift.role}</span> : null}
+            {shift.role ? <span className="font-normal text-ink/60">· {shift.role}</span> : null}
+          </p>
+          <p className="text-ink/60">
+            {shift.startTime}–{shift.endTime}
           </p>
         </div>
       </div>
