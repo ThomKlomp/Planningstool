@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 const DEMO_PASSWORD = "Demo1234!";
 
-export default function DemoSwitchPage() {
+function DemoSwitchInner() {
   const params = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -48,5 +48,19 @@ export default function DemoSwitchPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function DemoSwitchPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+          <p className="text-sm text-ink/60">Bezig met inloggen...</p>
+        </main>
+      }
+    >
+      <DemoSwitchInner />
+    </Suspense>
   );
 }
