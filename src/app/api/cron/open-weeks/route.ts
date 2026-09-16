@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { getWeekDates, getISOWeekNumber } from "@/lib/week";
 
+const AVAILABILITY_FROM = "Shiftje Beschikbaarheid <beschikbaarheid@shiftje.nl>";
+
 // Bedoeld om 1x per dag aangeroepen te worden door een externe cron-dienst
 // (bv. cron-job.org), met header: Authorization: Bearer <CRON_SECRET>.
 // Idempotent: gebruikt WeekStatus.notifiedAt om te voorkomen dat dezelfde
@@ -46,7 +48,12 @@ export async function GET(req: Request) {
 
     if (recipients.length > 0) {
       await sendEmail({
-        to: recipients,
+        from: AVAILABILITY_FROM,
+        // Iedereen in bcc, niemand ziet andermans e-mailadres. Het
+        // "aan"-veld is een nep-adres van de zaak zelf, dat nergens op
+        // aankomt (zelfde patroon als bij de andere groepsmails).
+        to: `${company.slug}@shiftje.nl`,
+        bcc: recipients,
         subject: `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open bij ${company.name}`,
         html: emailLayout(
           `Nieuwe week open bij ${company.name}`,
