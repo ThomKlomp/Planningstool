@@ -55,6 +55,12 @@ function mondayOf(date: Date) {
   return d;
 }
 
+function emailSeed(email: string) {
+  let h = 0;
+  for (let i = 0; i < email.length; i++) h = (h * 31 + email.charCodeAt(i)) % 997;
+  return h;
+}
+
 async function requirePlatformAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isPlatformAdmin) return null;
@@ -253,7 +259,8 @@ export async function POST() {
         const member = membershipByEmail[person.email];
 
         for (const template of templatesToday) {
-          const seed = (dayOffset + weekOffset + member.id.length + template.id.length) % 5;
+          const seed =
+            (dayOffset * 3 + weekOffset * 5 + emailSeed(person.email) + template.name.length) % 5;
           const status = seed === 0 ? "UNAVAILABLE" : seed === 1 ? "UNSURE" : "AVAILABLE";
           availabilityToCreate.push({
             membershipId: member.id,
