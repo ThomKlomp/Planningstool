@@ -154,19 +154,54 @@ function Feature({ title, body }: { title: string; body: string }) {
 /** Kleine, gestileerde weergave van een weekrooster: geen screenshot, gewoon opgebouwd uit divs. */
 function ScheduleMock() {
   const days = [
-    { label: "Ma", shifts: [] as { time: string; color: string }[] },
-    { label: "Di", shifts: [{ time: "17–23", color: "bg-awning" }] },
-    { label: "Wo", shifts: [{ time: "12–18", color: "bg-amber" }] },
     {
-      label: "Do",
-      shifts: [
-        { time: "12–18", color: "bg-amber" },
-        { time: "17–23", color: "bg-awning" },
+      label: "Wo 16",
+      groups: [
+        {
+          team: "Bediening",
+          color: "text-awning",
+          dot: "bg-awning",
+          shifts: [
+            { name: "Julia Bakker", time: "12–18" },
+            { name: "Tom Visser", time: "17–23" },
+          ],
+        },
+        {
+          team: "Keuken",
+          color: "text-amber-dark",
+          dot: "bg-amber",
+          shifts: [{ name: "Ahmed · Kok", time: "17–23" }],
+        },
       ],
     },
-    { label: "Vr", shifts: [{ time: "17–00", color: "bg-awning" }] },
-    { label: "Za", shifts: [{ time: "16–00", color: "bg-awning" }] },
-    { label: "Zo", shifts: [] },
+    {
+      label: "Do 17",
+      groups: [
+        {
+          team: "Bediening",
+          color: "text-awning",
+          dot: "bg-awning",
+          shifts: [{ name: "Nina de Boer", time: "12–18" }],
+        },
+        {
+          team: "Keuken",
+          color: "text-amber-dark",
+          dot: "bg-amber",
+          shifts: [{ name: "Lotte · Kok", time: "17–23" }],
+        },
+      ],
+    },
+    {
+      label: "Vr 18",
+      groups: [
+        {
+          team: "Bediening",
+          color: "text-awning",
+          dot: "bg-awning",
+          shifts: [{ name: "Mark Jansen", time: "17–23" }],
+        },
+      ],
+    },
   ];
 
   return (
@@ -177,26 +212,32 @@ function ScheduleMock() {
           Open
         </span>
       </div>
-      <div className="mt-3 grid grid-cols-7 gap-1.5">
+      <div className="mt-3 grid grid-cols-3 gap-2">
         {days.map((d) => (
-          <div key={d.label} className="text-center">
-            <p className="text-[10px] text-ink/40">{d.label}</p>
-            <div className="mt-1 flex min-h-[4.5rem] flex-col gap-1">
-              {d.shifts.map((s, i) => (
-                <div
-                  key={i}
-                  className={`rounded-md ${s.color} px-1 py-1.5 text-[9px] font-medium text-white`}
-                >
-                  {s.time}
+          <div key={d.label}>
+            <p className="text-center text-[10px] text-ink/40">{d.label}</p>
+            <div className="mt-1.5 space-y-2">
+              {d.groups.map((g) => (
+                <div key={g.team}>
+                  <p
+                    className={`flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wide ${g.color}`}
+                  >
+                    <span className={`h-1 w-1 rounded-full ${g.dot}`} />
+                    {g.team}
+                  </p>
+                  <div className="mt-1 space-y-1">
+                    {g.shifts.map((s, i) => (
+                      <div key={i} className="rounded-md bg-paper px-1.5 py-1">
+                        <p className="truncate text-[9px] font-medium leading-tight">{s.name}</p>
+                        <p className="text-[8px] leading-tight text-ink/50">{s.time}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         ))}
-      </div>
-      <div className="mt-4 flex items-center gap-2 border-t border-line pt-3 text-[11px] text-ink/50">
-        <span className="h-1.5 w-1.5 rounded-full bg-awning" /> Bediening
-        <span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber" /> Keuken
       </div>
     </div>
   );
