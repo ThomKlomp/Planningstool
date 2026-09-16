@@ -168,7 +168,7 @@ export async function POST() {
   }
 
   // ---------- 4. Standaard shifts ----------
-  await prisma.shiftTemplate.create({
+  const middagshift = await prisma.shiftTemplate.create({
     data: {
       companyId: company.id,
       name: "Middagshift",
@@ -177,7 +177,7 @@ export async function POST() {
       weekdays: [1, 2, 3, 4, 5],
     },
   });
-  await prisma.shiftTemplate.create({
+  const avondshift = await prisma.shiftTemplate.create({
     data: {
       companyId: company.id,
       name: "Avondshift",
@@ -242,19 +242,26 @@ export async function POST() {
         }
       }
 
-      // Beschikbaarheid: iedere medewerker geeft voor elke dag iets door,
-      // met een paar keer "weet niet" en "kan niet" voor de variatie.
+      // Beschikbaarheid: per medewerker, per van toepassing zijnde
+      // standaard-shift die dag (zoals het rooster het ook verwacht: de
+      // "daypart" moet het id van het shift-sjabloon zijn, anders matcht
+      // er niks en lijkt het scherm leeg).
+      const templatesToday = [avondshift, ...(isWeekday ? [middagshift] : [])];
+
       for (const person of DEMO_PEOPLE) {
         if (person.role !== "EMPLOYEE") continue;
         const member = membershipByEmail[person.email];
-        const seed = (dayOffset + weekOffset + member.id.length) % 5;
-        const status = seed === 0 ? "UNAVAILABLE" : seed === 1 ? "UNSURE" : "AVAILABLE";
-        availabilityToCreate.push({
-          membershipId: member.id,
-          date: day,
-          daypart: "",
-          status,
-        });
+
+        for (const template of templatesToday) {
+          const seed = (dayOffset + weekOffset + member.id.length + template.id.length) % 5;
+          const status = seed === 0 ? "UNAVAILABLE" : seed === 1 ? "UNSURE" : "AVAILABLE";
+          availabilityToCreate.push({
+            membershipId: member.id,
+            date: day,
+            daypart: template.id,
+            status,
+          });
+        }
       }
     }
   }
