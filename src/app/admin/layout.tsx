@@ -41,6 +41,7 @@ export default async function AdminLayout({
           <AdminNavLink href="/admin/users">Gebruikers</AdminNavLink>
           <AdminNavLink href="/admin/support">Support-chats</AdminNavLink>
           <AdminNavLink href="/admin/discount-codes">Kortingscodes</AdminNavLink>
+          <AdminNavLink href="/admin/demo-company">Demo-zaak</AdminNavLink>
           {session.user.memberships.length > 0 && (
             <Link
               href="/dashboard"
