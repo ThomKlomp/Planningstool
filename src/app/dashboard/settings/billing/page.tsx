@@ -2,13 +2,15 @@ import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import BillingActions from "../billing-actions";
-import CouponForm from "./coupon-form";
+import DiscountCodeForm from "../discount-code-form";
+import { describeDiscount } from "@/lib/discount";
 import {
   PRICE_TIERS,
   computeSubscriptionAmount,
   countBillableMembers,
   formatEuro,
   getTierForMemberCount,
+  isDiscountCurrentlyActive,
 } from "@/lib/billing";
 
 export default async function BillingPage() {
@@ -25,9 +27,7 @@ export default async function BillingPage() {
       billingInterval: true,
       trialEndsAt: true,
       currentPeriodEnd: true,
-      appliedCouponId: true,
-      couponMonthsRemaining: true,
-      coupon: { select: { code: true, type: true, value: true } },
+      discount: true,
     },
   });
 
@@ -40,6 +40,10 @@ export default async function BillingPage() {
   const currentTier = getTierForMemberCount(memberCount);
   const monthly = await computeSubscriptionAmount(membership.companyId, "MONTHLY");
   const yearly = await computeSubscriptionAmount(membership.companyId, "YEARLY");
+
+  const discountActive =
+    company?.discount &&
+    isDiscountCurrentlyActive(company.discount, company.billingInterval ?? null);
 
   return (
     <div className="max-w-2xl">
@@ -59,10 +63,9 @@ export default async function BillingPage() {
         <h2 className="font-display text-xl">Jouw staffel</h2>
         <p className="mt-1 text-sm text-ink/60">
           {memberCount} {memberCount === 1 ? "medewerker" : "medewerkers"} → staffel{" "}
-          <span className="font-medium text-ink">{currentTier.label}</span>.
-          De prijs past zich automatisch aan als het aantal medewerkers
-          structureel verandert (bij de eerstvolgende betaling, niet met
-          terugwerkende kracht).
+          <span className="font-medium text-ink">{currentTier.label}</span>. De prijs past
+          zich automatisch aan als het aantal medewerkers structureel verandert (bij de
+          eerstvolgende betaling, niet met terugwerkende kracht).
         </p>
         <div className="mt-4 overflow-hidden rounded-xl border border-line">
           <table className="w-full text-left text-sm">
@@ -87,28 +90,27 @@ export default async function BillingPage() {
         </div>
       </section>
 
-      {company?.appliedCouponId && company.coupon ? (
-        <section className="mt-8">
-          <h2 className="font-display text-xl">Kortingscode</h2>
+      <section className="mt-8">
+        <h2 className="font-display text-xl">Kortingscode</h2>
+        {discountActive && company?.discount ? (
           <p className="mt-1 text-sm text-ink/60">
-            Code <span className="font-medium text-ink">{company.coupon.code}</span> actief —{" "}
-            {company.coupon.type === "PERCENTAGE"
-              ? `${company.coupon.value}% korting`
-              : `${formatEuro(company.coupon.value)} korting`}
-            {company.couponMonthsRemaining !== null
-              ? `, nog ${company.couponMonthsRemaining} ${
-                  company.couponMonthsRemaining === 1 ? "termijn" : "termijnen"
-                }`
-              : ", zo lang het abonnement loopt"}
+            {describeDiscount(company.discount)} — actief sinds{" "}
+            {company.discount.redeemedAt.toLocaleDateString("nl-NL", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
             .
           </p>
-        </section>
-      ) : (
-        <section className="mt-8">
-          <h2 className="font-display text-xl">Kortingscode</h2>
-          <CouponForm />
-        </section>
-      )}
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-ink/60">Heb je een kortingscode?</p>
+            <div className="mt-3">
+              <DiscountCodeForm />
+            </div>
+          </>
+        )}
+      </section>
 
       {(status === "TRIALING" || status === "CANCELED" || status === "PAST_DUE") && (
         <section className="mt-8">
@@ -119,17 +121,17 @@ export default async function BillingPage() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <PlanCard
               title="Maandelijks"
-              price={`${formatEuro(monthly.excl)} / maand`}
+              price={`${formatEuro(monthly.baseExcl)} / maand`}
               subtext={`${formatEuro(monthly.incl)} incl. btw${
-                monthly.couponApplied ? " · korting toegepast" : ""
+                monthly.discountApplied ? " · korting toegepast" : ""
               }`}
               interval="MONTHLY"
             />
             <PlanCard
               title="Jaarlijks"
-              price={`${formatEuro(yearly.excl)} / jaar`}
+              price={`${formatEuro(yearly.baseExcl)} / jaar`}
               subtext={`${formatEuro(yearly.incl)} incl. btw · 2 maanden gratis${
-                yearly.couponApplied ? " · korting toegepast" : ""
+                yearly.discountApplied ? " · korting toegepast" : ""
               }`}
               interval="YEARLY"
               highlight

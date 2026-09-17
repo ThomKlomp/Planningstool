@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { getNextMemberTierWarning } from "@/lib/billing";
 
 function roleLabel(role: string) {
   return role === "MANAGER" ? "manager" : "medewerker";
@@ -27,6 +28,12 @@ export async function POST(req: Request) {
   if (!membership || (membership.role !== "OWNER" && membership.role !== "MANAGER")) {
     return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
   }
+
+  // Puur informatief: als deze uitnodiging geaccepteerd wordt, duwt dat de
+  // zaak dan naar een duurdere staffel? De daadwerkelijke afrekening
+  // gebeurt altijd via de dagelijkse cron (cron/billing-resync), dus dit
+  // is alleen om de eigenaar/manager vooraf niet te laten verrassen.
+  const tierWarning = await getNextMemberTierWarning(membership.companyId);
 
   const invite = await prisma.invite.create({
     data: {
@@ -63,5 +70,6 @@ export async function POST(req: Request) {
     invite,
     inviteUrl,
     emailSent: !("skipped" in emailResult),
+    tierWarning,
   });
 }

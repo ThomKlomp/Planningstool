@@ -39,6 +39,7 @@ export default async function DashboardLayout({
             <NavLink href="/dashboard/availability">Beschikbaarheid</NavLink>
             <NavLink href="/dashboard/roster">Rooster</NavLink>
             <NavLink href="/dashboard/hours">Uren</NavLink>
+            <NavLink href="/dashboard/calendar">Agenda-koppeling</NavLink>
             <NavLink href="/dashboard/notifications">
               Meldingen
               {unreadCount > 0 && (

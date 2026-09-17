@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
-import { computeSubscriptionAmount } from "@/lib/billing";
+import { computeSubscriptionAmount, isDiscountCurrentlyActive } from "@/lib/billing";
+import { sendEmail, emailLayout } from "@/lib/email";
 
 // Bedoeld om 1x per dag aangeroepen te worden door een externe cron-dienst
-// (bv. cron-job.org, zelfde patroon als /api/cron/open-weeks), met header:
+// (zelfde patroon als /api/cron/open-weeks), met header:
 // Authorization: Bearer <CRON_SECRET>.
 //
-// Herberekent voor elke actieve zaak de juiste staffelprijs (o.b.v. het
-// actuele aantal medewerkers) plus een eventuele kortingscode, en werkt het
-// bedrag bij Mollie bij als dat is gewijzigd sinds de vorige keer. Dit is
-// de plek waar staffelwijzigingen (op- én neerwaarts) daadwerkelijk worden
-// doorgevoerd — niet meteen bij het toevoegen/verwijderen van een
-// medewerker, om tussentijdse deelbetalingen te vermijden.
+// Combineert twee taken die voorheen apart waren (cron/billing-resync en
+// cron/discount-expiry — dat laatste bestaat niet meer, dit vervangt het):
+//  1. Een verlopen kortingscode (LIMITED_MONTHS, op) verwijderen en de
+//     eigenaar daarover mailen.
+//  2. De Mollie-prijs bijwerken als de staffel of het kortingsbedrag sinds
+//     de vorige run is veranderd.
+// Eén cron in plaats van twee voorkomt dat ze elkaars werk tegenspreken
+// (allebei het Mollie-bedrag proberen bij te werken op basis van een net
+// wel/niet verlopen korting).
 //
 // Veilig om op elk moment te draaien: Mollie past een bijgewerkt bedrag pas
 // toe op de eerstvolgende betaling, nooit met terugwerkende kracht.
@@ -29,20 +33,37 @@ export async function GET(req: Request) {
       mollieCustomerId: { not: null },
       mollieSubscriptionId: { not: null },
     },
+    include: { discount: true },
   });
 
-  let updated = 0;
+  let priceUpdated = 0;
+  let discountsExpired = 0;
   const errors: string[] = [];
 
   for (const company of companies) {
     try {
+      // Stap 1: een lopende, aftellende korting die nu op is → verwijderen
+      // en de eigenaar informeren. computeSubscriptionAmount hieronder
+      // negeert een verlopen korting toch al, maar we ruimen 'm hier ook
+      // echt op zodat 'm niet blijft "hangen" in de instellingenpagina.
+      let discountJustExpired = false;
+      if (
+        company.discount &&
+        company.discount.duration === "LIMITED_MONTHS" &&
+        company.discount.monthsRemaining !== null &&
+        !isDiscountCurrentlyActive(company.discount, company.billingInterval)
+      ) {
+        await prisma.companyDiscount.delete({ where: { id: company.discount.id } });
+        discountJustExpired = true;
+      }
+
       const interval = company.billingInterval ?? "MONTHLY";
-      const { excl, incl, tier } = await computeSubscriptionAmount(company.id, interval);
+      const { incl, tier } = await computeSubscriptionAmount(company.id, interval);
 
       const drifted =
-        company.lastBilledAmountExcl === null ||
-        company.lastBilledAmountExcl === undefined ||
-        Math.abs(company.lastBilledAmountExcl - excl) > 0.001;
+        company.lastBilledAmountIncl === null ||
+        company.lastBilledAmountIncl === undefined ||
+        Math.abs(company.lastBilledAmountIncl - incl) > 0.001;
 
       if (drifted) {
         await mollie.subscriptions.update(
@@ -52,9 +73,31 @@ export async function GET(req: Request) {
         );
         await prisma.company.update({
           where: { id: company.id },
-          data: { lastBilledAmountExcl: excl, currentTierId: tier.id },
+          data: { lastBilledAmountIncl: incl, currentTierId: tier.id },
         });
-        updated += 1;
+        priceUpdated += 1;
+      }
+
+      if (discountJustExpired) {
+        discountsExpired += 1;
+        const owner = await prisma.membership.findFirst({
+          where: { companyId: company.id, role: "OWNER" },
+          include: { user: true },
+        });
+        if (owner?.user.email) {
+          await sendEmail({
+            to: owner.user.email,
+            subject: "Je kortingsperiode is afgelopen",
+            html: emailLayout(
+              "Je kortingsperiode is afgelopen",
+              `
+                <p>De kortingsperiode op je Shiftje-abonnement is voorbij.
+                Vanaf de volgende termijn wordt weer het volledige bedrag van
+                €${incl.toFixed(2)} in rekening gebracht (staffel ${tier.label}).</p>
+              `
+            ),
+          });
+        }
       }
     } catch (err) {
       console.error("[cron/billing-resync] fout bij zaak", company.id, err);
@@ -62,5 +105,11 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, checked: companies.length, updated, errors });
+  return NextResponse.json({
+    ok: true,
+    checked: companies.length,
+    priceUpdated,
+    discountsExpired,
+    errors,
+  });
 }

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     // zet 'm om in een terugkerend abonnement, tegen de actuele staffelprijs.
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
-    const { incl, excl, tier } = await computeSubscriptionAmount(company.id, interval);
+    const { incl, tier } = await computeSubscriptionAmount(company.id, interval);
 
     try {
       const subscription = await mollie.subscriptions.create(payment.customerId, {
@@ -68,35 +68,28 @@ export async function POST(req: Request) {
           mollieSubscriptionId: subscription.id,
           currentPeriodEnd: new Date(Date.now() + periodMs),
           currentTierId: tier.id,
-          lastBilledAmountExcl: excl,
+          lastBilledAmountIncl: incl,
         },
       });
     } catch (err) {
       console.error("[webhooks/mollie] kon abonnement niet aanmaken", err);
     }
   } else if (payment.status === "paid" && payment.sequenceType === "recurring") {
-    // Een volgende, automatische termijnbetaling is gelukt.
+    // Een volgende, automatische termijnbetaling is gelukt. Staffel- en
+    // kortingswijzigingen worden niet hier verwerkt, maar door de
+    // dagelijkse cron/billing-resync — die is de bron van waarheid voor
+    // "wat zou dit bedrag nu moeten zijn" en houdt ook de
+    // korting-verloopt-logica bij.
     const interval = company.billingInterval ?? "MONTHLY";
     const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
 
-    const data: Record<string, unknown> = {
-      subscriptionStatus: "ACTIVE",
-      currentPeriodEnd: new Date(Date.now() + periodMs),
-    };
-
-    // Eén betaalperiode van een eventuele kortingscode is nu "verbruikt".
-    // Bij 0 vervalt de korting vanzelf — computeSubscriptionAmount past 'm
-    // dan niet meer toe, en de eerstvolgende cron/billing-resync-run
-    // corrigeert het Mollie-bedrag naar de volle staffelprijs.
-    if (company.couponMonthsRemaining !== null && company.couponMonthsRemaining !== undefined) {
-      const remaining = Math.max(0, company.couponMonthsRemaining - 1);
-      data.couponMonthsRemaining = remaining;
-      if (remaining === 0) {
-        data.appliedCouponId = null;
-      }
-    }
-
-    await prisma.company.update({ where: { id: company.id }, data });
+    await prisma.company.update({
+      where: { id: company.id },
+      data: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: new Date(Date.now() + periodMs),
+      },
+    });
   } else if (["failed", "expired", "canceled"].includes(payment.status)) {
     if (payment.sequenceType === "recurring") {
       await prisma.company.update({

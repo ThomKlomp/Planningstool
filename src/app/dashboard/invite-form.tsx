@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Invite = { id: string; email: string; role: string; token: string };
+type TierWarning = { fromLabel: string; toLabel: string; newMonthlyExcl: number } | null;
 
 export default function InviteForm({
   onInvited,
@@ -14,7 +15,11 @@ export default function InviteForm({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"EMPLOYEE" | "MANAGER">("EMPLOYEE");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ inviteUrl: string; emailSent: boolean } | null>(null);
+  const [result, setResult] = useState<{
+    inviteUrl: string;
+    emailSent: boolean;
+    tierWarning: TierWarning;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,7 +42,11 @@ export default function InviteForm({
       return;
     }
 
-    setResult({ inviteUrl: data.inviteUrl, emailSent: data.emailSent });
+    setResult({
+      inviteUrl: data.inviteUrl,
+      emailSent: data.emailSent,
+      tierWarning: data.tierWarning ?? null,
+    });
     if (data.invite) {
       onInvited?.(data.invite);
     }
@@ -47,6 +56,7 @@ export default function InviteForm({
   }
 
   return (
+    <div>
     <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-3">
       <div>
         <label className="block text-xs text-ink/60">E-mailadres</label>
@@ -93,5 +103,15 @@ export default function InviteForm({
         </p>
       )}
     </form>
+
+    {result?.tierWarning && (
+      <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
+        Let op: als deze uitnodiging wordt geaccepteerd, ga je van staffel{" "}
+        {result.tierWarning.fromLabel} naar {result.tierWarning.toLabel} — €
+        {result.tierWarning.newMonthlyExcl.toFixed(2)}/maand excl. btw vanaf de
+        eerstvolgende betaling.
+      </p>
+    )}
+    </div>
   );
 }

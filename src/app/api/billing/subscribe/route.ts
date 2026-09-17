@@ -27,8 +27,8 @@ export async function POST(req: Request) {
   }
 
   // Staffelprijs o.b.v. het actuele aantal medewerkers, met een eventuele
-  // al toegepaste kortingscode verrekend (zie /api/billing/coupon).
-  const { incl, excl, tier } = await computeSubscriptionAmount(company.id, interval);
+  // al ingewisselde kortingscode verrekend (zie /api/billing/redeem-discount).
+  const { incl, tier } = await computeSubscriptionAmount(company.id, interval);
 
   try {
     let customerId = company.mollieCustomerId;
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       data: {
         billingInterval: interval,
         currentTierId: tier.id,
-        lastBilledAmountExcl: excl,
+        lastBilledAmountIncl: incl,
       },
     });
 

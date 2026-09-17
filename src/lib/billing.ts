@@ -1,7 +1,13 @@
 // Prijzen: staffelprijs per zaak per maand, gebaseerd op het aantal actieve
 // medewerkers (memberships) van die zaak. Vervangt de oude vaste prijs.
 // BTW-tarief voor SaaS-diensten in Nederland is het standaardtarief (21%).
+//
+// Kortingscodes lopen via het bestaande DiscountCode/CompanyDiscount-systeem
+// (zie prisma/schema.prisma en src/lib/discount.ts) — dit bestand voegt daar
+// geen nieuw kortingsmechanisme aan toe, het rekent er alleen mee.
 import { prisma } from "@/lib/prisma";
+import { applyDiscount } from "@/lib/discount";
+import type { CompanyDiscount } from "@prisma/client";
 
 export const BTW_RATE = 0.21;
 export const TRIAL_DAYS = 7;
@@ -62,9 +68,39 @@ export async function countBillableMembers(companyId: string) {
 }
 
 /**
+ * Bepaalt of een CompanyDiscount op dit moment daadwerkelijk nog toegepast
+ * moet worden op de facturering.
+ *
+ * Drie gevallen:
+ *  - duration FOREVER: altijd actief zolang het record bestaat.
+ *  - duration LIMITED_MONTHS met monthsRemaining = null: dit was een 100%-
+ *    korting die bij het inwisselen al direct verwerkt is als een verlengde
+ *    proefperiode (zie /api/billing/redeem-discount) — telt NIET meer mee
+ *    voor de lopende facturering, ook al bestaat het record nog.
+ *  - duration LIMITED_MONTHS met een getal: nog actief zolang er, gerekend
+ *    vanaf redeemedAt, nog complete termijnen over zijn. Zelfde rekenwijze
+ *    als de vroegere cron/discount-expiry, nu hier gecentraliseerd.
+ */
+export function isDiscountCurrentlyActive(
+  discount: Pick<CompanyDiscount, "duration" | "monthsRemaining" | "redeemedAt">,
+  billingInterval: "MONTHLY" | "YEARLY" | null
+): boolean {
+  if (discount.duration === "FOREVER") return true;
+  if (discount.monthsRemaining === null) return false; // al verbruikt als proefperiode-verlenging
+
+  const monthsSinceRedeemed =
+    billingInterval === "YEARLY"
+      ? 12 * Math.floor((Date.now() - discount.redeemedAt.getTime()) / (365 * 24 * 60 * 60 * 1000))
+      : Math.floor((Date.now() - discount.redeemedAt.getTime()) / (30 * 24 * 60 * 60 * 1000));
+
+  return Math.max(0, discount.monthsRemaining - monthsSinceRedeemed) > 0;
+}
+
+/**
  * Bepaalt het bedrag (excl./incl. btw) dat een zaak op dit moment zou moeten
  * betalen: de staffelprijs o.b.v. het huidige aantal medewerkers, met een
- * eventuele actieve kortingscode verrekend.
+ * eventuele actieve kortingscode (uit het bestaande CompanyDiscount-record)
+ * verrekend via de bestaande applyDiscount()-functie.
  *
  * Gebruikt op drie plekken:
  *  - het afrekenscherm bij een nieuw abonnement (billing/subscribe)
@@ -79,37 +115,27 @@ export async function computeSubscriptionAmount(
     countBillableMembers(companyId),
     prisma.company.findUnique({
       where: { id: companyId },
-      select: {
-        appliedCouponId: true,
-        couponMonthsRemaining: true,
-        coupon: { select: { type: true, value: true } },
-      },
+      select: { billingInterval: true, discount: true },
     }),
   ]);
 
   const tier = getTierForMemberCount(memberCount);
   const baseExcl = interval === "YEARLY" ? yearlyExclForTier(tier) : tier.monthlyExcl;
+  const baseIncl = inclFromExcl(baseExcl);
 
-  let discountedExcl = baseExcl;
-  const couponActive =
-    company?.appliedCouponId &&
-    company.coupon &&
-    (company.couponMonthsRemaining === null || (company.couponMonthsRemaining ?? 0) > 0);
+  const discount = company?.discount ?? null;
+  const discountActive =
+    discount !== null && isDiscountCurrentlyActive(discount, company?.billingInterval ?? interval);
 
-  if (couponActive && company?.coupon) {
-    discountedExcl =
-      company.coupon.type === "PERCENTAGE"
-        ? round2(baseExcl * (1 - company.coupon.value / 100))
-        : Math.max(0, round2(baseExcl - company.coupon.value));
-  }
+  const incl = discountActive && discount ? applyDiscount(baseIncl, discount, interval) : baseIncl;
 
   return {
     memberCount,
     tier,
     baseExcl,
-    excl: discountedExcl,
-    incl: inclFromExcl(discountedExcl),
-    couponApplied: Boolean(couponActive),
+    baseIncl,
+    incl,
+    discountApplied: discountActive,
   };
 }
 

@@ -1,138 +1,118 @@
-# Shiftje — update: agenda-koppeling + staffelprijzen
+# Shiftje — fix: staffelprijzen + agenda-koppeling samengevoegd met je bestaande kortingscodesysteem
 
-Deze map bevat alle nieuwe en gewijzigde bestanden voor twee features,
-gebouwd op je bestaande architectuur (Next.js App Router, Prisma,
-PostgreSQL, Mollie, NextAuth Google). Kopieer de bestanden naar dezelfde
-paden in `ThomKlomp/Planningstool` en volg onderstaande stappen.
+## Wat er mis was
 
----
+Ik kon je repo nu inzien (raw.githubusercontent.com, nu hij publiek staat) en
+zag dat er al een **eigen, volwaardig kortingscodesysteem** in zat —
+`DiscountCode` / `CompanyDiscount`, admin-beheer op `/admin/discount-codes`,
+een eigen cron voor verlopen kortingen — van vóór dit gesprek. De zip die ik
+eerder gaf botste daarmee: die verwees naar velden die niet bestaan
+(`Company.appliedCouponId`) en de bestaande discount-expiry-cron gebruikte
+prijsconstanten die ik had verwijderd. Kortom: zoals het er nu bij staat
+zou de build breken.
 
-## 1. Database-schema bijwerken
-
-Open `prisma/schema-additions.prisma` in deze map — dat is **geen bestand
-dat je erbij zet**, maar een uitleg van de 3 wijzigingen die je handmatig in
-je bestaande `prisma/schema.prisma` doorvoert:
-
-1. Nieuw model `Coupon` (+ enum `CouponType`)
-2. Vier nieuwe velden op `Company` (kortingscode-koppeling + laatst-gefactureerde staffel/bedrag)
-3. Eén nieuw veld op `Membership` (`calendarToken`)
-
-Daarna:
-
-```bash
-npx prisma db push
-```
+Dit pakket lost dat op door mijn staffelprijzen-logica **in** je bestaande
+kortingscodesysteem te verwerken, in plaats van er een tweede naast te
+zetten.
 
 ---
 
-## 2. Bestanden kopiëren
-
-**Nieuwe bestanden** (gewoon toevoegen):
+## 1. Bestanden overschrijven (compleet, direct te uploaden)
 
 ```
-src/lib/ics.ts
-src/app/api/calendar/[token]/route.ts
-src/app/api/calendar/token/route.ts
-src/app/api/billing/coupon/route.ts
-src/app/api/cron/billing-resync/route.ts
-src/app/dashboard/calendar/page.tsx
-src/app/dashboard/calendar/calendar-sync-card.tsx
-src/app/dashboard/settings/billing/coupon-form.tsx
+prisma/schema.prisma                              — je eigen bestand + 3 nieuwe velden (zie hieronder)
+src/lib/billing.ts                                 — staffelprijzen, rekent nu met jouw CompanyDiscount
+src/app/api/billing/subscribe/route.ts              — gebruikt de staffelprijs
+src/app/api/webhooks/mollie/route.ts                — gebruikt de staffelprijs
+src/app/api/cron/billing-resync/route.ts            — combineert staffel-sync mét korting-verloop (zie punt 3)
+src/app/dashboard/settings/billing/page.tsx          — staffeltabel + je bestaande DiscountCodeForm
+src/app/dashboard/layout.tsx                        — jouw huidige layout + 1 nav-link naar Agenda-koppeling
+src/app/api/invites/route.ts                        — jouw huidige route + staffel-waarschuwing
+src/app/dashboard/invite-form.tsx                   — jouw huidige form + die waarschuwing zichtbaar
 ```
 
-**Bestaande bestanden om te vervangen** (volledig herschreven, zelfde
-conventies als het origineel):
+`prisma/schema.prisma` is nu je **eigen, volledige** bestand met alleen deze
+3 regels toegevoegd (verder niets gewijzigd — ik heb het gediffed om dat te
+garanderen):
+- `Membership.calendarToken` (voor de agenda-feature)
+- `Company.currentTierId` en `Company.lastBilledAmountIncl` (voor de staffel-sync)
+
+Er is dus geen apart `Coupon`-model meer nodig — dat gebruikte ik in de
+vorige versie, maar dat was overbodig naast je bestaande `DiscountCode`/
+`CompanyDiscount`.
+
+Daarna: `npx prisma db push`.
+
+---
+
+## 2. Bestanden verwijderen uit je repo
+
+Deze zijn overbodig geworden of botsten met je bestaande systeem:
 
 ```
-src/lib/billing.ts              — was vaste prijs, nu staffelprijzen + coupon-logica
-src/lib/mollie.ts               — subscriptions.update() toegevoegd
-src/app/api/billing/subscribe/route.ts   — gebruikt nu de staffelprijs
-src/app/api/webhooks/mollie/route.ts     — gebruikt nu de staffelprijs, telt coupon-termijnen af
-src/app/dashboard/settings/billing/page.tsx  — toont staffeltabel + kortingscode
+src/app/api/billing/coupon/route.ts              — vervangen door je bestaande /api/billing/redeem-discount
+src/app/dashboard/settings/billing/coupon-form.tsx — vervangen door je bestaande discount-code-form.tsx
+src/app/api/cron/discount-expiry/route.ts         — samengevoegd in cron/billing-resync (zie punt 3)
+prisma/schema-additions.prisma                    — was alleen een instructiebestand, niet meer nodig
 ```
 
 ---
 
-## 3. Kleine handmatige aanpassingen (bestanden die ik niet volledig kon zien)
+## 3. Eén cron in plaats van twee
 
-**Navigatie** — voeg ergens in je dashboard-navigatie (waarschijnlijk
-`src/app/dashboard/layout.tsx`) een link toe naar `/dashboard/calendar`,
-zodat medewerkers 'm kunnen vinden. Zelfde patroon als je andere
-nav-links.
+Je had al een cron voor verlopen kortingen (`cron/discount-expiry`) en ik
+voegde er een tweede aan toe voor de staffelprijs (`cron/billing-resync`).
+Die twee zouden elkaar tegen kunnen werken (allebei het Mollie-bedrag
+proberen bij te werken op basis van een net wel/niet verlopen korting).
 
-**Waarschuwing bij uitnodigen** (optioneel maar aanbevolen) — in de route
-die een `Invite` aanmaakt (`src/app/api/invites/route.ts` of vergelijkbaar)
-kun je vóór het aanmaken van de uitnodiging het volgende aanroepen:
+`cron/billing-resync` doet nu **beide** taken in één keer per zaak: eerst
+checken of een aftellende korting op is (zo ja: verwijderen + eigenaar
+mailen, exact zoals je oude discount-expiry-cron deed), dán pas de juiste
+staffelprijs + eventuele resterende korting berekenen en bij Mollie
+bijwerken als dat is veranderd.
 
-```ts
-import { getNextMemberTierWarning } from "@/lib/billing";
-
-const tierWarning = await getNextMemberTierWarning(membership.companyId);
-// geef dit terug in de response, bv. { invite, tierWarning }
-// en toon in de UI: "Met deze medewerker ga je naar staffel {toLabel}, €{newMonthlyExcl}/maand."
-```
-
-Dit is puur een waarschuwing vooraf — de daadwerkelijke afrekening gebeurt
-altijd via de cron (zie hieronder), dus een medewerker die deze melding
-negeert kan niets "omzeilen".
-
----
-
-## 4. Cron-job toevoegen
-
-Je hebt al `cron-job.org` voor `/api/cron/open-weeks`. Voeg daar een tweede
-taak aan toe:
+**Actie:** als je bij cron-job.org al een taak had voor
+`/api/cron/discount-expiry`, verwijder die. Je hebt er nog maar één nodig:
 
 - **URL:** `https://<jouw-domein>/api/cron/billing-resync`
-- **Header:** `Authorization: Bearer <CRON_SECRET>` (dezelfde secret als de bestaande cron)
-- **Interval:** 1x per dag (tijdstip maakt niet uit — zie uitleg in het bestand)
+- **Header:** `Authorization: Bearer <CRON_SECRET>`
+- **Interval:** 1x per dag
+- **Methode:** GET
 
-Geen nieuwe environment variables nodig — alles hergebruikt bestaande
-env vars (`CRON_SECRET`, `MOLLIE_API_KEY`, `NEXTAUTH_URL`).
-
----
-
-## 5. Hoe het samen werkt
-
-**Agenda-koppeling:** elke medewerker krijgt op `/dashboard/calendar` een
-unieke, geheime abonnementslink. Die link geeft een live `.ics`-feed van
-hun shifts terug; Google Agenda en Apple Agenda halen 'm zelf periodiek
-opnieuw op (reken op een paar uur vertraging, geen instant push). Geen
-OAuth, geen Google-verificatietraject nodig.
-
-**Staffelprijzen:** de prijs wordt **niet** live bijgewerkt zodra iemand
-wordt toegevoegd of verwijderd — dat gebeurt bewust pas bij de
-eerstvolgende afrekening, via de dagelijkse cron. Die cron:
-
-1. Telt per actieve zaak het huidige aantal medewerkers.
-2. Bepaalt de bijbehorende staffel + verrekent een eventuele kortingscode.
-3. Vergelijkt dat met het laatst doorgevoerde bedrag (`lastBilledAmountExcl`).
-4. Stuurt bij een verschil een `PATCH` naar Mollie — dat geldt voor de
-   eerstvolgende betaling, nooit met terugwerkende kracht.
-
-Dit voorkomt tussentijdse deelbetalingen en is de "bron van waarheid":
-zelfs als iemand tijdelijk veel medewerkers toevoegt en ze voor de
-volgende afrekening weer verwijdert, telt gewoon het aantal op het moment
-dat de cron draait.
-
-**Kortingscodes:** eigen tabel (`Coupon`), los van Mollie. Een code is
-percentage- of vast-bedrag-korting, met optioneel een looptijd in aantal
-termijnen (`durationMonths`) en/of een maximum aantal keer te gebruiken.
-Toegepast via `/dashboard/settings/billing` (`CouponForm`) of programmatisch
-via `POST /api/billing/coupon`. Zelf codes aanmaken kan vooralsnog alleen
-rechtstreeks in de database (`prisma studio` of een script) — er is geen
-admin-UI voor gebouwd; zeg het als je die ook wilt.
+Ik heb hier geen toegang toe (geen cron-job.org-koppeling beschikbaar) — dit
+moet je zelf 2 minuten instellen. Alternatief: je hebt Render als host, en
+daar is wél een koppeling voor beschikbaar waarmee ik dit voor je zou kunnen
+aanmaken als je die aanzet.
 
 ---
 
-## 6. Testen
+## 4. Wat ongewijzigd blijft (geen actie nodig)
 
-1. `npx prisma db push` lokaal, dan `npm run dev`.
-2. Log in, ga naar `/dashboard/calendar`, maak een agenda-link aan, open
-   de `.ics`-URL direct in de browser om te checken dat er geldige
-   iCalendar-inhoud terugkomt.
-3. Maak in Mollie test mode een coupon aan in je database (via Prisma
-   Studio: `npx prisma studio`) en test `/dashboard/settings/billing`.
+Deze bestanden uit de vorige zip kloppen nog gewoon en staan al goed in je
+repo:
+```
+src/lib/ics.ts
+src/lib/mollie.ts
+src/app/api/calendar/[token]/route.ts
+src/app/api/calendar/token/route.ts
+src/app/dashboard/calendar/page.tsx
+src/app/dashboard/calendar/calendar-sync-card.tsx
+```
+De admin-kant van kortingscodes (`/admin/discount-codes` en de bijbehorende
+API) is niet aangeraakt — die werkte al goed en heeft niets met staffels te
+maken.
+
+---
+
+## 5. Testen
+
+1. `npx prisma db push`, dan `npm run dev`.
+2. `/dashboard/settings/billing` → check dat de staffeltabel klopt en dat
+   een eventuele actieve korting nog steeds correct getoond wordt via
+   `describeDiscount()`.
+3. Wissel een testcode in via de bestaande flow (Instellingen → Facturering
+   → kortingscode) en controleer dat `computeSubscriptionAmount` 'm
+   meerekent.
 4. Roep `/api/cron/billing-resync` handmatig aan met de juiste
-   Authorization-header (bv. met `curl`) om de sync-logica te testen
-   zonder op de dagelijkse cron te wachten.
+   Authorization-header om zowel de staffel-sync als het verlopen van een
+   (test-)korting te controleren.

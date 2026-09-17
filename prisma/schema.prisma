@@ -87,6 +87,8 @@ model Company {
   currentPeriodEnd   DateTime?
   mollieCustomerId     String?
   mollieSubscriptionId String?
+  currentTierId        String?  // laatst doorgevoerde staffel-id ("S" | "M" | "L" | "XL"), voor drift-detectie
+  lastBilledAmountIncl Float?   // laatst naar Mollie doorgevoerde bedrag incl. btw
   shiftSwapRequests ShiftSwapRequest[]
   notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
@@ -177,6 +179,7 @@ model Membership {
   role      Role     @default(EMPLOYEE)
   departmentId String?
   createdAt DateTime @default(now())
+  calendarToken String? @unique // geheime token voor de ICS-agenda-feed van deze medewerker
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
