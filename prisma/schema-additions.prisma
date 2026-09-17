@@ -1,0 +1,51 @@
+// ============================================================================
+// TOE TE VOEGEN AAN prisma/schema.prisma
+// Dit is geen los bestand dat je erbij zet — dit zijn de wijzigingen die je
+// handmatig in je bestaande schema.prisma doorvoert. Zie README.md voor de
+// volgorde van alle stappen.
+// ============================================================================
+
+// ---------- 1. Nieuw model: Coupon ----------
+// Ergens toevoegen, bv. na het Company-model.
+
+enum CouponType {
+  PERCENTAGE // value = percentage korting, bv. 20 = 20% korting
+  FIXED // value = vast bedrag korting in euro's, excl. btw
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique // wordt bij gebruik uppercase vergeleken
+  type           CouponType
+  value          Float
+  durationMonths Int? // aantal betaalperiodes dat de korting geldt; null = zo lang het abonnement loopt
+  maxRedemptions Int? // null = onbeperkt aantal zaken dat 'm mag gebruiken
+  timesRedeemed  Int        @default(0)
+  expiresAt      DateTime? // na deze datum niet meer NIEUW toe te passen (al toegepaste blijven lopen)
+  active         Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+
+  companies Company[]
+
+  @@index([code])
+}
+
+// ---------- 2. Velden toevoegen aan het bestaande Company-model ----------
+// Voeg deze regels toe binnen `model Company { ... }`, bv. direct onder de
+// bestaande "// ---------- Abonnement ----------" sectie (bij
+// mollieCustomerId / mollieSubscriptionId):
+//
+//   appliedCouponId       String?
+//   coupon                Coupon?  @relation(fields: [appliedCouponId], references: [id], onDelete: SetNull)
+//   couponMonthsRemaining Int?     // null = permanent (of geen coupon); telt af per succesvolle betaling
+//   currentTierId         String?  // laatst doorgevoerde staffel-id ("S" | "M" | "L" | "XL"), voor drift-detectie
+//   lastBilledAmountExcl  Float?   // laatst naar Mollie doorgevoerde bedrag excl. btw
+
+// ---------- 3. Veld toevoegen aan het bestaande Membership-model ----------
+// Voeg dit toe binnen `model Membership { ... }`:
+//
+//   calendarToken String? @unique // geheime token voor de ICS-agenda-feed van deze medewerker
+
+// ============================================================================
+// Daarna:  npx prisma db push
+// ============================================================================

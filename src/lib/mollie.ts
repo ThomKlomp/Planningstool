@@ -1,6 +1,12 @@
 // Lichte wrapper rond Mollie's REST API (v2), rechtstreeks met fetch i.p.v.
-// een SDK-package, de v2 REST API is al jaren stabiel en dit voorkomt
+// een SDK-package — de v2 REST API is al jaren stabiel en dit voorkomt
 // afhankelijkheid van een specifieke SDK-versie.
+//
+// NIEUW t.o.v. de vorige versie: subscriptions.update(), nodig om het
+// bedrag van een lopend abonnement bij te werken als een zaak naar een
+// andere prijsstaffel verhuist (zie cron/billing-resync). Mollie past een
+// bijgewerkt bedrag toe vanaf de eerstvolgende betaling, nooit met
+// terugwerkende kracht.
 
 const MOLLIE_BASE = "https://api.mollie.com/v2";
 
@@ -63,19 +69,9 @@ export const mollie = {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    // Past een lopend abonnement aan (bv. het bedrag), zonder het op te
-    // zeggen en opnieuw aan te maken. Geannuleerde abonnementen kunnen niet
-    // meer bijgewerkt worden (dat weigert Mollie zelf al).
-    update: (
-      customerId: string,
-      subscriptionId: string,
-      data: Partial<{
-        amount: MollieAmount;
-        description: string;
-        interval: string;
-        webhookUrl: string;
-      }>
-    ) =>
+    // Werkt het bedrag van de eerstvolgende (en alle volgende) betalingen
+    // bij. Canceled subscriptions kunnen niet bijgewerkt worden.
+    update: (customerId: string, subscriptionId: string, data: { amount: MollieAmount }) =>
       mollieFetch(`/customers/${customerId}/subscriptions/${subscriptionId}`, {
         method: "PATCH",
         body: JSON.stringify(data),

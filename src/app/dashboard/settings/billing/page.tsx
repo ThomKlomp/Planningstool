@@ -2,15 +2,13 @@ import { redirect } from "next/navigation";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import BillingActions from "../billing-actions";
-import CompanyDetailsSetting from "../company-details-setting";
-import DiscountCodeForm from "../discount-code-form";
-import { describeDiscount } from "@/lib/discount";
+import CouponForm from "./coupon-form";
 import {
-  PRICE_MONTHLY_EXCL,
-  PRICE_MONTHLY_INCL,
-  PRICE_YEARLY_EXCL,
-  PRICE_YEARLY_INCL,
+  PRICE_TIERS,
+  computeSubscriptionAmount,
+  countBillableMembers,
   formatEuro,
+  getTierForMemberCount,
 } from "@/lib/billing";
 
 export default async function BillingPage() {
@@ -27,12 +25,9 @@ export default async function BillingPage() {
       billingInterval: true,
       trialEndsAt: true,
       currentPeriodEnd: true,
-      billingName: true,
-      kvkNumber: true,
-      vatNumber: true,
-      address: true,
-      postalCode: true,
-      discount: true,
+      appliedCouponId: true,
+      couponMonthsRemaining: true,
+      coupon: { select: { code: true, type: true, value: true } },
     },
   });
 
@@ -41,12 +36,10 @@ export default async function BillingPage() {
     ? Math.max(0, Math.ceil((company.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : 0;
 
-  const billingDetailsComplete = Boolean(
-    company?.billingName &&
-      company?.kvkNumber &&
-      company?.address &&
-      company?.postalCode
-  );
+  const memberCount = await countBillableMembers(membership.companyId);
+  const currentTier = getTierForMemberCount(memberCount);
+  const monthly = await computeSubscriptionAmount(membership.companyId, "MONTHLY");
+  const yearly = await computeSubscriptionAmount(membership.companyId, "YEARLY");
 
   return (
     <div className="max-w-2xl">
@@ -62,68 +55,86 @@ export default async function BillingPage() {
         />
       </div>
 
+      <section className="mt-8">
+        <h2 className="font-display text-xl">Jouw staffel</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          {memberCount} {memberCount === 1 ? "medewerker" : "medewerkers"} → staffel{" "}
+          <span className="font-medium text-ink">{currentTier.label}</span>.
+          De prijs past zich automatisch aan als het aantal medewerkers
+          structureel verandert (bij de eerstvolgende betaling, niet met
+          terugwerkende kracht).
+        </p>
+        <div className="mt-4 overflow-hidden rounded-xl border border-line">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-paper text-xs uppercase text-ink/50">
+              <tr>
+                <th className="px-4 py-2">Medewerkers</th>
+                <th className="px-4 py-2">Per maand (excl. btw)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {PRICE_TIERS.map((tier) => (
+                <tr
+                  key={tier.id}
+                  className={tier.id === currentTier.id ? "bg-awning/5 font-medium" : undefined}
+                >
+                  <td className="px-4 py-2">{tier.label}</td>
+                  <td className="px-4 py-2">{formatEuro(tier.monthlyExcl)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {company?.appliedCouponId && company.coupon ? (
+        <section className="mt-8">
+          <h2 className="font-display text-xl">Kortingscode</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Code <span className="font-medium text-ink">{company.coupon.code}</span> actief —{" "}
+            {company.coupon.type === "PERCENTAGE"
+              ? `${company.coupon.value}% korting`
+              : `${formatEuro(company.coupon.value)} korting`}
+            {company.couponMonthsRemaining !== null
+              ? `, nog ${company.couponMonthsRemaining} ${
+                  company.couponMonthsRemaining === 1 ? "termijn" : "termijnen"
+                }`
+              : ", zo lang het abonnement loopt"}
+            .
+          </p>
+        </section>
+      ) : (
+        <section className="mt-8">
+          <h2 className="font-display text-xl">Kortingscode</h2>
+          <CouponForm />
+        </section>
+      )}
+
       {(status === "TRIALING" || status === "CANCELED" || status === "PAST_DUE") && (
         <section className="mt-8">
-          {!billingDetailsComplete ? (
-            <>
-              <h2 className="font-display text-xl">Eerst je bedrijfsgegevens</h2>
-              <p className="mt-1 text-sm text-ink/60">
-                Nodig voor de factuur. Vul in ieder geval je bedrijfsnaam,
-                KVK-nummer, adres en postcode in, dan kun je daarna een
-                abonnement kiezen. Het BTW-nummer is optioneel.
-              </p>
-              <div className="mt-4">
-                <CompanyDetailsSetting
-                  initialValue={{
-                    billingName: company?.billingName ?? "",
-                    kvkNumber: company?.kvkNumber ?? "",
-                    vatNumber: company?.vatNumber ?? "",
-                    address: company?.address ?? "",
-                    postalCode: company?.postalCode ?? "",
-                  }}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="font-display text-xl">Kies je abonnement</h2>
-              <p className="mt-1 text-sm text-ink/60">
-                Eén vast bedrag per zaak, ongeacht het aantal medewerkers.
-              </p>
-
-              <div className="mt-4">
-                {company?.discount ? (
-                  <p className="rounded-lg bg-awning/10 px-3 py-2 text-sm text-awning">
-                    Kortingscode toegepast: {describeDiscount(company.discount)}
-                  </p>
-                ) : (
-                  <DiscountCodeForm />
-                )}
-              </div>
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <PlanCard
-                  title="Maandelijks"
-                  price={`${formatEuro(PRICE_MONTHLY_EXCL)} / maand`}
-                  subtext={`${formatEuro(PRICE_MONTHLY_INCL)} incl. btw`}
-                  interval="MONTHLY"
-                />
-                <PlanCard
-                  title="Jaarlijks"
-                  price={`${formatEuro(PRICE_YEARLY_EXCL)} / jaar`}
-                  subtext={`${formatEuro(PRICE_YEARLY_INCL)} incl. btw · 2 maanden gratis`}
-                  interval="YEARLY"
-                  highlight
-                />
-              </div>
-              <a
-                href="/dashboard/settings/billing"
-                className="mt-3 inline-block text-xs text-ink/50 hover:underline"
-              >
-                Bedrijfsgegevens aanpassen
-              </a>
-            </>
-          )}
+          <h2 className="font-display text-xl">Kies je abonnement</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Gebaseerd op je huidige staffel ({currentTier.label}).
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <PlanCard
+              title="Maandelijks"
+              price={`${formatEuro(monthly.excl)} / maand`}
+              subtext={`${formatEuro(monthly.incl)} incl. btw${
+                monthly.couponApplied ? " · korting toegepast" : ""
+              }`}
+              interval="MONTHLY"
+            />
+            <PlanCard
+              title="Jaarlijks"
+              price={`${formatEuro(yearly.excl)} / jaar`}
+              subtext={`${formatEuro(yearly.incl)} incl. btw · 2 maanden gratis${
+                yearly.couponApplied ? " · korting toegepast" : ""
+              }`}
+              interval="YEARLY"
+              highlight
+            />
+          </div>
         </section>
       )}
 

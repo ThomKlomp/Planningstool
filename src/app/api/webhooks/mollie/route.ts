@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
-import { PRICE_MONTHLY_INCL, PRICE_YEARLY_INCL } from "@/lib/billing";
-import { applyDiscount } from "@/lib/discount";
+import { computeSubscriptionAmount } from "@/lib/billing";
 
 // Mollie stuurt hier een POST naartoe met de betaalinformatie ALTIJD als
-// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON, een
+// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON — een
 // veelgemaakte misvatting. We lezen 'm daarom als tekst en parsen zelf.
 // De rest van de betaalinformatie halen we op bij Mollie zelf (nooit
 // vertrouwen op wat er verder in de webhook-body staat).
@@ -38,34 +37,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
-    include: { discount: true },
-  });
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
   if (!company) {
     return NextResponse.json({ ok: true });
   }
 
   if (payment.status === "paid" && payment.sequenceType === "first") {
-    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie),
-    // zet 'm om in een terugkerend abonnement, met het kortingsbedrag als
-    // de zaak een (niet-100%) kortingscode heeft ingewisseld.
+    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie) —
+    // zet 'm om in een terugkerend abonnement, tegen de actuele staffelprijs.
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
-    const baseAmount = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
-    const amountValue = applyDiscount(baseAmount, company.discount, interval);
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
+    const { incl, excl, tier } = await computeSubscriptionAmount(company.id, interval);
 
     try {
       const subscription = await mollie.subscriptions.create(payment.customerId, {
-        amount: { currency: "EUR", value: amountValue.toFixed(2) },
+        amount: { currency: "EUR", value: incl.toFixed(2) },
         interval: interval === "YEARLY" ? "12 months" : "1 month",
-        description: `Shiftje abonnement, ${company.name}`,
+        description: `Shiftje abonnement — ${company.name}`,
         webhookUrl: `${baseUrl}/api/webhooks/mollie`,
         metadata: { companyId: company.id, interval },
       });
 
-      const periodMs =
-        (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
+      const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
 
       await prisma.company.update({
         where: { id: company.id },
@@ -74,6 +67,8 @@ export async function POST(req: Request) {
           billingInterval: interval,
           mollieSubscriptionId: subscription.id,
           currentPeriodEnd: new Date(Date.now() + periodMs),
+          currentTierId: tier.id,
+          lastBilledAmountExcl: excl,
         },
       });
     } catch (err) {
@@ -84,13 +79,24 @@ export async function POST(req: Request) {
     const interval = company.billingInterval ?? "MONTHLY";
     const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
 
-    await prisma.company.update({
-      where: { id: company.id },
-      data: {
-        subscriptionStatus: "ACTIVE",
-        currentPeriodEnd: new Date(Date.now() + periodMs),
-      },
-    });
+    const data: Record<string, unknown> = {
+      subscriptionStatus: "ACTIVE",
+      currentPeriodEnd: new Date(Date.now() + periodMs),
+    };
+
+    // Eén betaalperiode van een eventuele kortingscode is nu "verbruikt".
+    // Bij 0 vervalt de korting vanzelf — computeSubscriptionAmount past 'm
+    // dan niet meer toe, en de eerstvolgende cron/billing-resync-run
+    // corrigeert het Mollie-bedrag naar de volle staffelprijs.
+    if (company.couponMonthsRemaining !== null && company.couponMonthsRemaining !== undefined) {
+      const remaining = Math.max(0, company.couponMonthsRemaining - 1);
+      data.couponMonthsRemaining = remaining;
+      if (remaining === 0) {
+        data.appliedCouponId = null;
+      }
+    }
+
+    await prisma.company.update({ where: { id: company.id }, data });
   } else if (["failed", "expired", "canceled"].includes(payment.status)) {
     if (payment.sequenceType === "recurring") {
       await prisma.company.update({

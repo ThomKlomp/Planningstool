@@ -1,141 +1,138 @@
-# Shiftje — planningstool voor kleine horeca
+# Shiftje — update: agenda-koppeling + staffelprijzen
 
-Starter-project: beschikbaarheid ("datumprikker"), een rooster-tool die
-beschikbaarheid direct toont, bedrijfsomgevingen (multi-tenant) met een
-intern adminportaal, medewerkers uitnodigen met Google-login, en
-urenregistratie met goedkeuring door de manager.
+Deze map bevat alle nieuwe en gewijzigde bestanden voor twee features,
+gebouwd op je bestaande architectuur (Next.js App Router, Prisma,
+PostgreSQL, Mollie, NextAuth Google). Kopieer de bestanden naar dezelfde
+paden in `ThomKlomp/Planningstool` en volg onderstaande stappen.
 
-**Stack:** Next.js (App Router) · TypeScript · Prisma · PostgreSQL ·
-NextAuth (Google) · Tailwind CSS. Gebouwd om zonder gedoe op GitHub +
-Render te draaien.
+---
 
-## Hoe alles in elkaar zit
+## 1. Database-schema bijwerken
 
-- **Company** = een zaak/tenant. Elke gebruiker hoort via een `Membership`
-  bij een company, met een rol: `OWNER`, `MANAGER` of `EMPLOYEE`.
-- **PlatformAdmin** is jou: los van een company, geeft toegang tot `/admin`.
-- **Availability** = de datumprikker: per medewerker, per dag, een status.
-- **Shift** = een roosterregel, gekoppeld aan een company en (optioneel) een
-  membership.
-- **Invite** = uitnodiging per e-mail; bij het volgen van de link + inloggen
-  met Google wordt automatisch een `Membership` aangemaakt.
-- **TimeEntry** = ingevulde uren van een medewerker, met status
-  `SUBMITTED` / `APPROVED` / `REJECTED`.
+Open `prisma/schema-additions.prisma` in deze map — dat is **geen bestand
+dat je erbij zet**, maar een uitleg van de 3 wijzigingen die je handmatig in
+je bestaande `prisma/schema.prisma` doorvoert:
 
-Zie `prisma/schema.prisma` voor het volledige datamodel — dat is het beste
-startpunt om de app te begrijpen.
+1. Nieuw model `Coupon` (+ enum `CouponType`)
+2. Vier nieuwe velden op `Company` (kortingscode-koppeling + laatst-gefactureerde staffel/bedrag)
+3. Eén nieuw veld op `Membership` (`calendarToken`)
 
-## 1. Lokaal draaien
-
-### Vereisten
-- Node.js 18+
-- Een PostgreSQL-database (lokaal via Docker, of gratis via Render/Neon/Supabase)
-
-### Stappen
+Daarna:
 
 ```bash
-npm install
-cp .env.example .env
+npx prisma db push
 ```
 
-Vul `.env` in:
-- `DATABASE_URL` — je Postgres-connectiestring
-- `NEXTAUTH_SECRET` — genereer met `openssl rand -base64 32`
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — zie stap 2 hieronder
+---
 
-Database-schema uitrollen:
+## 2. Bestanden kopiëren
 
-```bash
-npm run db:push
+**Nieuwe bestanden** (gewoon toevoegen):
+
+```
+src/lib/ics.ts
+src/app/api/calendar/[token]/route.ts
+src/app/api/calendar/token/route.ts
+src/app/api/billing/coupon/route.ts
+src/app/api/cron/billing-resync/route.ts
+src/app/dashboard/calendar/page.tsx
+src/app/dashboard/calendar/calendar-sync-card.tsx
+src/app/dashboard/settings/billing/coupon-form.tsx
 ```
 
-Development-server starten:
+**Bestaande bestanden om te vervangen** (volledig herschreven, zelfde
+conventies als het origineel):
 
-```bash
-npm run dev
+```
+src/lib/billing.ts              — was vaste prijs, nu staffelprijzen + coupon-logica
+src/lib/mollie.ts               — subscriptions.update() toegevoegd
+src/app/api/billing/subscribe/route.ts   — gebruikt nu de staffelprijs
+src/app/api/webhooks/mollie/route.ts     — gebruikt nu de staffelprijs, telt coupon-termijnen af
+src/app/dashboard/settings/billing/page.tsx  — toont staffeltabel + kortingscode
 ```
 
-App draait nu op `http://localhost:3000`.
+---
 
-### Jezelf platform-admin maken
+## 3. Kleine handmatige aanpassingen (bestanden die ik niet volledig kon zien)
 
-Log eerst één keer in via de app (met Google), en run dan:
+**Navigatie** — voeg ergens in je dashboard-navigatie (waarschijnlijk
+`src/app/dashboard/layout.tsx`) een link toe naar `/dashboard/calendar`,
+zodat medewerkers 'm kunnen vinden. Zelfde patroon als je andere
+nav-links.
 
-```bash
-npm run db:seed -- jouw@email.nl
+**Waarschuwing bij uitnodigen** (optioneel maar aanbevolen) — in de route
+die een `Invite` aanmaakt (`src/app/api/invites/route.ts` of vergelijkbaar)
+kun je vóór het aanmaken van de uitnodiging het volgende aanroepen:
+
+```ts
+import { getNextMemberTierWarning } from "@/lib/billing";
+
+const tierWarning = await getNextMemberTierWarning(membership.companyId);
+// geef dit terug in de response, bv. { invite, tierWarning }
+// en toon in de UI: "Met deze medewerker ga je naar staffel {toLabel}, €{newMonthlyExcl}/maand."
 ```
 
-Je hebt nu toegang tot `/admin`.
+Dit is puur een waarschuwing vooraf — de daadwerkelijke afrekening gebeurt
+altijd via de cron (zie hieronder), dus een medewerker die deze melding
+negeert kan niets "omzeilen".
 
-## 2. Google OAuth instellen
+---
 
-1. Ga naar de [Google Cloud Console](https://console.cloud.google.com/) →
-   maak een project aan (of gebruik een bestaand project).
-2. **APIs & Services → OAuth consent screen** → stel in als "External",
-   vul app-naam en contactgegevens in.
-3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
-   → Type: "Web application".
-4. Voeg als **Authorized redirect URI** toe:
-   - Lokaal: `http://localhost:3000/api/auth/callback/google`
-   - Productie: `https://jouw-domein.onrender.com/api/auth/callback/google`
-5. Kopieer de Client ID en Client Secret naar je `.env` (en straks naar de
-   environment variables op Render).
+## 4. Cron-job toevoegen
 
-## 3. Naar GitHub pushen
+Je hebt al `cron-job.org` voor `/api/cron/open-weeks`. Voeg daar een tweede
+taak aan toe:
 
-```bash
-git init
-git add .
-git commit -m "Initial commit: Shiftje starter"
-git branch -M main
-git remote add origin https://github.com/<jouw-gebruikersnaam>/<repo-naam>.git
-git push -u origin main
-```
+- **URL:** `https://<jouw-domein>/api/cron/billing-resync`
+- **Header:** `Authorization: Bearer <CRON_SECRET>` (dezelfde secret als de bestaande cron)
+- **Interval:** 1x per dag (tijdstip maakt niet uit — zie uitleg in het bestand)
 
-## 4. Deployen op Render
+Geen nieuwe environment variables nodig — alles hergebruikt bestaande
+env vars (`CRON_SECRET`, `MOLLIE_API_KEY`, `NEXTAUTH_URL`).
 
-**Optie A — Blueprint (aanbevolen, sneller):**
+---
 
-1. Push dit project naar GitHub (zie hierboven). Het bevat al een
-   `render.yaml`.
-2. Ga in Render naar **New → Blueprint**, kies je GitHub-repo.
-3. Render maakt automatisch een web service + een gratis Postgres-database
-   aan, en koppelt `DATABASE_URL` vanzelf.
-4. Vul de overige environment variables in (Render vraagt hierom omdat ze
-   `sync: false` hebben, zodat je geen geheimen in git zet):
-   - `NEXTAUTH_URL` → je Render-URL, bv. `https://shiftje.onrender.com`
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-5. Deploy. Render draait automatisch `prisma migrate deploy` als onderdeel
-   van de build (zie `buildCommand` in `render.yaml`).
+## 5. Hoe het samen werkt
 
-**Optie B — Handmatig:**
+**Agenda-koppeling:** elke medewerker krijgt op `/dashboard/calendar` een
+unieke, geheime abonnementslink. Die link geeft een live `.ics`-feed van
+hun shifts terug; Google Agenda en Apple Agenda halen 'm zelf periodiek
+opnieuw op (reken op een paar uur vertraging, geen instant push). Geen
+OAuth, geen Google-verificatietraject nodig.
 
-1. **New → PostgreSQL** → maak een database aan, kopieer de
-   "Internal Database URL".
-2. **New → Web Service** → koppel je GitHub-repo.
-   - Build command: `npm install && npx prisma migrate deploy && npm run build`
-   - Start command: `npm run start`
-3. Zet de environment variables zoals hierboven.
-4. Deploy.
+**Staffelprijzen:** de prijs wordt **niet** live bijgewerkt zodra iemand
+wordt toegevoegd of verwijderd — dat gebeurt bewust pas bij de
+eerstvolgende afrekening, via de dagelijkse cron. Die cron:
 
-Vergeet niet de Google OAuth redirect-URI aan te vullen met je definitieve
-Render-domein (stap 2 hierboven).
+1. Telt per actieve zaak het huidige aantal medewerkers.
+2. Bepaalt de bijbehorende staffel + verrekent een eventuele kortingscode.
+3. Vergelijkt dat met het laatst doorgevoerde bedrag (`lastBilledAmountExcl`).
+4. Stuurt bij een verschil een `PATCH` naar Mollie — dat geldt voor de
+   eerstvolgende betaling, nooit met terugwerkende kracht.
 
-## Volgende stappen (nog niet in deze starter)
+Dit voorkomt tussentijdse deelbetalingen en is de "bron van waarheid":
+zelfs als iemand tijdelijk veel medewerkers toevoegt en ze voor de
+volgende afrekening weer verwijdert, telt gewoon het aantal op het moment
+dat de cron draait.
 
-- **Migraties**: dit project gebruikt `prisma db push` voor lokaal
-  itereren. Zodra het schema stabieler is, stap over op
-  `prisma migrate dev` / `prisma migrate deploy` voor nette
-  migratiehistorie (het `render.yaml`-buildcommand draait al
-  `migrate deploy`, dus zorg dat je migraties committed hebt).
-- **E-mail versturen bij uitnodigingen** — nu wordt alleen een link
-  gegenereerd (zie `TODO` in `src/app/api/invites/route.ts`). Koppel
-  bijvoorbeeld Resend of Postmark.
-- **Company-switcher** — huidige aanname is één zaak per gebruiker; zie
-  comment in `src/lib/current-membership.ts`.
-- **Weeknavigatie** — beschikbaarheid en rooster tonen nu alleen de huidige
-  week; volgende/vorige week toevoegen is een kleine uitbreiding van
-  `src/lib/week.ts` + de paginas die het gebruiken.
-- **Bugmonitoring in het adminportaal** — koppel bijvoorbeeld Sentry en
-  toon recente errors op `/admin`.
+**Kortingscodes:** eigen tabel (`Coupon`), los van Mollie. Een code is
+percentage- of vast-bedrag-korting, met optioneel een looptijd in aantal
+termijnen (`durationMonths`) en/of een maximum aantal keer te gebruiken.
+Toegepast via `/dashboard/settings/billing` (`CouponForm`) of programmatisch
+via `POST /api/billing/coupon`. Zelf codes aanmaken kan vooralsnog alleen
+rechtstreeks in de database (`prisma studio` of een script) — er is geen
+admin-UI voor gebouwd; zeg het als je die ook wilt.
+
+---
+
+## 6. Testen
+
+1. `npx prisma db push` lokaal, dan `npm run dev`.
+2. Log in, ga naar `/dashboard/calendar`, maak een agenda-link aan, open
+   de `.ics`-URL direct in de browser om te checken dat er geldige
+   iCalendar-inhoud terugkomt.
+3. Maak in Mollie test mode een coupon aan in je database (via Prisma
+   Studio: `npx prisma studio`) en test `/dashboard/settings/billing`.
+4. Roep `/api/cron/billing-resync` handmatig aan met de juiste
+   Authorization-header (bv. met `curl`) om de sync-logica te testen
+   zonder op de dagelijkse cron te wachten.

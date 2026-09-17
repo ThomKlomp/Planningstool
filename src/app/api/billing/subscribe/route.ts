@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
-import { PRICE_MONTHLY_INCL, PRICE_YEARLY_INCL } from "@/lib/billing";
-import { applyDiscount } from "@/lib/discount";
+import { computeSubscriptionAmount } from "@/lib/billing";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -21,17 +20,15 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const interval = body?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
-  const baseAmount = interval === "YEARLY" ? PRICE_YEARLY_INCL : PRICE_MONTHLY_INCL;
 
-  const company = await prisma.company.findUnique({
-    where: { id: membership.companyId },
-    include: { discount: true },
-  });
+  const company = await prisma.company.findUnique({ where: { id: membership.companyId } });
   if (!company) {
     return NextResponse.json({ error: "Zaak niet gevonden" }, { status: 404 });
   }
 
-  const amountValue = applyDiscount(baseAmount, company.discount, interval);
+  // Staffelprijs o.b.v. het actuele aantal medewerkers, met een eventuele
+  // al toegepaste kortingscode verrekend (zie /api/billing/coupon).
+  const { incl, excl, tier } = await computeSubscriptionAmount(company.id, interval);
 
   try {
     let customerId = company.mollieCustomerId;
@@ -57,8 +54,10 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
     const payment = await mollie.payments.create({
       customerId,
-      amount: { currency: "EUR", value: amountValue.toFixed(2) },
-      description: `Shiftje abonnement, ${company.name} (${interval === "YEARLY" ? "jaarlijks" : "maandelijks"})`,
+      amount: { currency: "EUR", value: incl.toFixed(2) },
+      description: `Shiftje abonnement — ${company.name} (${
+        interval === "YEARLY" ? "jaarlijks" : "maandelijks"
+      }, staffel ${tier.label})`,
       redirectUrl: `${baseUrl}/dashboard/settings/billing?status=pending`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
       sequenceType: "first",
@@ -67,7 +66,11 @@ export async function POST(req: Request) {
 
     await prisma.company.update({
       where: { id: company.id },
-      data: { billingInterval: interval },
+      data: {
+        billingInterval: interval,
+        currentTierId: tier.id,
+        lastBilledAmountExcl: excl,
+      },
     });
 
     const checkoutUrl = payment._links?.checkout?.href;
