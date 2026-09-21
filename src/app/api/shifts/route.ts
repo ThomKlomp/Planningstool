@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
+import { notifyShiftChanges, describeShift } from "@/lib/roster-change";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -84,6 +85,23 @@ export async function POST(req: Request) {
         endTime: "",
         status: "DRAFT",
       },
+    });
+  }
+
+  // Staat het rooster al online, dan moet de medewerker weten dat er een dienst bij is.
+  if (membershipId) {
+    await notifyShiftChanges({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      actorMembershipId: membership.membershipId,
+      shiftDate: shift.date,
+      changes: [
+        {
+          membershipId,
+          title: "Je bent ingeroosterd",
+          body: `Je staat ingepland op ${describeShift(shift)}.`,
+        },
+      ],
     });
   }
 

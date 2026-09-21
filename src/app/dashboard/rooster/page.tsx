@@ -227,6 +227,8 @@ export default async function RosterPage({
         {canManage && (
           <RosterActions
             isPublished={rosterPublished}
+            emailedAt={rosterWeek?.emailedAt ? rosterWeek.emailedAt.toISOString() : null}
+            emailedCount={rosterWeek?.emailedCount ?? null}
             weekStart={week[0].toISOString()}
             weekLabel={`week ${getISOWeekNumber(week[0])}`}
             members={members.map((m) => ({

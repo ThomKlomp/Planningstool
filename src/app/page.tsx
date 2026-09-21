@@ -119,7 +119,7 @@ export default function HomePage() {
               <ul className="mt-6 space-y-2 text-sm text-paper/80">
                 <li>Beschikbaarheid, rooster, teams, uren</li>
                 <li>7 dagen gratis proberen</li>
-                <li>Jaarlijks betalen? 2 maanden gratis</li>
+                <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
               </ul>
             </div>
             <div className="rounded-2xl border border-paper/20 bg-paper/5 p-6 md:p-8">
@@ -128,7 +128,7 @@ export default function HomePage() {
                   <tr>
                     <th className="pb-3 font-medium">Medewerkers</th>
                     <th className="pb-3 text-right font-medium">Per maand</th>
-                    <th className="pb-3 text-right font-medium">Per jaar</th>
+                    <th className="pb-3 text-right font-medium">Per jaar (met korting)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-paper/10">
@@ -138,8 +138,13 @@ export default function HomePage() {
                       <td className="py-3 text-right font-display text-lg">
                         {formatEuro(tier.monthlyExcl)}
                       </td>
-                      <td className="py-3 text-right text-paper/70">
-                        {formatEuro(yearlyExclForTier(tier))}
+                      <td className="py-3 text-right">
+                        <span className="mr-1.5 text-paper/40 line-through">
+                          {formatEuro(tier.monthlyExcl * 12)}
+                        </span>
+                        <span className="font-medium text-amber">
+                          {formatEuro(yearlyExclForTier(tier))}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -151,7 +156,7 @@ export default function HomePage() {
                   </tr>
                 </tbody>
               </table>
-              <p className="mt-3 text-xs text-paper/50">Alle prijzen excl. btw.</p>
+              <p className="mt-3 text-xs text-paper/50">Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van 12 maanden.</p>
 
               <Link
                 href="/onboarding"

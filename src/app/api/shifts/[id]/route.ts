@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyShiftChanges, describeShift, shiftDateLabel, type ShiftChange } from "@/lib/roster-change";
 
 export async function PATCH(
   req: Request,
@@ -103,6 +104,46 @@ export async function PATCH(
     }
   }
 
+  // Medewerkers laten weten wat er aan hun diensten veranderd is (alleen als
+  // het rooster van die week al online staat, zie lib/roster-change).
+  const changes: ShiftChange[] = [];
+  if (shift.membershipId !== updated.membershipId) {
+    if (shift.membershipId) {
+      changes.push({
+        membershipId: shift.membershipId,
+        title: `Je dienst op ${shiftDateLabel(shift.date)} is vervallen`,
+        body: `Je staat niet meer ingepland op ${describeShift(shift)}.`,
+      });
+    }
+    if (updated.membershipId) {
+      changes.push({
+        membershipId: updated.membershipId,
+        title: "Je bent ingeroosterd",
+        body: `Je staat ingepland op ${describeShift(updated)}.`,
+      });
+    }
+  } else if (
+    updated.membershipId &&
+    (shift.startTime !== updated.startTime ||
+      shift.endTime !== updated.endTime ||
+      (shift.role ?? null) !== (updated.role ?? null))
+  ) {
+    changes.push({
+      membershipId: updated.membershipId,
+      title: `Je dienst op ${shiftDateLabel(updated.date)} is gewijzigd`,
+      body: `Was: ${describeShift(shift)}. Nu: ${describeShift(updated)}.`,
+    });
+  }
+  if (changes.length > 0) {
+    await notifyShiftChanges({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      actorMembershipId: membership.membershipId,
+      shiftDate: updated.date,
+      changes,
+    });
+  }
+
   return NextResponse.json({ shift: updated });
 }
 
@@ -128,6 +169,22 @@ export async function DELETE(
   // van de shift, via onDelete: SetNull), een eventueel ruilverzoek wordt
   // automatisch mee opgeruimd (onDelete: Cascade).
   await prisma.shift.delete({ where: { id: shift.id } });
+
+  if (shift.membershipId) {
+    await notifyShiftChanges({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      actorMembershipId: membership.membershipId,
+      shiftDate: shift.date,
+      changes: [
+        {
+          membershipId: shift.membershipId,
+          title: `Je dienst op ${shiftDateLabel(shift.date)} is vervallen`,
+          body: `Je staat niet meer ingepland op ${describeShift(shift)}.`,
+        },
+      ],
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

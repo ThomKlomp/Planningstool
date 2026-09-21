@@ -27,6 +27,25 @@ export async function supportRecipients(): Promise<string[]> {
   return admins.map((a) => a.user.email).filter((e): e is string => Boolean(e));
 }
 
+const ROLE_LABEL: Record<string, string> = {
+  OWNER: "eigenaar",
+  MANAGER: "manager",
+  EMPLOYEE: "medewerker",
+};
+
+/** "Café De Pub (eigenaar)" voor de zaak(en) van een gebruiker; null bij een bezoeker. */
+export async function describeUserCompanies(userId: string | null): Promise<string | null> {
+  if (!userId) return null;
+  const memberships = await prisma.membership.findMany({
+    where: { userId },
+    include: { company: { select: { name: true } } },
+  });
+  if (memberships.length === 0) return "Ingelogd, nog geen zaak";
+  return memberships
+    .map((m) => `${m.company.name} (${ROLE_LABEL[m.role] ?? m.role})`)
+    .join(", ");
+}
+
 /**
  * Mailt het supportteam over een nieuwe chat (isNew) of een nieuw bericht in
  * een bestaande chat. Faalt nooit: een mislukte e-mail mag het chatbericht van
@@ -42,8 +61,9 @@ export async function notifySupportOfMessage(opts: {
   try {
     const conversation = await prisma.supportConversation.findUnique({
       where: { id: opts.conversationId },
-      select: { notifiedAt: true },
+      select: { notifiedAt: true, userId: true },
     });
+    const companyInfo = await describeUserCompanies(conversation?.userId ?? null);
 
     if (
       !opts.isNew &&
@@ -71,6 +91,9 @@ export async function notifySupportOfMessage(opts: {
         opts.isNew ? "Er is een support-chat aangemaakt" : "Nieuw bericht in een support-chat",
         `
           <p><strong>Van:</strong> ${escapeHtml(opts.name)} (${escapeHtml(opts.email)})</p>
+          <p><strong>Zaak:</strong> ${
+            companyInfo ? escapeHtml(companyInfo) : "Niet ingelogd (bezoeker zonder account)"
+          }</p>
           <p style="margin-top: 12px; white-space: pre-wrap;">${escapeHtml(opts.message)}</p>
           <p style="margin-top: 20px;">
             <a href="${link}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">

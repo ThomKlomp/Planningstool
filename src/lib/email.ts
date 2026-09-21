@@ -2,7 +2,10 @@ import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM = process.env.RESEND_FROM_EMAIL || "Shiftje <onboarding@resend.dev>";
+// Alle mails van Shiftje komen van dit ene (no-reply) adres. Bewust vast, niet
+// instelbaar per mail of via een omgevingsvariabele. Het domein shiftje.nl moet
+// bij Resend geverifieerd zijn.
+export const FROM = "Shiftje <shiftje@shiftje.nl>";
 
 export async function sendEmail({
   to,
@@ -10,16 +13,14 @@ export async function sendEmail({
   html,
   replyTo,
   bcc,
-  from,
 }: {
   to?: string | string[];
   subject: string;
   html: string;
   replyTo?: string;
   bcc?: string | string[];
-  from?: string;
 }) {
-  const resolvedFrom = from || FROM;
+  const resolvedFrom = FROM;
   // Bij een pure BCC-verzending (iedereen anoniem in bcc, niemand als
   // zichtbare "aan") is er alsnog een "to" nodig voor de meeste
   // e-mailproviders: gebruik dan het eigen afzenderadres, zodat er nooit
@@ -53,7 +54,7 @@ export function emailLayout(title: string, bodyHtml: string) {
         ${bodyHtml}
       </div>
       <p style="margin-top: 32px; font-size: 12px; color: #999;">
-        Verstuurd via Shiftje.
+        Verstuurd via Shiftje. Dit is een automatisch bericht, je kunt niet op deze e-mail reageren.
       </p>
     </div>
   `;
@@ -69,7 +70,7 @@ export function emailLayoutWide(title: string, bodyHtml: string) {
         ${bodyHtml}
       </div>
       <p style="margin-top: 32px; font-size: 12px; color: #999;">
-        Verstuurd via Shiftje.
+        Verstuurd via Shiftje. Dit is een automatisch bericht, je kunt niet op deze e-mail reageren.
       </p>
     </div>
   `;

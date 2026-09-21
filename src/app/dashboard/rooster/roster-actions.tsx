@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Shift = {
   id: string;
@@ -71,17 +72,22 @@ function dayLabel(day: Date) {
 
 export default function RosterActions({
   isPublished,
+  emailedAt,
+  emailedCount,
   weekStart,
   weekLabel,
   members,
   shifts,
 }: {
   isPublished: boolean;
+  emailedAt: string | null;
+  emailedCount: number | null;
   weekStart: string;
   weekLabel: string;
   members: Member[];
   shifts: Shift[];
 }) {
+  const router = useRouter();
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -104,6 +110,7 @@ export default function RosterActions({
       setMessage("E-mail kon niet verstuurd worden.");
     }
     setSending(false);
+    router.refresh(); // toont de bijgewerkte "Laatst gemaild"-regel
   }
 
   function downloadCsv() {
@@ -195,17 +202,39 @@ export default function RosterActions({
       </button>
       <button
         onClick={downloadCsv}
-        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
+        disabled={!isPublished}
+        title={isPublished ? undefined : "Publiceer het rooster eerst, dan kun je het downloaden"}
+        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink disabled:opacity-50"
       >
         Downloaden (CSV)
       </button>
       <button
         onClick={downloadPdf}
-        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink"
+        disabled={!isPublished}
+        title={isPublished ? undefined : "Publiceer het rooster eerst, dan kun je het downloaden"}
+        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium hover:border-ink disabled:opacity-50"
       >
         Downloaden (PDF)
       </button>
       {message && <span className="text-xs text-ink/50">{message}</span>}
+      {!isPublished && (
+        <span className="text-xs text-ink/50">
+          Mailen en downloaden kan pas nadat je het rooster hebt gepubliceerd.
+        </span>
+      )}
+      {emailedAt && (
+        <span className="w-full text-xs text-awning">
+          ✓ Laatst gemaild op{" "}
+          {new Date(emailedAt).toLocaleDateString("nl-NL", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          {emailedCount ? ` naar ${emailedCount} ${emailedCount === 1 ? "teamlid" : "teamleden"}` : ""}
+        </span>
+      )}
     </div>
   );
 }

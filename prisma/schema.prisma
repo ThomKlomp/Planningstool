@@ -287,6 +287,8 @@ model RosterWeek {
   published   Boolean   @default(false)
   publishedAt DateTime?
   notifiedAt  DateTime? // wanneer medewerkers voor het eerst een melding kregen
+  emailedAt   DateTime? // wanneer het rooster voor het laatst per mail naar het team is gestuurd
+  emailedCount Int?     // naar hoeveel teamleden
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 

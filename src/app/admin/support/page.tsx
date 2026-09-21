@@ -6,7 +6,13 @@ export default async function AdminSupportPage() {
     orderBy: { updatedAt: "desc" },
     include: {
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
-      user: { select: { name: true, email: true } },
+      user: {
+        select: {
+          name: true,
+          email: true,
+          memberships: { select: { company: { select: { name: true } } } },
+        },
+      },
     },
     take: 100,
   });
@@ -47,7 +53,15 @@ export default async function AdminSupportPage() {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-ink/50">{email}</p>
+                  <p className="text-xs text-ink/50">
+                    {email}
+                    {" · "}
+                    {c.user
+                      ? c.user.memberships.length > 0
+                        ? c.user.memberships.map((m) => m.company.name).join(", ")
+                        : "geen zaak"
+                      : "bezoeker (niet ingelogd)"}
+                  </p>
                   {lastMessage && (
                     <p className="mt-1 truncate text-xs text-ink/60">
                       {lastMessage.sender === "SUPPORT" ? "Jij: " : ""}

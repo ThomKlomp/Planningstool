@@ -12,7 +12,13 @@ export default async function AdminSupportConversationPage({
     where: { id: params.id },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
-      user: { select: { name: true, email: true } },
+      user: {
+        select: {
+          name: true,
+          email: true,
+          memberships: { select: { role: true, company: { select: { id: true, name: true } } } },
+        },
+      },
     },
   });
 
@@ -29,6 +35,28 @@ export default async function AdminSupportConversationPage({
       <div className="mt-2">
         <h1 className="font-display text-2xl">{name}</h1>
         <p className="text-sm text-ink/50">{email}</p>
+        <p className="mt-1 text-sm">
+          <span className="text-ink/50">Zaak: </span>
+          {conversation.user ? (
+            conversation.user.memberships.length > 0 ? (
+              conversation.user.memberships.map((m, i) => (
+                <span key={m.company.id}>
+                  {i > 0 && ", "}
+                  <Link href={`/admin/companies/${m.company.id}`} className="text-awning hover:underline">
+                    {m.company.name}
+                  </Link>{" "}
+                  <span className="text-ink/50">
+                    ({m.role === "OWNER" ? "eigenaar" : m.role === "MANAGER" ? "manager" : "medewerker"})
+                  </span>
+                </span>
+              ))
+            ) : (
+              "ingelogd, nog geen zaak"
+            )
+          ) : (
+            "bezoeker, niet ingelogd"
+          )}
+        </p>
       </div>
 
       <div className="mt-6">

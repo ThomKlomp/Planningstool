@@ -6,8 +6,6 @@ import { sendEmail, emailLayoutWide } from "@/lib/email";
 import { resolveWeek, getISOWeekNumber, toDateParam } from "@/lib/week";
 import { isRosterPublished } from "@/lib/roster-publish";
 
-const ROSTER_FROM = "Shiftje Rooster <rooster@shiftje.nl>";
-
 type GridMember = {
   membershipId: string;
   name: string;
@@ -229,7 +227,6 @@ export async function POST(req: Request) {
     const ownerEmail = allMembers.find((m) => m.role === "OWNER")?.email;
 
     const result = await sendEmail({
-      from: ROSTER_FROM,
       to: ownerEmail || `${membership.companySlug}@shiftje.nl`,
       bcc: emails,
       subject,
@@ -275,6 +272,21 @@ export async function POST(req: Request) {
       const ownShifts = allShifts.filter((s) => s.membershipId === e.membershipId);
       await sendGroup([e], [e], ownShifts);
     }
+  }
+
+  // Onthouden dat (en wanneer) het rooster gemaild is, zodat de manager dat
+  // ook later nog op de roosterpagina terugziet.
+  if (anySent) {
+    await prisma.rosterWeek.upsert({
+      where: { companyId_weekStart: { companyId: membership.companyId, weekStart: week[0] } },
+      update: { emailedAt: new Date(), emailedCount: sentCount },
+      create: {
+        companyId: membership.companyId,
+        weekStart: week[0],
+        emailedAt: new Date(),
+        emailedCount: sentCount,
+      },
+    });
   }
 
   return NextResponse.json({

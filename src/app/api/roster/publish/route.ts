@@ -69,5 +69,23 @@ export async function POST(req: Request) {
     });
   }
 
+  // Opnieuw gepubliceerd na een correctie: medewerkers weten dan dat het
+  // rooster bijgewerkt is (alleen een melding, geen extra mail).
+  if (published && existing?.notifiedAt && !existing.published) {
+    const employees = await prisma.membership.findMany({
+      where: { companyId: membership.companyId, role: "EMPLOYEE" },
+      select: { id: true },
+    });
+    await notify(
+      membership.companyId,
+      employees.map((m) => m.id),
+      {
+        title: `Rooster week ${getISOWeekNumber(weekStart)} is bijgewerkt`,
+        body: "Er zijn wijzigingen doorgevoerd, bekijk het rooster.",
+        link: `/dashboard/rooster?week=${toDateParam(weekStart)}`,
+      }
+    );
+  }
+
   return NextResponse.json({ rosterWeek });
 }
