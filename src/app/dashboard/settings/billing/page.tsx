@@ -70,6 +70,14 @@ export default async function BillingPage() {
           zich automatisch aan als het aantal medewerkers structureel verandert (bij de
           eerstvolgende betaling, niet met terugwerkende kracht).
         </p>
+        {status === "ACTIVE" && company?.billingInterval === "YEARLY" && (
+          <p className="mt-2 text-sm text-ink/60">
+            Groeit je team tijdens het jaar naar een hogere staffel? Dan betaal je het verschil
+            naar rato van de resterende maanden bij (resterende maanden × prijsverschil ×
+            10/12, excl. btw). Dit wordt automatisch afgeschreven via je machtiging. Bij een
+            lagere staffel wordt niets terugbetaald; de lagere prijs geldt bij de verlenging.
+          </p>
+        )}
         <div className="mt-4 overflow-hidden rounded-xl border border-line">
           <table className="w-full text-left text-sm">
             <thead className="bg-paper text-xs uppercase text-ink/50">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
 import { computeSubscriptionAmount } from "@/lib/billing";
+import { handleTierUpgradePayment } from "@/lib/tier-upgrade";
 
 // Mollie stuurt hier een POST naartoe met de betaalinformatie ALTIJD als
 // application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON — een
@@ -42,6 +43,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // Bijbetaling bij groei naar een hogere staffel: geen verlenging, dus apart
+  // afhandelen (mag currentPeriodEnd en de status niet aanraken).
+  if (payment.metadata?.kind === "tier_upgrade") {
+    await handleTierUpgradePayment({ id: payment.id, status: payment.status });
+    return NextResponse.json({ ok: true });
+  }
+
   if (payment.status === "paid" && payment.sequenceType === "first") {
     // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie) —
     // zet 'm om in een terugkerend abonnement, tegen de actuele staffelprijs.
@@ -68,6 +76,7 @@ export async function POST(req: Request) {
           mollieSubscriptionId: subscription.id,
           currentPeriodEnd: new Date(Date.now() + periodMs),
           currentTierId: tier.id,
+          periodTierId: tier.id,
           lastBilledAmountIncl: incl,
         },
       });
@@ -83,11 +92,14 @@ export async function POST(req: Request) {
     const interval = company.billingInterval ?? "MONTHLY";
     const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
 
+    // Nieuwe betaalperiode: de zojuist betaalde staffel is de nieuwe basislijn
+    // voor eventuele bijbetaling in dit jaar.
     await prisma.company.update({
       where: { id: company.id },
       data: {
         subscriptionStatus: "ACTIVE",
         currentPeriodEnd: new Date(Date.now() + periodMs),
+        periodTierId: company.currentTierId,
       },
     });
   } else if (["failed", "expired", "canceled"].includes(payment.status)) {

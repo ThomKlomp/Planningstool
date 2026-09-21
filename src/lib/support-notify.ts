@@ -14,7 +14,7 @@ const FOLLOW_UP_THROTTLE_MS = 15 * 60 * 1000;
  * anders alle platform-admins. Zo komt de melding ook aan als de
  * omgevingsvariabele (nog) niet is gezet.
  */
-async function supportRecipients(): Promise<string[]> {
+export async function supportRecipients(): Promise<string[]> {
   const configured = (process.env.SUPPORT_EMAIL ?? "")
     .split(",")
     .map((e) => e.trim())

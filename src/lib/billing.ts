@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma";
 import { applyDiscount } from "@/lib/discount";
 import type { CompanyDiscount } from "@prisma/client";
+import type { PriceTier } from "@/lib/pricing";
 import {
   getTierForMemberCount,
   yearlyExclForTier,
@@ -83,6 +84,20 @@ export function isDiscountCurrentlyActive(
  *  - de webhook die de eerste betaling omzet in een Mollie-abonnement
  *  - de dagelijkse cron die bestaande abonnementen bijwerkt (cron/billing-resync)
  */
+/**
+ * Jaarbedrag (incl. btw, met een eventuele actieve korting) voor een gegeven
+ * staffel. Gebruikt voor de bijbetaling bij groei tijdens een jaarabonnement.
+ */
+export function yearlyInclForTier(
+  tier: PriceTier,
+  discount: CompanyDiscount | null,
+  billingInterval: "MONTHLY" | "YEARLY" | null
+) {
+  const baseIncl = inclFromExcl(yearlyExclForTier(tier));
+  const active = discount !== null && isDiscountCurrentlyActive(discount, billingInterval);
+  return active && discount ? applyDiscount(baseIncl, discount, "YEARLY") : baseIncl;
+}
+
 export async function computeSubscriptionAmount(
   companyId: string,
   interval: "MONTHLY" | "YEARLY"
@@ -126,7 +141,12 @@ export async function getNextMemberTierWarning(companyId: string) {
   const currentTier = getTierForMemberCount(count);
   const nextTier = getTierForMemberCount(count + 1);
   if (nextTier.id === currentTier.id) return null;
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { billingInterval: true, subscriptionStatus: true },
+  });
   return {
+    yearly: company?.subscriptionStatus === "ACTIVE" && company.billingInterval === "YEARLY",
     fromLabel: currentTier.label,
     toLabel: nextTier.label,
     newMonthlyExcl: nextTier.monthlyExcl,

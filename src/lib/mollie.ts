@@ -47,9 +47,9 @@ export const mollie = {
       customerId: string;
       amount: MollieAmount;
       description: string;
-      redirectUrl: string;
+      redirectUrl?: string; // niet nodig bij "recurring" (geen klantactie)
       webhookUrl: string;
-      sequenceType: "first";
+      sequenceType: "first" | "recurring";
       metadata?: Record<string, string>;
     }) => mollieFetch("/payments", { method: "POST", body: JSON.stringify(data) }),
     get: (paymentId: string) => mollieFetch(`/payments/${paymentId}`),
@@ -69,6 +69,8 @@ export const mollie = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    get: (customerId: string, subscriptionId: string) =>
+      mollieFetch(`/customers/${customerId}/subscriptions/${subscriptionId}`),
     // Werkt het bedrag van de eerstvolgende (en alle volgende) betalingen
     // bij. Canceled subscriptions kunnen niet bijgewerkt worden.
     update: (customerId: string, subscriptionId: string, data: { amount: MollieAmount }) =>

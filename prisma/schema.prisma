@@ -91,6 +91,8 @@ model Company {
   mollieSubscriptionId String?
   currentTierId        String?  // laatst doorgevoerde staffel-id ("S" | "M" | "L" | "XL"), voor drift-detectie
   lastBilledAmountIncl Float?   // laatst naar Mollie doorgevoerde bedrag incl. btw
+  periodTierId         String?  // hoogste staffel waarvoor in de lopende betaalperiode (jaar) al betaald is; basis voor bijbetaling bij groei
+  tierUpgradeCharges   TierUpgradeCharge[]
   shiftSwapRequests ShiftSwapRequest[]
   notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
@@ -521,4 +523,26 @@ model CompanyDiscount {
 
   company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   discountCode DiscountCode @relation(fields: [discountCodeId], references: [id])
+}
+
+// Bijbetaling voor een jaarabonnement wanneer de zaak tijdens het jaar naar
+// een hogere staffel groeit: verschil in jaarprijs x resterende maanden / 12,
+// automatisch geïncasseerd via de bestaande Mollie-machtiging.
+model TierUpgradeCharge {
+  id              String   @id @default(cuid())
+  companyId       String
+  fromTierId      String
+  toTierId        String
+  periodKey       String   // volgende verlengdatum (YYYY-MM-DD): voorkomt dubbel incasseren in dezelfde periode
+  monthsRemaining Int
+  amountIncl      Float
+  molliePaymentId String   @unique
+  status          String   @default("PENDING") // PENDING | PAID | FAILED
+  createdAt       DateTime @default(now())
+  paidAt          DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, toTierId, periodKey])
+  @@index([companyId])
 }

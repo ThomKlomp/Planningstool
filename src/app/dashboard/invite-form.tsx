@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import ContactButton from "@/components/contact-button";
 
 type Invite = { id: string; email: string; role: string; token: string };
-type TierWarning = { fromLabel: string; toLabel: string; newMonthlyExcl: number } | null;
+type TierWarning = {
+  yearly: boolean;
+  fromLabel: string;
+  toLabel: string;
+  newMonthlyExcl: number;
+} | null;
 
 export default function InviteForm({
   onInvited,
@@ -112,8 +117,10 @@ export default function InviteForm({
       <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
         Let op: als deze uitnodiging wordt geaccepteerd, ga je van staffel{" "}
         {result.tierWarning.fromLabel} naar {result.tierWarning.toLabel} — €
-        {result.tierWarning.newMonthlyExcl.toFixed(2)}/maand excl. btw vanaf de
-        eerstvolgende betaling.
+        {result.tierWarning.newMonthlyExcl.toFixed(2)}/maand excl. btw.{" "}
+        {result.tierWarning.yearly
+          ? "Omdat je een jaarabonnement hebt, betaal je het verschil naar rato van de resterende maanden bij (wordt automatisch afgeschreven). Bij de verlenging geldt het volledige tarief."
+          : "Dit geldt vanaf de eerstvolgende betaling."}
       </p>
     )}
     {maxReached && (

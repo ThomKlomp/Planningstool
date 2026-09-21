@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { mollie } from "@/lib/mollie";
 import { computeSubscriptionAmount, isDiscountCurrentlyActive } from "@/lib/billing";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { chargeYearlyTierUpgrade } from "@/lib/tier-upgrade";
 
 // Bedoeld om 1x per dag aangeroepen te worden door een externe cron-dienst
 // (zelfde patroon als /api/cron/open-weeks), met header:
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
 
   let priceUpdated = 0;
   let discountsExpired = 0;
+  let upgradesCharged = 0;
   const errors: string[] = [];
 
   for (const company of companies) {
@@ -59,6 +61,15 @@ export async function GET(req: Request) {
 
       const interval = company.billingInterval ?? "MONTHLY";
       const { incl, tier } = await computeSubscriptionAmount(company.id, interval);
+
+      // Jaarabonnement en een hogere staffel dan waarvoor betaald is: eerst het
+      // verschil naar rato incasseren. Mislukt dat (bv. Mollie-fout), dan
+      // gaat de rest van deze zaak niet door en probeert de cron het morgen
+      // opnieuw; de prijs van de volgende verlenging wordt pas daarna bijgewerkt.
+      if (interval === "YEARLY") {
+        const result = await chargeYearlyTierUpgrade(company, tier.id);
+        if (result.charged) upgradesCharged += 1;
+      }
 
       const drifted =
         company.lastBilledAmountIncl === null ||
@@ -110,6 +121,7 @@ export async function GET(req: Request) {
     checked: companies.length,
     priceUpdated,
     discountsExpired,
+    upgradesCharged,
     errors,
   });
 }
