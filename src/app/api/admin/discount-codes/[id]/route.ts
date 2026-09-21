@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PRICE_TIERS } from "@/lib/pricing";
 
 async function requirePlatformAdmin() {
   const session = await getServerSession(authOptions);
@@ -25,6 +26,7 @@ export async function PATCH(
     duration?: "FOREVER" | "LIMITED_MONTHS";
     durationMonths?: number | null;
     applicableInterval?: "MONTHLY" | "YEARLY" | "BOTH";
+    applicableTiers?: string[];
     maxRedemptions?: number | null;
     expiresAt?: Date | null;
     active?: boolean;
@@ -60,6 +62,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Ongeldig interval" }, { status: 400 });
     }
     data.applicableInterval = body.applicableInterval;
+  }
+  if (body?.applicableTiers !== undefined) {
+    const validTierIds = PRICE_TIERS.map((t) => t.id);
+    if (!Array.isArray(body.applicableTiers)) {
+      return NextResponse.json({ error: "Ongeldige staffels" }, { status: 400 });
+    }
+    const tiers: string[] = body.applicableTiers.filter(
+      (id: unknown) => typeof id === "string" && validTierIds.includes(id)
+    );
+    data.applicableTiers = tiers.length === validTierIds.length ? [] : tiers;
   }
   if (body?.maxRedemptions !== undefined) {
     data.maxRedemptions = body.maxRedemptions ? Number(body.maxRedemptions) : null;

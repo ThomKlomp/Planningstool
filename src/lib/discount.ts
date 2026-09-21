@@ -1,6 +1,17 @@
+import { PRICE_TIERS } from "@/lib/pricing";
+
 export type DiscountType = "PERCENTAGE" | "FIXED_AMOUNT";
 export type DiscountDuration = "FOREVER" | "LIMITED_MONTHS";
 export type DiscountInterval = "MONTHLY" | "YEARLY" | "BOTH";
+
+/** Geldt de code voor deze staffel? Een lege lijst betekent: alle staffels. */
+export function discountAppliesToTier(
+  discount: { applicableTiers?: string[] } | null | undefined,
+  tierId: string | undefined
+): boolean {
+  const tiers = discount?.applicableTiers ?? [];
+  return tiers.length === 0 || !tierId || tiers.includes(tierId);
+}
 
 /**
  * Past een korting toe op een bedrag (in euro's, zoals PRICE_MONTHLY_INCL).
@@ -15,12 +26,16 @@ export type DiscountInterval = "MONTHLY" | "YEARLY" | "BOTH";
 export function applyDiscount(
   baseAmount: number,
   discount:
-    | { type: DiscountType; value: number; applicableInterval?: DiscountInterval }
+    | { type: DiscountType; value: number; applicableInterval?: DiscountInterval; applicableTiers?: string[] }
     | null
     | undefined,
-  interval?: "MONTHLY" | "YEARLY"
+  interval?: "MONTHLY" | "YEARLY",
+  tierId?: string
 ): number {
   if (!discount) return baseAmount;
+
+  // Code geldt niet voor de staffel waar de zaak nu in zit.
+  if (!discountAppliesToTier(discount, tierId)) return baseAmount;
 
   if (
     interval &&
@@ -46,16 +61,24 @@ export function describeDiscount(discount: {
   duration: DiscountDuration;
   durationMonths?: number | null;
   applicableInterval?: DiscountInterval;
+  applicableTiers?: string[];
 }): string {
   const amount =
     discount.type === "PERCENTAGE" ? `${discount.value}%` : `€${(discount.value / 100).toFixed(2)}`;
 
+  const tierSuffix =
+    discount.applicableTiers && discount.applicableTiers.length > 0
+      ? ` (staffel ${discount.applicableTiers
+          .map((id) => PRICE_TIERS.find((t) => t.id === id)?.label.replace(" medewerkers", "") ?? id)
+          .join(", ")})`
+      : "";
+
   const intervalSuffix =
-    discount.applicableInterval === "MONTHLY"
+    (discount.applicableInterval === "MONTHLY"
       ? " (alleen maandelijks)"
       : discount.applicableInterval === "YEARLY"
       ? " (alleen jaarlijks)"
-      : "";
+      : "") + tierSuffix;
 
   if (discount.type === "PERCENTAGE" && discount.value === 100 && discount.duration === "LIMITED_MONTHS") {
     return `Eerste ${discount.durationMonths} ${discount.durationMonths === 1 ? "maand" : "maanden"} gratis`;

@@ -495,6 +495,7 @@ model DiscountCode {
   duration           DiscountDuration @default(FOREVER)
   durationMonths     Int?             // alleen relevant bij LIMITED_MONTHS
   applicableInterval DiscountInterval @default(BOTH) // alleen maandelijks, alleen jaarlijks, of allebei
+  applicableTiers    String[]         @default([]) // staffel-id's ("S","M","L","XL") waarvoor de code geldt; leeg = alle staffels
   maxRedemptions     Int?             // null = onbeperkt
   timesRedeemed      Int              @default(0)
   active             Boolean          @default(true)
@@ -519,6 +520,7 @@ model CompanyDiscount {
   durationMonths     Int?             // oorspronkelijke duur (voor weergave), blijft staan
   monthsRemaining    Int?             // telt af bij LIMITED_MONTHS, null bij FOREVER
   applicableInterval DiscountInterval @default(BOTH)
+  applicableTiers    String[]         @default([]) // snapshot van de code; leeg = alle staffels
   redeemedAt         DateTime         @default(now())
 
   company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)

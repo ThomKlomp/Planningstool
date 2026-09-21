@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PRICE_TIERS } from "@/lib/pricing";
 
 async function requirePlatformAdmin() {
   const session = await getServerSession(authOptions);
@@ -35,6 +36,12 @@ export async function POST(req: Request) {
   const applicableInterval = ["MONTHLY", "YEARLY", "BOTH"].includes(body?.applicableInterval)
     ? body.applicableInterval
     : "BOTH";
+  // Lege lijst = alle staffels. Onbekende id's worden weggefilterd.
+  const validTierIds = PRICE_TIERS.map((t) => t.id);
+  let applicableTiers: string[] = Array.isArray(body?.applicableTiers)
+    ? body.applicableTiers.filter((id: unknown) => typeof id === "string" && validTierIds.includes(id))
+    : [];
+  if (applicableTiers.length === validTierIds.length) applicableTiers = [];
   const value = Number(body?.value);
   const durationMonths = body?.durationMonths ? Number(body.durationMonths) : null;
   const maxRedemptions = body?.maxRedemptions ? Number(body.maxRedemptions) : null;
@@ -72,6 +79,7 @@ export async function POST(req: Request) {
       duration,
       durationMonths: duration === "LIMITED_MONTHS" ? durationMonths : null,
       applicableInterval,
+      applicableTiers,
       maxRedemptions,
       expiresAt,
     },

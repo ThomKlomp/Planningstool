@@ -6,7 +6,7 @@
 // (zie prisma/schema.prisma en src/lib/discount.ts) — dit bestand voegt daar
 // geen nieuw kortingsmechanisme aan toe, het rekent er alleen mee.
 import { prisma } from "@/lib/prisma";
-import { applyDiscount } from "@/lib/discount";
+import { applyDiscount, discountAppliesToTier } from "@/lib/discount";
 import type { CompanyDiscount } from "@prisma/client";
 import type { PriceTier } from "@/lib/pricing";
 import {
@@ -95,7 +95,7 @@ export function yearlyInclForTier(
 ) {
   const baseIncl = inclFromExcl(yearlyExclForTier(tier));
   const active = discount !== null && isDiscountCurrentlyActive(discount, billingInterval);
-  return active && discount ? applyDiscount(baseIncl, discount, "YEARLY") : baseIncl;
+  return active && discount ? applyDiscount(baseIncl, discount, "YEARLY", tier.id) : baseIncl;
 }
 
 export async function computeSubscriptionAmount(
@@ -116,9 +116,12 @@ export async function computeSubscriptionAmount(
 
   const discount = company?.discount ?? null;
   const discountActive =
-    discount !== null && isDiscountCurrentlyActive(discount, company?.billingInterval ?? interval);
+    discount !== null &&
+    isDiscountCurrentlyActive(discount, company?.billingInterval ?? interval) &&
+    discountAppliesToTier(discount, tier.id);
 
-  const incl = discountActive && discount ? applyDiscount(baseIncl, discount, interval) : baseIncl;
+  const incl =
+    discountActive && discount ? applyDiscount(baseIncl, discount, interval, tier.id) : baseIncl;
 
   return {
     memberCount,

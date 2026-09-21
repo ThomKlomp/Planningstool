@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { countBillableMembers } from "@/lib/billing";
+import { PRICE_TIERS, getTierForMemberCount } from "@/lib/pricing";
+import { discountAppliesToTier } from "@/lib/discount";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -46,6 +49,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // Code beperkt tot bepaalde staffels: de zaak moet nu in zo'n staffel zitten.
+  const currentTier = getTierForMemberCount(await countBillableMembers(membership.companyId));
+  if (!discountAppliesToTier(discountCode, currentTier.id)) {
+    const labels = discountCode.applicableTiers
+      .map((id) => PRICE_TIERS.find((t) => t.id === id)?.label ?? id)
+      .join(", ");
+    return NextResponse.json(
+      { error: `Deze code geldt alleen voor de staffel(s): ${labels}. Jouw zaak zit in ${currentTier.label}.` },
+      { status: 400 }
+    );
+  }
+
   // Bijzonder geval: 100% korting voor een beperkt aantal maanden = die
   // maanden gewoon helemaal gratis. Mollie vereist een echte, niet-nul
   // eerste betaling om een incassomachtiging vast te leggen, dus dit lopen
@@ -80,6 +95,7 @@ export async function POST(req: Request) {
           duration: discountCode.duration,
           durationMonths: discountCode.durationMonths,
           applicableInterval: discountCode.applicableInterval,
+          applicableTiers: discountCode.applicableTiers,
           monthsRemaining: null, // al direct volledig verwerkt, niets meer af te tellen
         },
       }),
@@ -110,6 +126,7 @@ export async function POST(req: Request) {
         duration: discountCode.duration,
         durationMonths: discountCode.durationMonths,
         applicableInterval: discountCode.applicableInterval,
+        applicableTiers: discountCode.applicableTiers,
         monthsRemaining: discountCode.duration === "LIMITED_MONTHS" ? discountCode.durationMonths : null,
       },
     }),

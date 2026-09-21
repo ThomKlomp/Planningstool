@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PRICE_TIERS } from "@/lib/pricing";
 
 type Interval = "MONTHLY" | "YEARLY" | "BOTH";
 
@@ -12,6 +13,7 @@ type DiscountCode = {
   duration: "FOREVER" | "LIMITED_MONTHS";
   durationMonths: number | null;
   applicableInterval: Interval;
+  applicableTiers: string[]; // leeg = alle staffels
   maxRedemptions: number | null;
   timesRedeemed: number;
   active: boolean;
@@ -24,9 +26,52 @@ const intervalLabel: Record<Interval, string> = {
   BOTH: "Beide",
 };
 
+function tierSuffix(tiers: string[]) {
+  if (tiers.length === 0) return "";
+  return ` · staffel ${tiers
+    .map((id) => PRICE_TIERS.find((t) => t.id === id)?.label.replace(" medewerkers", "") ?? id)
+    .join(", ")}`;
+}
+
+// Kies één of meer staffels, of laat leeg voor alle staffels.
+function TierPicker({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+  const chip = (active: boolean) =>
+    `rounded-full border px-2.5 py-1 text-xs ${
+      active ? "border-ink bg-ink text-paper" : "border-line hover:border-ink"
+    }`;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <button type="button" onClick={() => onChange([])} className={chip(value.length === 0)}>
+        Alle staffels
+      </button>
+      {PRICE_TIERS.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => toggle(t.id)}
+          className={chip(value.includes(t.id))}
+        >
+          {t.label.replace(" medewerkers", "")}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function describe(c: DiscountCode) {
   const amount = c.type === "PERCENTAGE" ? `${c.value}%` : `€${(c.value / 100).toFixed(2)}`;
-  const suffix = c.applicableInterval !== "BOTH" ? ` · ${intervalLabel[c.applicableInterval]}` : "";
+  const suffix =
+    (c.applicableInterval !== "BOTH" ? ` · ${intervalLabel[c.applicableInterval]}` : "") +
+    tierSuffix(c.applicableTiers);
   if (c.type === "PERCENTAGE" && c.value === 100 && c.duration === "LIMITED_MONTHS") {
     return `Eerste ${c.durationMonths} ${c.durationMonths === 1 ? "maand" : "maanden"} gratis${suffix}`;
   }
@@ -49,6 +94,7 @@ export default function DiscountCodesManager({
   const [duration, setDuration] = useState<"FOREVER" | "LIMITED_MONTHS">("FOREVER");
   const [durationMonths, setDurationMonths] = useState("");
   const [applicableInterval, setApplicableInterval] = useState<Interval>("BOTH");
+  const [applicableTiers, setApplicableTiers] = useState<string[]>([]);
   const [maxRedemptions, setMaxRedemptions] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [creating, setCreating] = useState(false);
@@ -69,6 +115,7 @@ export default function DiscountCodesManager({
         duration,
         durationMonths: duration === "LIMITED_MONTHS" ? Number(durationMonths) : undefined,
         applicableInterval,
+        applicableTiers,
         maxRedemptions: maxRedemptions ? Number(maxRedemptions) : undefined,
         expiresAt: expiresAt || undefined,
       }),
@@ -90,6 +137,7 @@ export default function DiscountCodesManager({
         duration: data.discountCode.duration,
         durationMonths: data.discountCode.durationMonths,
         applicableInterval: data.discountCode.applicableInterval,
+        applicableTiers: data.discountCode.applicableTiers ?? [],
         maxRedemptions: data.discountCode.maxRedemptions,
         timesRedeemed: 0,
         active: true,
@@ -98,6 +146,7 @@ export default function DiscountCodesManager({
       ...prev,
     ]);
     setCode("");
+    setApplicableTiers([]);
     setValue("");
     setDurationMonths("");
     setMaxRedemptions("");
@@ -213,6 +262,13 @@ export default function DiscountCodesManager({
               <option value="MONTHLY">Alleen maandelijks</option>
               <option value="YEARLY">Alleen jaarlijks</option>
             </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-xs text-ink/60">Geldig voor staffel</label>
+            <div className="mt-1">
+              <TierPicker value={applicableTiers} onChange={setApplicableTiers} />
+            </div>
           </div>
 
           <div>
@@ -356,6 +412,7 @@ function EditRow({
   const [applicableInterval, setApplicableInterval] = useState<Interval>(
     discountCode.applicableInterval
   );
+  const [applicableTiers, setApplicableTiers] = useState<string[]>(discountCode.applicableTiers);
   const [maxRedemptions, setMaxRedemptions] = useState(
     discountCode.maxRedemptions ? String(discountCode.maxRedemptions) : ""
   );
@@ -378,6 +435,7 @@ function EditRow({
         duration,
         durationMonths: duration === "LIMITED_MONTHS" ? Number(durationMonths) : null,
         applicableInterval,
+        applicableTiers,
         maxRedemptions: maxRedemptions ? Number(maxRedemptions) : null,
         expiresAt: expiresAt || null,
       }),
@@ -397,6 +455,7 @@ function EditRow({
       duration: data.discountCode.duration,
       durationMonths: data.discountCode.durationMonths,
       applicableInterval: data.discountCode.applicableInterval,
+      applicableTiers: data.discountCode.applicableTiers ?? [],
       maxRedemptions: data.discountCode.maxRedemptions,
       expiresAt: data.discountCode.expiresAt,
     });
@@ -449,6 +508,9 @@ function EditRow({
             <option value="MONTHLY">Alleen maandelijks</option>
             <option value="YEARLY">Alleen jaarlijks</option>
           </select>
+          <div className="sm:col-span-3">
+            <TierPicker value={applicableTiers} onChange={setApplicableTiers} />
+          </div>
           <input
             type="number"
             min={1}
