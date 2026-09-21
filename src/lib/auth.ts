@@ -11,6 +11,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      // Staat toe dat iemand met Google inlogt op een e-mailadres dat al
+      // een account heeft (bv. aangemaakt met wachtwoord), zonder dat
+      // NextAuth dit blokkeert met "OAuthAccountNotLinked". Dit is veilig
+      // omdat Google zelf al garandeert dat het e-mailadres geverifieerd
+      // en van deze persoon is, er is dus geen risico dat iemand anders
+      // met een willekeurig Google-account een bestaand account overneemt.
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       id: "credentials",
