@@ -23,3 +23,5 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
+      - key: SUPPORT_EMAIL
+        sync: false

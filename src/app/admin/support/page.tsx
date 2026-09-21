@@ -32,6 +32,11 @@ export default async function AdminSupportPage() {
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm font-medium">
                     {name}
+                    {c.status === "OPEN" && lastMessage?.sender === "USER" && (
+                      <span className="rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-medium text-amber-dark">
+                        Wacht op antwoord
+                      </span>
+                    )}
                     {c.status === "OPEN" ? (
                       <span className="rounded-full bg-awning/10 px-2 py-0.5 text-[10px] font-medium text-awning">
                         Open

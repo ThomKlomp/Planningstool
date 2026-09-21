@@ -4,14 +4,32 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { getWeekDates, toDateParam } from "@/lib/week";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 function escapeHtml(input: string) {
   return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/** Haalt iemands eigen aankomende diensten op en maakt er een HTML-lijst van. */
-async function ownUpcomingShiftsHtml(membershipId: string, excludeShiftId: string) {
-  const shifts = await prisma.shift.findMany({
+function buttonHtml(url: string, label: string) {
+  return `<p style="margin-top: 20px;">
+    <a href="${url}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
+      ${label}
+    </a>
+  </p>`;
+}
+
+/**
+ * Iemands eigen aankomende diensten als HTML-lijst, voor in de ruilmail.
+ * Alleen diensten die de ontvanger ook in het rooster kan zien (dus geen
+ * concept-weken), anders lekt een ruilmail een nog niet gepubliceerd rooster.
+ */
+async function ownUpcomingShiftsHtml(
+  companyId: string,
+  membershipId: string,
+  excludeShiftId: string
+) {
+  const upcoming = await prisma.shift.findMany({
     where: {
       membershipId,
       id: { not: excludeShiftId },
@@ -20,9 +38,10 @@ async function ownUpcomingShiftsHtml(membershipId: string, excludeShiftId: strin
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
     take: 30,
   });
+  const shifts = await filterVisibleForEmployee(companyId, upcoming);
 
   if (shifts.length === 0) {
-    return `<p style="margin-top: 12px; color: #666;">Deze persoon heeft verder geen aankomende diensten ingepland om voor terug te ruilen.</p>`;
+    return `<p style="margin-top: 12px; color: #666;">Deze persoon heeft verder geen aankomende diensten in het rooster staan om voor terug te ruilen.</p>`;
   }
 
   const items = shifts
@@ -39,7 +58,7 @@ async function ownUpcomingShiftsHtml(membershipId: string, excludeShiftId: strin
     .join("");
 
   return `
-    <p style="margin-top: 16px;">Diensten waar eventueel voor teruggeruild kan worden:</p>
+    <p style="margin-top: 16px;">Het rooster van deze persoon (diensten waar eventueel voor teruggeruild kan worden):</p>
     <ul style="margin: 8px 0; padding-left: 20px;">${items}</ul>
   `;
 }
@@ -100,6 +119,86 @@ export async function POST(
   });
   const timeLabel = `${swapRequest.shift.startTime}–${swapRequest.shift.endTime}`;
   const claimerName = claimer?.user.name ?? claimer?.user.email ?? "Een collega";
+  const claimerNameHtml = escapeHtml(claimerName);
+
+  // Link naar de week van de dienst zelf, zodat je op de juiste plek landt.
+  const shiftWeekStart = getWeekDates(swapRequest.shift.date)[0];
+  const rosterLink = `/dashboard/rooster?week=${toDateParam(shiftWeekStart)}`;
+  const rosterUrl = `${process.env.NEXTAUTH_URL ?? ""}${rosterLink}`;
+
+  // ------------------------------------------------------------------
+  // RUILEN: een voorstel aan de aanbieder, géén overname en géén
+  // goedkeuring door de manager. Aanbieder en voorsteller spreken onderling
+  // af; de manager past daarna het rooster aan.
+  // ------------------------------------------------------------------
+  if (asSwap) {
+    const already = await prisma.shiftSwapProposal.findUnique({
+      where: {
+        swapRequestId_proposedById: {
+          swapRequestId: swapRequest.id,
+          proposedById: membership.membershipId,
+        },
+      },
+    });
+    if (already) {
+      return NextResponse.json(
+        { error: "Je hebt al een ruilverzoek voor deze dienst gestuurd" },
+        { status: 409 }
+      );
+    }
+
+    const proposal = await prisma.shiftSwapProposal.create({
+      data: {
+        swapRequestId: swapRequest.id,
+        proposedById: membership.membershipId,
+        note: note || null,
+      },
+    });
+
+    await notify(membership.companyId, [swapRequest.offeredById], {
+      title: `${claimerName} wil ruilen voor je dienst`,
+      body: `${timeLabel} op ${dateLabel}. Neem onderling contact op om af te spreken wat je ruilt.`,
+      link: rosterLink,
+    });
+
+    if (offerer?.user.email) {
+      const claimerShiftsHtml = await ownUpcomingShiftsHtml(
+        membership.companyId,
+        membership.membershipId,
+        swapRequest.shiftId
+      );
+
+      await sendEmail({
+        to: offerer.user.email,
+        subject: `${claimerName} wil ruilen voor je dienst op ${dateLabel}`,
+        html: emailLayout(
+          "Er is een ruilverzoek",
+          `
+            <p><strong>${claimerNameHtml}</strong> wil ruilen voor je dienst op
+            <strong>${escapeHtml(dateLabel)}</strong> (${timeLabel}).</p>
+            ${
+              note
+                ? `<p style="margin-top: 12px;"><strong>Voorstel van ${claimerNameHtml}:</strong> ${escapeHtml(note)}</p>`
+                : ""
+            }
+            ${claimerShiftsHtml}
+            <p style="margin-top: 16px; padding: 12px 14px; background: #F4EFE6; border-radius: 8px;">
+              <strong>Neem onderling contact op.</strong> Shiftje wisselt niet
+              automatisch: spreek zelf met ${claimerNameHtml} af welke dienst je
+              terugkrijgt, en laat daarna je manager het rooster aanpassen.
+            </p>
+            ${buttonHtml(rosterUrl, "Bekijken in het rooster")}
+          `
+        ),
+      });
+    }
+
+    return NextResponse.json({ proposal, swapProposed: true });
+  }
+
+  // ------------------------------------------------------------------
+  // OVERNEMEN
+  // ------------------------------------------------------------------
 
   // Een manager/eigenaar heeft sowieso goedkeuringsrecht, dus die hoeft niet
   // via de wachtrij: dat zou anders betekenen dat ze hun eigen overname aan
@@ -107,47 +206,26 @@ export async function POST(
   const isManager = membership.role === "OWNER" || membership.role === "MANAGER";
 
   if (isManager || company?.autoApproveShiftSwaps) {
-    const updated = await reassignShift(swapRequest, membership.membershipId, asSwap);
+    const updated = await reassignShift(swapRequest, membership.membershipId);
 
     await notify(membership.companyId, [swapRequest.offeredById], {
-      title: asSwap ? `${claimerName} wil met je ruilen` : "Je aangeboden dienst is overgenomen",
-      body: `${timeLabel} op ${dateLabel}.`,
-      link: "/dashboard/roster",
+      title: "Je aangeboden dienst is overgenomen",
+      body: `${claimerName} nam je dienst over: ${timeLabel} op ${dateLabel}.`,
+      link: rosterLink,
     });
 
     if (offerer?.user.email) {
-      const swapShiftsHtml = asSwap
-        ? await ownUpcomingShiftsHtml(membership.membershipId, swapRequest.shiftId)
-        : "";
-
       await sendEmail({
         to: offerer.user.email,
-        subject: asSwap
-          ? `${claimerName} wil ruilen voor je dienst op ${dateLabel}`
-          : `Je dienst op ${dateLabel} is overgenomen`,
+        subject: `Je dienst op ${dateLabel} is overgenomen`,
         html: emailLayout(
-          asSwap ? "Er is een ruilverzoek" : "Je dienst is overgenomen",
-          asSwap
-            ? `
-              <p><strong>${claimerName}</strong> wil met je ruilen voor je dienst op
-              <strong>${dateLabel}</strong> (${timeLabel}).</p>
-              ${
-                note
-                  ? `<p style="margin-top: 12px;"><strong>Voorstel van ${claimerName}:</strong> ${escapeHtml(note)}</p>`
-                  : ""
-              }
-              ${swapShiftsHtml}
-              <p style="margin-top: 16px; color: #666;">
-                Shiftje wisselt niet automatisch een dienst terug: kies zelf uit
-                bovenstaande (of spreek iets anders af), en pas het rooster
-                daarna zelf aan of vraag je manager dit te doen.
-              </p>
-            `
-            : `
-              <p><strong>${claimerName}</strong> heeft je dienst op
-              <strong>${dateLabel}</strong> (${timeLabel}) overgenomen. Je staat
-              hier zelf niet meer voor ingepland.</p>
-            `
+          "Je dienst is overgenomen",
+          `
+            <p><strong>${claimerNameHtml}</strong> heeft je dienst op
+            <strong>${escapeHtml(dateLabel)}</strong> (${timeLabel}) overgenomen. Je staat
+            hier zelf niet meer voor ingepland.</p>
+            ${buttonHtml(rosterUrl, "Bekijken in het rooster")}
+          `
         ),
       });
     }
@@ -161,8 +239,15 @@ export async function POST(
       status: "PENDING_APPROVAL",
       claimedById: membership.membershipId,
       claimedAt: new Date(),
-      claimedAsSwap: asSwap,
+      claimedAsSwap: false,
     },
+  });
+
+  // De aanbieder weet nu dat iemand de dienst wil overnemen.
+  await notify(membership.companyId, [swapRequest.offeredById], {
+    title: `${claimerName} wil je dienst overnemen`,
+    body: `${timeLabel} op ${dateLabel}. Je manager moet dit nog goedkeuren.`,
+    link: rosterLink,
   });
 
   const managers = await prisma.membership.findMany({
@@ -174,11 +259,9 @@ export async function POST(
     membership.companyId,
     managers.map((m) => m.id),
     {
-      title: asSwap
-        ? `Ruilverzoek van ${claimerName} wacht op goedkeuring`
-        : "Overname wacht op jouw goedkeuring",
-      body: `${timeLabel} op ${dateLabel}.`,
-      link: "/dashboard/roster",
+      title: "Overname wacht op jouw goedkeuring",
+      body: `${claimerName}: ${timeLabel} op ${dateLabel}.`,
+      link: rosterLink,
     }
   );
 
@@ -187,20 +270,14 @@ export async function POST(
     await sendEmail({
       to: `${membership.companySlug}@shiftje.nl`,
       bcc: managerEmails,
-      subject: asSwap
-        ? `Ruilverzoek wacht op goedkeuring, ${dateLabel}`
-        : `Overname wacht op goedkeuring, ${dateLabel}`,
+      subject: `Overname wacht op goedkeuring, ${dateLabel}`,
       html: emailLayout(
         "Wacht op jouw goedkeuring",
         `
-          <p><strong>${claimerName}</strong> wil de dienst van
-          <strong>${offerer?.user.name ?? offerer?.user.email ?? "een collega"}</strong>
-          op <strong>${dateLabel}</strong> (${timeLabel}) ${asSwap ? "ruilen" : "overnemen"}.</p>
-          <p style="margin-top: 20px;">
-            <a href="${process.env.NEXTAUTH_URL ?? ""}/dashboard/roster" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
-              Bekijken in het rooster
-            </a>
-          </p>
+          <p><strong>${claimerNameHtml}</strong> wil de dienst van
+          <strong>${escapeHtml(offerer?.user.name ?? offerer?.user.email ?? "een collega")}</strong>
+          op <strong>${escapeHtml(dateLabel)}</strong> (${timeLabel}) overnemen.</p>
+          ${buttonHtml(rosterUrl, "Bekijken in het rooster")}
         `
       ),
     });
@@ -215,8 +292,7 @@ export async function POST(
  */
 async function reassignShift(
   swapRequest: { id: string; shiftId: string },
-  newMembershipId: string,
-  asSwap: boolean
+  newMembershipId: string
 ) {
   const shift = await prisma.shift.update({
     where: { id: swapRequest.shiftId },
@@ -249,7 +325,7 @@ async function reassignShift(
       status: "APPROVED",
       claimedById: newMembershipId,
       claimedAt: new Date(),
-      claimedAsSwap: asSwap,
+      claimedAsSwap: false,
       reviewedAt: new Date(),
     },
   });

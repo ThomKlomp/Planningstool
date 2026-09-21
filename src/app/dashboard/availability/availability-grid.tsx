@@ -26,12 +26,14 @@ export default function AvailabilityGrid({
   ownEntries,
   shiftTemplates,
   closedDates = [],
+  closedReasons = {},
   locked = false,
 }: {
   week: string[];
   ownEntries: OwnEntry[];
   shiftTemplates: ShiftTemplate[];
   closedDates?: string[];
+  closedReasons?: Record<string, string>;
   locked?: boolean;
 }) {
   const router = useRouter();
@@ -82,6 +84,11 @@ export default function AvailabilityGrid({
               </p>
               <p className="font-display text-lg text-ink/50">{date.getDate()}</p>
               <p className="mt-4 text-xs font-medium text-ink/40">Gesloten</p>
+              {closedReasons[date.toDateString()] && (
+                <p className="mt-1 text-[11px] text-ink/50">
+                  {closedReasons[date.toDateString()]}
+                </p>
+              )}
             </div>
           );
         }

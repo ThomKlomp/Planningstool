@@ -8,55 +8,31 @@
 import { prisma } from "@/lib/prisma";
 import { applyDiscount } from "@/lib/discount";
 import type { CompanyDiscount } from "@prisma/client";
+import {
+  getTierForMemberCount,
+  yearlyExclForTier,
+  inclFromExcl,
+  MAX_STANDARD_MEMBERS,
+} from "@/lib/pricing";
 
-export const BTW_RATE = 0.21;
+// Prijzen en staffels staan in lib/pricing.ts (zonder database-afhankelijkheid,
+// zodat de homepage ze ook kan gebruiken). Hier her-exporteren voor de
+// bestaande imports.
+export {
+  BTW_RATE,
+  MAX_STANDARD_MEMBERS,
+  PRICE_TIERS,
+  getTierForMemberCount,
+  getTierById,
+  exceedsStandardTiers,
+  yearlyExclForTier,
+  round2,
+  inclFromExcl,
+  formatEuro,
+} from "@/lib/pricing";
+export type { PriceTier } from "@/lib/pricing";
+
 export const TRIAL_DAYS = 7;
-
-export type PriceTier = {
-  id: string;
-  label: string;
-  minMembers: number; // inclusief
-  maxMembers: number | null; // inclusief; null = geen bovengrens
-  monthlyExcl: number;
-};
-
-// Grenzen sluiten naadloos op elkaar aan: 1–10, 11–20, 21–30, 31+.
-export const PRICE_TIERS: PriceTier[] = [
-  { id: "S", label: "1–10 medewerkers", minMembers: 1, maxMembers: 10, monthlyExcl: 8.0 },
-  { id: "M", label: "11–20 medewerkers", minMembers: 11, maxMembers: 20, monthlyExcl: 15.0 },
-  { id: "L", label: "21–30 medewerkers", minMembers: 21, maxMembers: 30, monthlyExcl: 21.0 },
-  { id: "XL", label: "30+ medewerkers", minMembers: 31, maxMembers: null, monthlyExcl: 25.0 },
-];
-
-export function getTierForMemberCount(count: number): PriceTier {
-  const n = Math.max(1, count);
-  return (
-    PRICE_TIERS.find((t) => n >= t.minMembers && (t.maxMembers === null || n <= t.maxMembers)) ??
-    PRICE_TIERS[PRICE_TIERS.length - 1]
-  );
-}
-
-export function getTierById(id: string): PriceTier | undefined {
-  return PRICE_TIERS.find((t) => t.id === id);
-}
-
-// Jaarprijs = 10x de maandprijs van de staffel (2 maanden gratis), zelfde
-// verhouding als voorheen.
-export function yearlyExclForTier(tier: PriceTier) {
-  return round2(tier.monthlyExcl * 10);
-}
-
-export function round2(n: number) {
-  return Math.round(n * 100) / 100;
-}
-
-export function inclFromExcl(excl: number) {
-  return round2(excl * (1 + BTW_RATE));
-}
-
-export function formatEuro(amount: number) {
-  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(amount);
-}
 
 /**
  * Telt de medewerkers die meetellen voor de staffel: alle actieve
@@ -147,10 +123,21 @@ export async function computeSubscriptionAmount(
  */
 export async function getNextMemberTierWarning(companyId: string) {
   const count = await countBillableMembers(companyId);
+
+  // Boven het maximum van de standaardstaffels: geen automatische staffel
+  // meer, maar maatwerk. Aparte waarschuwing, zodat de UI om contact vraagt.
+  if (count + 1 > MAX_STANDARD_MEMBERS) {
+    return {
+      kind: "contact" as const,
+      maxMembers: MAX_STANDARD_MEMBERS,
+    };
+  }
+
   const currentTier = getTierForMemberCount(count);
   const nextTier = getTierForMemberCount(count + 1);
   if (nextTier.id === currentTier.id) return null;
   return {
+    kind: "tier" as const,
     fromLabel: currentTier.label,
     toLabel: nextTier.label,
     newMonthlyExcl: nextTier.monthlyExcl,

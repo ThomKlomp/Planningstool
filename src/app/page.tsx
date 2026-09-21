@@ -1,4 +1,11 @@
 import Link from "next/link";
+import ContactButton from "@/components/contact-button";
+import {
+  PRICE_TIERS,
+  MAX_STANDARD_MEMBERS,
+  formatEuro,
+  yearlyExclForTier,
+} from "@/lib/pricing";
 
 export default function HomePage() {
   return (
@@ -25,7 +32,7 @@ export default function HomePage() {
         <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="mb-4 text-sm text-awning">
-              Voor cafés, restaurants &amp; bars tot ~30 medewerkers
+              Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
             </p>
             <h1 className="font-display text-4xl leading-tight md:text-5xl">
               Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
@@ -99,36 +106,75 @@ export default function HomePage() {
       {/* Prijs */}
       <section className="border-t border-line bg-ink text-paper">
         <div className="mx-auto max-w-5xl px-6 py-20">
-          <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-center">
+          <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-start">
             <div>
               <h2 className="font-display text-3xl md:text-4xl">
-                Eén prijs, per zaak. Niet per medewerker.
+                Eén prijs per zaak, op basis van de grootte van je team.
               </h2>
               <p className="mt-4 max-w-md text-paper/70">
-                Of je nu met 4 of met 25 mensen werkt: je betaalt hetzelfde.
-                Geen rekenwerk bij elke nieuwe aanwas, geen minimum aantal
-                gebruikers.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-paper/20 bg-paper/5 p-8">
-              <p className="font-display text-4xl">
-                €10
-                <span className="text-lg font-body text-paper/60"> / maand</span>
-              </p>
-              <p className="mt-1 text-sm text-paper/50">
-                excl. btw, of €100/jaar (2 maanden gratis)
+                Je betaalt een vast bedrag per maand, afhankelijk van hoeveel
+                medewerkers je hebt. Geen kosten per gebruiker, en de prijs
+                past zich vanzelf aan als je team groeit of krimpt.
               </p>
               <ul className="mt-6 space-y-2 text-sm text-paper/80">
-                <li>Onbeperkt medewerkers</li>
                 <li>Beschikbaarheid, rooster, teams, uren</li>
                 <li>7 dagen gratis proberen</li>
+                <li>Jaarlijks betalen? 2 maanden gratis</li>
               </ul>
+            </div>
+            <div className="rounded-2xl border border-paper/20 bg-paper/5 p-6 md:p-8">
+              <table className="w-full text-left text-sm">
+                <thead className="text-xs uppercase tracking-wide text-paper/50">
+                  <tr>
+                    <th className="pb-3 font-medium">Medewerkers</th>
+                    <th className="pb-3 text-right font-medium">Per maand</th>
+                    <th className="pb-3 text-right font-medium">Per jaar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-paper/10">
+                  {PRICE_TIERS.map((tier) => (
+                    <tr key={tier.id}>
+                      <td className="py-3">{tier.label.replace(" medewerkers", "")}</td>
+                      <td className="py-3 text-right font-display text-lg">
+                        {formatEuro(tier.monthlyExcl)}
+                      </td>
+                      <td className="py-3 text-right text-paper/70">
+                        {formatEuro(yearlyExclForTier(tier))}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td className="py-3">Meer dan {MAX_STANDARD_MEMBERS}</td>
+                    <td className="py-3 text-right text-paper/70" colSpan={2}>
+                      Op maat
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="mt-3 text-xs text-paper/50">Alle prijzen excl. btw.</p>
+
               <Link
                 href="/onboarding"
                 className="mt-6 block rounded-full bg-amber px-6 py-3 text-center font-medium text-ink hover:bg-amber-dark transition-colors"
               >
                 Begin gratis
               </Link>
+
+              <div className="mt-6 rounded-xl border border-paper/20 p-4">
+                <p className="text-sm font-medium">
+                  Meer dan {MAX_STANDARD_MEMBERS} medewerkers?
+                </p>
+                <p className="mt-1 text-sm text-paper/60">
+                  Neem contact met ons op, dan kijken we samen naar de
+                  mogelijkheden.
+                </p>
+                <ContactButton
+                  message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
+                  className="mt-3 rounded-full border border-paper/40 px-5 py-2 text-sm font-medium hover:border-paper hover:bg-paper/10 transition-colors"
+                >
+                  Neem contact op
+                </ContactButton>
+              </div>
             </div>
           </div>
         </div>

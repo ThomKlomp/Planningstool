@@ -75,6 +75,8 @@ model Company {
   weeks       WeekStatus[]
   shiftTemplates ShiftTemplate[]
   closedDays  ClosedDay[]
+  rosterWeeks RosterWeek[]
+  rosterEvents RosterEvent[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
@@ -272,6 +274,45 @@ model WeekStatus {
   @@unique([companyId, weekStart])
 }
 
+// Publicatiestatus van het rooster per week. Zolang een (huidige of
+// toekomstige) week niet gepubliceerd is, zien alleen eigenaar/managers het
+// rooster; medewerkers zien dan een melding dat het nog niet klaar is.
+// Geen record = niet gepubliceerd. Weken in het verleden zijn altijd zichtbaar.
+model RosterWeek {
+  id          String    @id @default(cuid())
+  companyId   String
+  weekStart   DateTime  @db.Date // maandag van de betreffende week
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  notifiedAt  DateTime? // wanneer medewerkers voor het eerst een melding kregen
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, weekStart])
+}
+
+// Evenement op het rooster, bv. "Feestje van Bas" op zaterdag. Hoort bij een
+// losse dag (date) of bij een hele week (weekStart), nooit beide.
+model RosterEvent {
+  id          String   @id @default(cuid())
+  companyId   String
+  date        DateTime? @db.Date
+  weekStart   DateTime? @db.Date
+  title       String
+  description String?
+  startTime   String?
+  endTime     String?
+  createdAt   DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, date])
+  @@index([companyId, weekStart])
+}
+
 // ---------- Rooster ----------
 
 model Shift {
@@ -319,10 +360,29 @@ model ShiftSwapRequest {
   notifiedMembershipIds String[] @default([]) // wie een melding kreeg toen dit werd aangeboden
   createdAt     DateTime        @default(now())
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  shift   Shift   @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  shift     Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  proposals ShiftSwapProposal[]
 
   @@index([companyId, status])
+}
+
+// Een ruilvoorstel: iemand wil een aangeboden dienst NIET overnemen maar er
+// een eigen dienst voor terug geven. Dit loopt bewust niet via de manager:
+// aanbieder en voorsteller spreken onderling af en de manager past daarna
+// zelf het rooster aan. Het aanbod blijft OPEN totdat het wordt ingetrokken
+// of iemand de dienst overneemt.
+model ShiftSwapProposal {
+  id            String   @id @default(cuid())
+  swapRequestId String
+  proposedById  String // membershipId van wie wil ruilen
+  note          String?
+  createdAt     DateTime @default(now())
+
+  swapRequest ShiftSwapRequest @relation(fields: [swapRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([swapRequestId, proposedById])
+  @@index([swapRequestId])
 }
 
 // ---------- Meldingen ----------

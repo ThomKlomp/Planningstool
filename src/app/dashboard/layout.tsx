@@ -37,7 +37,7 @@ export default async function DashboardLayout({
           <nav className="flex gap-1 overflow-x-auto border-t border-line px-2 py-2 text-sm sm:flex-col sm:gap-0 sm:space-y-1 sm:overflow-visible sm:border-t-0 sm:px-2 sm:py-0">
             <NavLink href="/dashboard">Overzicht</NavLink>
             <NavLink href="/dashboard/availability">Beschikbaarheid</NavLink>
-            <NavLink href="/dashboard/roster">Rooster</NavLink>
+            <NavLink href="/dashboard/rooster">Rooster</NavLink>
             <NavLink href="/dashboard/hours">Uren</NavLink>
             <NavLink href="/dashboard/calendar">Agenda-koppeling</NavLink>
             <NavLink href="/dashboard/notifications">

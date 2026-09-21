@@ -105,6 +105,8 @@ export async function POST() {
     await prisma.shift.deleteMany({ where: { companyId: company.id } });
     await prisma.availability.deleteMany({ where: { membership: { companyId: company.id } } });
     await prisma.weekStatus.deleteMany({ where: { companyId: company.id } });
+    await prisma.rosterWeek.deleteMany({ where: { companyId: company.id } });
+    await prisma.rosterEvent.deleteMany({ where: { companyId: company.id } });
     await prisma.closedDay.deleteMany({ where: { companyId: company.id } });
     await prisma.invite.deleteMany({ where: { companyId: company.id } });
     await prisma.companyDiscount.deleteMany({ where: { companyId: company.id } });
@@ -275,6 +277,35 @@ export async function POST() {
 
   await prisma.shift.createMany({ data: shiftsToCreate });
   await prisma.availability.createMany({ data: availabilityToCreate });
+
+  // Alle demo-weken publiceren, anders zien de demo-medewerkers geen rooster.
+  await prisma.rosterWeek.createMany({
+    data: [-1, 0, 1, 2, 3].map((weekOffset) => {
+      const weekStart = new Date(thisWeekStart);
+      weekStart.setDate(weekStart.getDate() + weekOffset * 7);
+      return {
+        companyId: company.id,
+        weekStart,
+        published: true,
+        publishedAt: new Date(),
+        notifiedAt: new Date(),
+      };
+    }),
+  });
+
+  // Een voorbeeld-evenement, om te laten zien hoe dat op het rooster staat.
+  const eventDay = new Date(thisWeekStart);
+  eventDay.setDate(eventDay.getDate() + 5); // aanstaande zaterdag
+  await prisma.rosterEvent.create({
+    data: {
+      companyId: company.id,
+      date: eventDay,
+      title: "Feestje van Bas",
+      description: "Besloten feest met ongeveer 60 gasten, verwacht een drukke avond.",
+      startTime: "19:00",
+      endTime: "01:00",
+    },
+  });
 
   // Eén onbeheerd/open shift, om te laten zien hoe dat eruitziet.
   const openShiftDay = new Date(thisWeekStart);

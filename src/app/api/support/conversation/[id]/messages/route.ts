@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifySupportOfMessage } from "@/lib/support-notify";
 
 export async function POST(
   req: Request,
@@ -40,9 +41,25 @@ export async function POST(
     data: { status: "OPEN" },
   });
 
-  const updated = await prisma.supportConversation.findUnique({
-    where: { id: conversation.id },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+  const [updated, sender] = await Promise.all([
+    prisma.supportConversation.findUnique({
+      where: { id: conversation.id },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    }),
+    conversation.userId
+      ? prisma.user.findUnique({
+          where: { id: conversation.userId },
+          select: { name: true, email: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  await notifySupportOfMessage({
+    conversationId: conversation.id,
+    name: sender?.name ?? conversation.guestName ?? "Onbekend",
+    email: sender?.email ?? conversation.guestEmail ?? "",
+    message,
+    isNew: false,
   });
 
   return NextResponse.json({ conversation: updated });

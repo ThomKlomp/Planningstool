@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isDateClosed } from "@/lib/closed-days";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,7 @@ export async function GET() {
   }
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
 
-  const timeEntries = await prisma.timeEntry.findMany({
+  const allEntries = await prisma.timeEntry.findMany({
     where: canManage
       ? { companyId: membership.companyId }
       : { membershipId: membership.membershipId },
@@ -23,6 +24,19 @@ export async function GET() {
     orderBy: { date: "desc" },
     take: 100,
   });
+
+  // Een conceptregel (DRAFT) wordt automatisch aangemaakt zodra een dienst
+  // ingeroosterd is. Zolang het rooster van die week niet gepubliceerd is,
+  // verbergen we die voor medewerkers, anders lekt het rooster via Uren.
+  const timeEntries = canManage
+    ? allEntries
+    : [
+        ...(await filterVisibleForEmployee(
+          membership.companyId,
+          allEntries.filter((e) => e.status === "DRAFT")
+        )),
+        ...allEntries.filter((e) => e.status !== "DRAFT"),
+      ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return NextResponse.json({ timeEntries });
 }

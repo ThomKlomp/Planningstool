@@ -68,6 +68,17 @@ export default async function AvailabilityPage({
     .filter((d) => isDateClosed(d, closedWeekdays, specificClosedDates))
     .map((d) => d.toDateString());
 
+  // Reden per gesloten dag, zodat medewerkers zien waarom de zaak dicht is.
+  const closedReasons: Record<string, string> = {};
+  for (const d of week) {
+    if (closedWeekdays.includes(d.getDay())) {
+      closedReasons[d.toDateString()] = "Vaste sluitingsdag";
+    }
+  }
+  for (const c of closedDays) {
+    if (c.reason) closedReasons[c.date.toDateString()] = c.reason;
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -126,6 +137,7 @@ export default async function AvailabilityPage({
             note: e.note,
           }))}
           closedDates={closedDates}
+          closedReasons={closedReasons}
           locked={!isWeekOpen && !canManage}
         />
       </div>

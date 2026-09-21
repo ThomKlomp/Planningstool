@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayoutWide } from "@/lib/email";
-import { resolveWeek, getISOWeekNumber } from "@/lib/week";
+import { resolveWeek, getISOWeekNumber, toDateParam } from "@/lib/week";
+import { isRosterPublished } from "@/lib/roster-publish";
 
 const ROSTER_FROM = "Shiftje Rooster <rooster@shiftje.nl>";
 
@@ -98,6 +99,51 @@ function buildRosterTableHtml(week: Date[], members: GridMember[], shifts: GridS
   </table>`;
 }
 
+type MailEvent = {
+  date: Date | null;
+  title: string;
+  description: string | null;
+  startTime: string | null;
+  endTime: string | null;
+};
+
+/** Evenementen van de week, als korte lijst boven het rooster. */
+function buildEventsHtml(events: MailEvent[]) {
+  if (events.length === 0) return "";
+  const items = events
+    .map((e) => {
+      const when = e.date
+        ? e.date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })
+        : "Hele week";
+      const time =
+        e.startTime && e.endTime
+          ? ` (${e.startTime}–${e.endTime})`
+          : e.startTime
+          ? ` (vanaf ${e.startTime})`
+          : "";
+      return `<li style="margin-bottom:6px;"><strong>${escapeHtml(e.title)}</strong>, ${escapeHtml(
+        when
+      )}${time}${
+        e.description
+          ? `<br /><span style="color:#555;">${escapeHtml(e.description)}</span>`
+          : ""
+      }</li>`;
+    })
+    .join("");
+  return `<div style="margin-bottom:16px; padding:12px 14px; background:#F4EFE6; border-radius:8px;">
+    <p style="margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; color:#8A6A1F;">Evenementen</p>
+    <ul style="margin:0; padding-left:18px;">${items}</ul>
+  </div>`;
+}
+
+function buildRosterButtonHtml(url: string) {
+  return `<p style="margin-top:24px;">
+    <a href="${url}" style="display:inline-block; background:#1B1B18; color:#FAF7F2; padding:12px 20px; border-radius:999px; text-decoration:none; font-weight:500;">
+      Bekijk het rooster online
+    </a>
+  </p>`;
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -111,7 +157,16 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const week = resolveWeek(body?.weekStart);
 
-  const [membersRaw, shiftsRaw, company] = await Promise.all([
+  // Een concept-rooster mag niet gemaild worden: medewerkers zouden dan een
+  // link krijgen naar een rooster dat ze nog niet mogen zien.
+  if (!(await isRosterPublished(membership.companyId, week[0]))) {
+    return NextResponse.json(
+      { error: "Publiceer het rooster eerst, daarna kun je het mailen." },
+      { status: 409 }
+    );
+  }
+
+  const [membersRaw, shiftsRaw, company, events] = await Promise.all([
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
       include: { user: true, department: true },
@@ -122,6 +177,13 @@ export async function POST(req: Request) {
     prisma.company.findUnique({
       where: { id: membership.companyId },
       select: { showCompanyRosterToEmployees: true },
+    }),
+    prisma.rosterEvent.findMany({
+      where: {
+        companyId: membership.companyId,
+        OR: [{ date: { gte: week[0], lte: week[6] } }, { weekStart: week[0] }],
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }, { createdAt: "asc" }],
     }),
   ]);
 
@@ -147,6 +209,8 @@ export async function POST(req: Request) {
   const weekLabel = `week ${getISOWeekNumber(week[0])}`;
   const subject = `Rooster ${weekLabel} bij ${membership.companyName}`;
   const showFullToEmployees = company?.showCompanyRosterToEmployees ?? true;
+  const rosterUrl = `${process.env.NEXTAUTH_URL ?? ""}/dashboard/rooster?week=${toDateParam(week[0])}`;
+  const eventsHtml = buildEventsHtml(events);
 
   let sentCount = 0;
   let anySent = false;
@@ -159,7 +223,7 @@ export async function POST(req: Request) {
 
     const html = emailLayoutWide(
       `Rooster ${weekLabel} bij ${membership.companyName}`,
-      buildRosterTableHtml(week, members, shifts)
+      eventsHtml + buildRosterTableHtml(week, members, shifts) + buildRosterButtonHtml(rosterUrl)
     );
 
     const ownerEmail = allMembers.find((m) => m.role === "OWNER")?.email;

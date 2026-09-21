@@ -66,12 +66,12 @@ export async function POST(
     membership.companyId,
     [swapRequest.offeredById, swapRequest.claimedById],
     {
-      title: "Overname/ruil goedgekeurd",
+      title: "Overname goedgekeurd",
       body: `${swapRequest.shift.startTime}–${swapRequest.shift.endTime} op ${swapRequest.shift.date.toLocaleDateString(
         "nl-NL",
         { weekday: "long", day: "numeric", month: "long" }
       )}.`,
-      link: "/dashboard/roster",
+      link: "/dashboard/rooster",
     }
   );
 

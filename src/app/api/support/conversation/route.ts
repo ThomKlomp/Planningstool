@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, emailLayout } from "@/lib/email";
+import { notifySupportOfMessage } from "@/lib/support-notify";
 import { randomBytes } from "crypto";
 
 async function findConversation(userId: string | null, guestToken: string | null) {
@@ -63,30 +63,13 @@ export async function POST(req: Request) {
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
 
-    const supportEmail = process.env.SUPPORT_EMAIL;
-    if (supportEmail) {
-      await sendEmail({
-        to: supportEmail,
-        subject: `Nieuwe chat geopend door ${name}`,
-        replyTo: email,
-        html: emailLayout(
-          "Er staat een nieuwe chat open",
-          `
-            <p><strong>Van:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
-            <p style="margin-top: 12px; white-space: pre-wrap;">${escapeHtml(message)}</p>
-            <p style="margin-top: 20px;">
-              <a href="${process.env.NEXTAUTH_URL ?? ""}/admin/support/${conversation.id}" style="color:#3F6E5B;">
-                Reageren in het adminportaal →
-              </a>
-            </p>
-          `
-        ),
-      });
-      await prisma.supportConversation.update({
-        where: { id: conversation.id },
-        data: { notifiedAt: new Date() },
-      });
-    }
+    await notifySupportOfMessage({
+      conversationId: conversation.id,
+      name,
+      email,
+      message,
+      isNew: true,
+    });
   } else {
     await prisma.supportMessage.create({
       data: { conversationId: conversation.id, sender: "USER", body: message },
@@ -95,11 +78,16 @@ export async function POST(req: Request) {
       where: { id: conversation.id },
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
+    if (conversation) {
+      await notifySupportOfMessage({
+        conversationId: conversation.id,
+        name,
+        email,
+        message,
+        isNew: false,
+      });
+    }
   }
 
   return NextResponse.json({ conversation, guestToken: newGuestToken });
-}
-
-function escapeHtml(input: string) {
-  return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function TimeEntryForm({ closedDates = [] }: { closedDates?: string[] }) {
+export default function TimeEntryForm({
+  closedDates = [],
+  closedReasons = {},
+}: {
+  closedDates?: string[];
+  closedReasons?: Record<string, string>; // "YYYY-MM-DD" -> reden
+}) {
   const router = useRouter();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startTime, setStartTime] = useState("17:00");
@@ -96,7 +102,9 @@ export default function TimeEntryForm({ closedDates = [] }: { closedDates?: stri
 
       {isClosed && (
         <p className="w-full text-sm text-red-600">
-          De zaak was dicht op deze dag — hier kun je geen uren op indienen.
+          De zaak was dicht op deze dag
+          {closedReasons[date] ? ` (${closedReasons[date]})` : ""} — hier kun je geen uren op
+          indienen.
         </p>
       )}
       {error && <p className="w-full text-sm text-red-600">{error}</p>}

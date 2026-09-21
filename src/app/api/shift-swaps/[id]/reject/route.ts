@@ -39,12 +39,12 @@ export async function POST(
 
   if (swapRequest.claimedById) {
     await notify(membership.companyId, [swapRequest.claimedById], {
-      title: "Overname/ruil afgekeurd",
+      title: "Overname afgekeurd",
       body: `${swapRequest.shift.startTime}–${swapRequest.shift.endTime} op ${swapRequest.shift.date.toLocaleDateString(
         "nl-NL",
         { weekday: "long", day: "numeric", month: "long" }
       )} is niet goedgekeurd door je manager.`,
-      link: "/dashboard/roster",
+      link: "/dashboard/rooster",
     });
   }
 

@@ -11,7 +11,10 @@ import {
   formatEuro,
   getTierForMemberCount,
   isDiscountCurrentlyActive,
+  exceedsStandardTiers,
+  MAX_STANDARD_MEMBERS,
 } from "@/lib/billing";
+import ContactButton from "@/components/contact-button";
 
 export default async function BillingPage() {
   const { membership } = await requireMembership();
@@ -85,9 +88,25 @@ export default async function BillingPage() {
                   <td className="px-4 py-2">{formatEuro(tier.monthlyExcl)}</td>
                 </tr>
               ))}
+              <tr className={exceedsStandardTiers(memberCount) ? "bg-awning/5 font-medium" : undefined}>
+                <td className="px-4 py-2">Meer dan {MAX_STANDARD_MEMBERS} medewerkers</td>
+                <td className="px-4 py-2">Op maat</td>
+              </tr>
             </tbody>
           </table>
         </div>
+        {exceedsStandardTiers(memberCount) && (
+          <div className="mt-3 rounded-lg bg-amber/10 px-4 py-3 text-sm text-amber-dark">
+            Je hebt meer dan {MAX_STANDARD_MEMBERS} medewerkers. Neem contact met ons op om
+            de mogelijkheden te bespreken.
+            <ContactButton
+              message={`Hoi! Wij hebben ${memberCount} medewerkers en willen graag weten wat de mogelijkheden zijn.`}
+              className="ml-2 font-medium underline hover:no-underline"
+            >
+              Neem contact op
+            </ContactButton>
+          </div>
+        )}
       </section>
 
       <section className="mt-8">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "start en end zijn verplicht" }, { status: 400 });
   }
 
-  const shifts = await prisma.shift.findMany({
+  const allShifts = await prisma.shift.findMany({
     where: {
       companyId: membership.companyId,
       date: { gte: new Date(start), lte: new Date(end) },
@@ -28,6 +29,12 @@ export async function GET(req: Request) {
     include: { membership: { include: { user: true } } },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
+
+  // Medewerkers krijgen alleen shifts uit gepubliceerde (of verleden) weken.
+  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
+  const shifts = canManage
+    ? allShifts
+    : await filterVisibleForEmployee(membership.companyId, allShifts);
 
   return NextResponse.json({ shifts });
 }

@@ -29,8 +29,17 @@ export async function POST(
   if (shift.membershipId !== membership.membershipId) {
     return NextResponse.json({ error: "Dit is niet jouw dienst" }, { status: 403 });
   }
-  if (shift.swapRequest) {
+  // Alleen een lopend aanbod blokkeert een nieuw aanbod. Een eerder afgehandeld
+  // (overgenomen), afgewezen of ingetrokken verzoek ruimen we op, zodat de
+  // (nieuwe) eigenaar de dienst opnieuw kan aanbieden.
+  if (
+    shift.swapRequest &&
+    (shift.swapRequest.status === "OPEN" || shift.swapRequest.status === "PENDING_APPROVAL")
+  ) {
     return NextResponse.json({ error: "Deze dienst is al aangeboden" }, { status: 409 });
+  }
+  if (shift.swapRequest) {
+    await prisma.shiftSwapRequest.delete({ where: { id: shift.swapRequest.id } });
   }
 
   // Eigen team van de aanbieder opzoeken, zodat we alleen teamgenoten
@@ -70,7 +79,7 @@ export async function POST(
   // land je op de roosterpagina zonder de aangeboden dienst te zien als
   // die in een andere week valt.
   const shiftWeekStart = getWeekDates(shift.date)[0];
-  const rosterLink = `/dashboard/roster?week=${toDateParam(shiftWeekStart)}`;
+  const rosterLink = `/dashboard/rooster?week=${toDateParam(shiftWeekStart)}`;
   const rosterUrl = `${process.env.NEXTAUTH_URL ?? ""}${rosterLink}`;
   const dateLabel = shift.date.toLocaleDateString("nl-NL", {
     weekday: "long",

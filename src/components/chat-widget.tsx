@@ -49,6 +49,18 @@ export default function ChatWidget({
     if (open && !loaded) loadConversation();
   }, [open, loaded]);
 
+  // Andere delen van de site (bv. de "Neem contact op"-knop op de homepage)
+  // kunnen de chat openen, optioneel met een voorgevulde tekst.
+  useEffect(() => {
+    function handleOpen(e: Event) {
+      const message = (e as CustomEvent<{ message?: string }>).detail?.message;
+      setOpen(true);
+      if (message) setDraft((current) => current || message);
+    }
+    window.addEventListener("shiftje:open-chat", handleOpen);
+    return () => window.removeEventListener("shiftje:open-chat", handleOpen);
+  }, []);
+
   // Poll voor nieuwe berichten (bv. een antwoord) terwijl het venster open is.
   useEffect(() => {
     if (!open || !conversation) return;

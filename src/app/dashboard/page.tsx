@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import { resolveWeek } from "@/lib/week";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 import TeamSection from "./team-section";
 import MemberList from "./member-list";
 import JoinLink from "./settings/join-link";
@@ -11,7 +12,7 @@ export default async function DashboardOverviewPage() {
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek();
 
-  const [members, pendingInvites, weekShifts, pendingHours, pendingSwapCount, company] =
+  const [members, pendingInvites, allWeekShifts, pendingHours, pendingSwapCount, company] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
@@ -51,6 +52,11 @@ export default async function DashboardOverviewPage() {
         : Promise.resolve(null),
     ]);
 
+  // Medewerkers tellen alleen mee wat ze ook in het rooster mogen zien.
+  const weekShifts = canManage
+    ? allWeekShifts
+    : await filterVisibleForEmployee(membership.companyId, allWeekShifts);
+
   const openShiftCount = weekShifts.filter((s) => !s.membershipId).length;
   const assignedMembershipIds = new Set(
     weekShifts.filter((s) => s.membershipId).map((s) => s.membershipId as string)
@@ -83,7 +89,7 @@ export default async function DashboardOverviewPage() {
         {canManage && <StatCard label="Uren ter goedkeuring" value={pendingHours} />}
         {canManage && pendingSwapCount > 0 && (
           <Link
-            href="/dashboard/roster"
+            href="/dashboard/rooster"
             className="rounded-xl border border-amber/40 bg-amber/10 px-5 py-4 transition-colors hover:border-amber"
           >
             <p className="text-2xl font-display text-amber-dark">{pendingSwapCount}</p>

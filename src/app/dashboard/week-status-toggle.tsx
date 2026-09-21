@@ -8,11 +8,15 @@ export default function WeekStatusToggle({
   initialIsOpen,
   hasOverride = false,
   canManage,
+  openLabel = "Week open, klik om te sluiten",
+  closedLabel = "Week gesloten, klik om te openen",
 }: {
   weekStart: string;
   initialIsOpen: boolean;
   hasOverride?: boolean;
   canManage: boolean;
+  openLabel?: string;
+  closedLabel?: string;
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(initialIsOpen);
@@ -70,7 +74,7 @@ export default function WeekStatusToggle({
         }`}
       >
         <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-awning" : "bg-ink/40"}`} />
-        {isOpen ? "Week open, klik om te sluiten" : "Week gesloten, klik om te openen"}
+        {isOpen ? openLabel : closedLabel}
       </button>
       {overridden && (
         <button

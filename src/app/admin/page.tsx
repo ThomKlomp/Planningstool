@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import CompaniesTable from "./companies-table";
+import { countChatsAwaitingReply } from "@/lib/support-notify";
 
 export default async function AdminOverviewPage() {
-  const [companies, userCount, companyCount, pendingHoursCount, platformAdminCount] =
+  const [companies, userCount, companyCount, pendingHoursCount, platformAdminCount, chatsAwaitingReply] =
     await Promise.all([
       prisma.company.findMany({
         include: {
@@ -16,10 +17,23 @@ export default async function AdminOverviewPage() {
       prisma.company.count(),
       prisma.timeEntry.count({ where: { status: "SUBMITTED" } }),
       prisma.platformAdmin.count(),
+      countChatsAwaitingReply(),
     ]);
 
   return (
     <div>
+      {chatsAwaitingReply > 0 && (
+        <Link
+          href="/admin/support"
+          className="mb-4 block rounded-xl border border-amber/40 bg-amber/10 px-5 py-3 text-sm text-amber-dark hover:border-amber"
+        >
+          {chatsAwaitingReply === 1
+            ? "1 support-chat wacht op antwoord"
+            : `${chatsAwaitingReply} support-chats wachten op antwoord`}{" "}
+          →
+        </Link>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Zaken" value={companyCount} />
         <StatCard label="Gebruikers" value={userCount} />

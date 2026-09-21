@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Invite = { id: string; email: string; role: string; token: string };
-type TierWarning = { fromLabel: string; toLabel: string; newMonthlyExcl: number } | null;
+type TierWarning =
+  | { kind: "tier"; fromLabel: string; toLabel: string; newMonthlyExcl: number }
+  | { kind: "contact"; maxMembers: number }
+  | null;
 
 export default function InviteForm({
   onInvited,
@@ -104,12 +107,19 @@ export default function InviteForm({
       )}
     </form>
 
-    {result?.tierWarning && (
+    {result?.tierWarning?.kind === "tier" && (
       <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
         Let op: als deze uitnodiging wordt geaccepteerd, ga je van staffel{" "}
         {result.tierWarning.fromLabel} naar {result.tierWarning.toLabel} — €
         {result.tierWarning.newMonthlyExcl.toFixed(2)}/maand excl. btw vanaf de
         eerstvolgende betaling.
+      </p>
+    )}
+    {result?.tierWarning?.kind === "contact" && (
+      <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
+        Let op: met deze uitnodiging kom je boven de {result.tierWarning.maxMembers}{" "}
+        medewerkers. Neem contact met ons op (via het chat-bolletje rechtsonder)
+        om de mogelijkheden te bespreken.
       </p>
     )}
     </div>

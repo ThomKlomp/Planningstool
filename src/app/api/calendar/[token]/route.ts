@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildShiftsICS } from "@/lib/ics";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 // Publieke, niet-ingelogde route: de beveiliging zit in de onraadbare
 // token, niet in een sessie-check — dit endpoint wordt rechtstreeks door
@@ -25,10 +26,17 @@ export async function GET(_req: Request, { params }: { params: { token: string }
   const to = new Date();
   to.setMonth(to.getMonth() + 6);
 
-  const shifts = await prisma.shift.findMany({
+  const allShifts = await prisma.shift.findMany({
     where: { membershipId: membership.id, date: { gte: from, lte: to } },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
+
+  // Medewerkers zien alleen gepubliceerde weken, ook via de agenda-feed.
+  // Eigenaar/managers zien altijd alles.
+  const shifts =
+    membership.role === "EMPLOYEE"
+      ? await filterVisibleForEmployee(membership.companyId, allShifts)
+      : allShifts;
 
   const ics = buildShiftsICS({
     companyName: membership.company.name,

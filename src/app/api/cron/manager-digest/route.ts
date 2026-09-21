@@ -47,7 +47,7 @@ export async function GET(req: Request) {
       .filter((e): e is string => Boolean(e));
     if (managerEmails.length === 0) continue;
 
-    const [offered, claimed, openedWeeks, submittedHours] = await Promise.all([
+    const [offered, claimed, proposals, openedWeeks, submittedHours] = await Promise.all([
       prisma.shiftSwapRequest.findMany({
         where: { companyId: company.id, createdAt: { gte: since } },
         include: { shift: true },
@@ -57,6 +57,11 @@ export async function GET(req: Request) {
         where: { companyId: company.id, claimedAt: { gte: since } },
         include: { shift: true },
         orderBy: { claimedAt: "asc" },
+      }),
+      prisma.shiftSwapProposal.findMany({
+        where: { createdAt: { gte: since }, swapRequest: { companyId: company.id } },
+        include: { swapRequest: { include: { shift: true } } },
+        orderBy: { createdAt: "asc" },
       }),
       prisma.weekStatus.findMany({
         where: { companyId: company.id, notifiedAt: { gte: since }, isOpen: true },
@@ -72,6 +77,7 @@ export async function GET(req: Request) {
     if (
       offered.length === 0 &&
       claimed.length === 0 &&
+      proposals.length === 0 &&
       openedWeeks.length === 0 &&
       submittedHours.length === 0
     ) {
@@ -85,6 +91,10 @@ export async function GET(req: Request) {
     for (const r of claimed) {
       membershipIds.add(r.offeredById);
       if (r.claimedById) membershipIds.add(r.claimedById);
+    }
+    for (const p of proposals) {
+      membershipIds.add(p.proposedById);
+      membershipIds.add(p.swapRequest.offeredById);
     }
     const namedMembers = await prisma.membership.findMany({
       where: { id: { in: Array.from(membershipIds) } },
@@ -114,6 +124,15 @@ export async function GET(req: Request) {
               `${escapeHtml(dateLabel(r.shift.date))}, ${r.shift.startTime}–${r.shift.endTime}: ${escapeHtml(
                 r.claimedById ? nameById.get(r.claimedById) ?? "Onbekend" : "Onbekend"
               )} nam 'm over van ${escapeHtml(nameById.get(r.offeredById) ?? "Onbekend")}`
+          )
+        )}
+        ${section(
+          "Ruilvoorstellen (medewerkers spreken dit onderling af, pas daarna zelf het rooster aan)",
+          proposals.map(
+            (p) =>
+              `${escapeHtml(nameById.get(p.proposedById) ?? "Onbekend")} wil ruilen voor de dienst van ${escapeHtml(
+                nameById.get(p.swapRequest.offeredById) ?? "Onbekend"
+              )} op ${escapeHtml(dateLabel(p.swapRequest.shift.date))}, ${p.swapRequest.shift.startTime}–${p.swapRequest.shift.endTime}`
           )
         )}
         ${section(

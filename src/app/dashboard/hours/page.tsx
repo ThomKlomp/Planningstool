@@ -2,8 +2,10 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import TimeEntryForm from "./time-entry-form";
 import TimeEntryList from "./time-entry-list";
+import ExportHours from "./export-hours";
 import WeekNav from "../week-nav";
 import { resolveWeek } from "@/lib/week";
+import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 export default async function HoursPage({
   searchParams,
@@ -19,7 +21,7 @@ export default async function HoursPage({
   const rangeEnd = new Date();
   rangeEnd.setDate(rangeEnd.getDate() + 90);
 
-  const [timeEntries, closedDays, company] = await Promise.all([
+  const [allTimeEntries, closedDays, company] = await Promise.all([
     prisma.timeEntry.findMany({
       where: canManage
         ? {
@@ -47,6 +49,18 @@ export default async function HoursPage({
         }),
   ]);
 
+  // Zie api/time-entries: conceptregels van nog niet gepubliceerde weken zijn
+  // voor medewerkers verborgen.
+  const timeEntries = canManage
+    ? allTimeEntries
+    : [
+        ...(await filterVisibleForEmployee(
+          membership.companyId,
+          allTimeEntries.filter((e) => e.status === "DRAFT")
+        )),
+        ...allTimeEntries.filter((e) => e.status !== "DRAFT"),
+      ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
   const closedDates = closedDays.map((c) => c.date.toISOString().slice(0, 10));
   if (company?.closedWeekdays && company.closedWeekdays.length > 0) {
     for (
@@ -60,6 +74,14 @@ export default async function HoursPage({
     }
   }
 
+  // Reden per gesloten dag, zodat de medewerker ziet waarom er niets
+  // ingediend kan worden.
+  const closedReasons: Record<string, string> = {};
+  for (const d of closedDates) closedReasons[d] = "vaste sluitingsdag";
+  for (const c of closedDays) {
+    if (c.reason) closedReasons[c.date.toISOString().slice(0, 10)] = c.reason;
+  }
+
   return (
     <div className="max-w-3xl">
       <h1 className="font-display text-3xl">Uren</h1>
@@ -69,6 +91,12 @@ export default async function HoursPage({
           : "Log je gewerkte uren, je manager keurt ze goed."}
       </p>
 
+      {canManage && (
+        <div className="mt-4">
+          <ExportHours />
+        </div>
+      )}
+
       {canManage && week && (
         <div className="mt-4">
           <WeekNav basePath="/dashboard/hours" weekStart={week[0]} />
@@ -77,7 +105,7 @@ export default async function HoursPage({
 
       {!canManage && (
         <div className="mt-6">
-          <TimeEntryForm closedDates={closedDates} />
+          <TimeEntryForm closedDates={closedDates} closedReasons={closedReasons} />
         </div>
       )}
 

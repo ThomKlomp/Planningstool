@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import SignOutButton from "@/components/sign-out-button";
+import { countChatsAwaitingReply } from "@/lib/support-notify";
 
 export default async function AdminLayout({
   children,
@@ -17,6 +18,8 @@ export default async function AdminLayout({
   if (!session.user.isPlatformAdmin) {
     redirect("/dashboard");
   }
+
+  const chatsAwaitingReply = await countChatsAwaitingReply();
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -39,7 +42,14 @@ export default async function AdminLayout({
           <AdminNavLink href="/admin">Overzicht</AdminNavLink>
           <AdminNavLink href="/admin/companies">Zaken</AdminNavLink>
           <AdminNavLink href="/admin/users">Gebruikers</AdminNavLink>
-          <AdminNavLink href="/admin/support">Support-chats</AdminNavLink>
+          <AdminNavLink href="/admin/support">
+            Support-chats
+            {chatsAwaitingReply > 0 && (
+              <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
+                {chatsAwaitingReply}
+              </span>
+            )}
+          </AdminNavLink>
           <AdminNavLink href="/admin/discount-codes">Kortingscodes</AdminNavLink>
           <AdminNavLink href="/admin/demo-company">Demo-zaak</AdminNavLink>
           {session.user.memberships.length > 0 && (
