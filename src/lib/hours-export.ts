@@ -180,3 +180,20 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
   void periodLabel;
   return wb;
 }
+
+/** Leest ?month=YYYY-MM of ?from=&to= (inclusief) uit de query; null bij ongeldig. */
+export function parsePeriod(params: URLSearchParams): { from: Date; to: Date } | null {
+  let from: Date;
+  let to: Date;
+  const month = params.get("month");
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split("-").map(Number);
+    from = new Date(Date.UTC(y, m - 1, 1));
+    to = new Date(Date.UTC(y, m, 0));
+  } else {
+    from = new Date(`${params.get("from") ?? ""}T00:00:00Z`);
+    to = new Date(`${params.get("to") ?? ""}T00:00:00Z`);
+  }
+  if (isNaN(from.getTime()) || isNaN(to.getTime()) || from > to) return null;
+  return { from, to };
+}

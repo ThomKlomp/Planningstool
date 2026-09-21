@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 import { hashPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { resolveDepartmentId } from "@/lib/resolve-department";
@@ -11,6 +12,10 @@ export async function POST(
   const invite = await prisma.invite.findUnique({ where: { token: params.token } });
   if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
     return NextResponse.json({ error: "Uitnodiging is niet meer geldig" }, { status: 410 });
+  }
+
+  if (!(await hasRoomForMember(invite.companyId))) {
+    return NextResponse.json(maxMembersResponse(), { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

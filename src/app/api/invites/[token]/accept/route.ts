@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
@@ -19,6 +20,10 @@ export async function POST(
   }
   if (session.user.email?.toLowerCase() !== invite.email.toLowerCase()) {
     return NextResponse.json({ error: "Verkeerd account" }, { status: 403 });
+  }
+
+  if (!(await hasRoomForMember(invite.companyId))) {
+    return NextResponse.json(maxMembersResponse(), { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ContactButton from "@/components/contact-button";
 
 type Invite = { id: string; email: string; role: string; token: string };
-type TierWarning =
-  | { kind: "tier"; fromLabel: string; toLabel: string; newMonthlyExcl: number }
-  | { kind: "contact"; maxMembers: number }
-  | null;
+type TierWarning = { fromLabel: string; toLabel: string; newMonthlyExcl: number } | null;
 
 export default function InviteForm({
   onInvited,
@@ -24,11 +22,13 @@ export default function InviteForm({
     tierWarning: TierWarning;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [maxReached, setMaxReached] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMaxReached(false);
     setResult(null);
 
     const res = await fetch("/api/invites", {
@@ -41,6 +41,7 @@ export default function InviteForm({
 
     if (!res.ok) {
       setError(data.error ?? "Er ging iets mis.");
+      setMaxReached(data.code === "MAX_MEMBERS");
       setLoading(false);
       return;
     }
@@ -107,7 +108,7 @@ export default function InviteForm({
       )}
     </form>
 
-    {result?.tierWarning?.kind === "tier" && (
+    {result?.tierWarning && (
       <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
         Let op: als deze uitnodiging wordt geaccepteerd, ga je van staffel{" "}
         {result.tierWarning.fromLabel} naar {result.tierWarning.toLabel} — €
@@ -115,11 +116,14 @@ export default function InviteForm({
         eerstvolgende betaling.
       </p>
     )}
-    {result?.tierWarning?.kind === "contact" && (
-      <p className="mt-2 w-full rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
-        Let op: met deze uitnodiging kom je boven de {result.tierWarning.maxMembers}{" "}
-        medewerkers. Neem contact met ons op (via het chat-bolletje rechtsonder)
-        om de mogelijkheden te bespreken.
+    {maxReached && (
+      <p className="mt-2 w-full">
+        <ContactButton
+          message="Hoi! Ik zit op het maximum van 40 medewerkers en wil graag weten wat de mogelijkheden zijn."
+          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning"
+        >
+          Neem contact op
+        </ContactButton>
       </p>
     )}
     </div>

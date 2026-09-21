@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 import { resolveDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
@@ -38,6 +39,10 @@ export async function POST(
       });
     }
     return NextResponse.json({ ok: true });
+  }
+
+  if (!(await hasRoomForMember(company.id))) {
+    return NextResponse.json(maxMembersResponse(), { status: 403 });
   }
 
   const resolved = await resolveDepartmentId(company.id, body?.departmentId);

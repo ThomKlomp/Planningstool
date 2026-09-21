@@ -123,23 +123,38 @@ export async function computeSubscriptionAmount(
  */
 export async function getNextMemberTierWarning(companyId: string) {
   const count = await countBillableMembers(companyId);
-
-  // Boven het maximum van de standaardstaffels: geen automatische staffel
-  // meer, maar maatwerk. Aparte waarschuwing, zodat de UI om contact vraagt.
-  if (count + 1 > MAX_STANDARD_MEMBERS) {
-    return {
-      kind: "contact" as const,
-      maxMembers: MAX_STANDARD_MEMBERS,
-    };
-  }
-
   const currentTier = getTierForMemberCount(count);
   const nextTier = getTierForMemberCount(count + 1);
   if (nextTier.id === currentTier.id) return null;
   return {
-    kind: "tier" as const,
     fromLabel: currentTier.label,
     toLabel: nextTier.label,
     newMonthlyExcl: nextTier.monthlyExcl,
   };
+}
+
+export const MAX_MEMBERS_ERROR =
+  `Deze zaak zit op het maximum van ${MAX_STANDARD_MEMBERS} medewerkers. Neem contact met ons op om de mogelijkheden te bespreken (via het chat-bolletje rechtsonder).`;
+
+/**
+ * Controleert of er nog een medewerker bij kan (max. MAX_STANDARD_MEMBERS).
+ * `includePendingInvites` telt openstaande uitnodigingen mee (bij het
+ * versturen van een nieuwe uitnodiging); bij het accepteren niet, want die
+ * uitnodiging telde dan al mee.
+ */
+export async function hasRoomForMember(
+  companyId: string,
+  includePendingInvites = false
+): Promise<boolean> {
+  const members = await countBillableMembers(companyId);
+  const pending = includePendingInvites
+    ? await prisma.invite.count({
+        where: { companyId, acceptedAt: null, expiresAt: { gt: new Date() } },
+      })
+    : 0;
+  return members + pending < MAX_STANDARD_MEMBERS;
+}
+
+export function maxMembersResponse() {
+  return { error: MAX_MEMBERS_ERROR, code: "MAX_MEMBERS" };
 }

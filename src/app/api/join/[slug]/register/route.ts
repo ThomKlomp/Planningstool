@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 import { hashPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { resolveDepartmentId } from "@/lib/resolve-department";
@@ -11,6 +12,10 @@ export async function POST(
   const company = await prisma.company.findUnique({ where: { slug: params.slug } });
   if (!company) {
     return NextResponse.json({ error: "Deze link is niet geldig" }, { status: 404 });
+  }
+
+  if (!(await hasRoomForMember(company.id))) {
+    return NextResponse.json(maxMembersResponse(), { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

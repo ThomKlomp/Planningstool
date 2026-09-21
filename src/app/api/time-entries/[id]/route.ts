@@ -53,9 +53,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     // De medewerker moet weten dat er een vraag ligt: melding in Shiftje én
     // een e-mail. Een mislukte mail mag het stellen van de vraag niet blokkeren.
-    if (status === "QUERIED") {
-      await notifyEmployeeOfQuery(updated, membership.companyName, membership.companySlug);
-    }
+    await notifyEmployeeOfReview(
+      status as "APPROVED" | "REJECTED" | "QUERIED",
+      updated,
+      membership.companyName,
+      membership.companySlug
+    );
 
     return NextResponse.json({ timeEntry: updated });
   }
@@ -87,7 +90,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
 }
 
-async function notifyEmployeeOfQuery(
+async function notifyEmployeeOfReview(
+  status: "APPROVED" | "REJECTED" | "QUERIED",
   entry: { companyId: string; membershipId: string; date: Date; startTime: string; endTime: string; managerComment: string | null },
   companyName: string,
   companySlug: string
@@ -98,11 +102,46 @@ async function notifyEmployeeOfQuery(
     month: "long",
   });
   const comment = entry.managerComment ?? "";
+  const times = `${entry.startTime}–${entry.endTime || "?"}`;
 
-  try {
-    await notify(entry.companyId, [entry.membershipId], {
+  const copy = {
+    QUERIED: {
       title: "Je manager heeft een vraag over je uren",
       body: `${dateLabel}: ${comment}`,
+      subject: `Vraag over je uren van ${dateLabel}`,
+      heading: "Je manager heeft een vraag over je uren",
+      intro: `Bij <strong>${escapeHtml(companyName)}</strong> heeft je manager een vraag over je uren van <strong>${escapeHtml(dateLabel)}</strong> (${escapeHtml(times)}):`,
+      showComment: true,
+      outro: "Pas je uren aan (of licht ze toe) en dien ze opnieuw in.",
+      button: "Naar mijn uren",
+    },
+    APPROVED: {
+      title: "Je uren zijn goedgekeurd",
+      body: `${dateLabel} (${times})`,
+      subject: `Je uren van ${dateLabel} zijn goedgekeurd`,
+      heading: "Je uren zijn goedgekeurd",
+      intro: `Je uren bij <strong>${escapeHtml(companyName)}</strong> van <strong>${escapeHtml(dateLabel)}</strong> (${escapeHtml(times)}) zijn goedgekeurd.`,
+      showComment: false,
+      outro: "",
+      button: "Naar mijn uren",
+    },
+    REJECTED: {
+      title: "Je uren zijn afgekeurd",
+      body: `${dateLabel} (${times}). Neem contact op met je manager als je wilt weten waarom.`,
+      subject: `Je uren van ${dateLabel} zijn afgekeurd`,
+      heading: "Je uren zijn afgekeurd",
+      intro: `Je uren bij <strong>${escapeHtml(companyName)}</strong> van <strong>${escapeHtml(dateLabel)}</strong> (${escapeHtml(times)}) zijn afgekeurd.`,
+      showComment: false,
+      outro: "Neem contact op met je manager als je wilt weten waarom, en dien indien nodig nieuwe uren in.",
+      button: "Naar mijn uren",
+    },
+  }[status];
+
+  // Een mislukte melding/mail mag het beoordelen zelf nooit blokkeren.
+  try {
+    await notify(entry.companyId, [entry.membershipId], {
+      title: copy.title,
+      body: copy.body,
       link: "/dashboard/hours",
     });
 
@@ -115,24 +154,26 @@ async function notifyEmployeeOfQuery(
     const url = `${process.env.NEXTAUTH_URL ?? ""}/dashboard/hours`;
     await sendEmail({
       to: employee.user.email,
-      subject: `Vraag over je uren van ${dateLabel}`,
+      subject: copy.subject,
       html: emailLayout(
-        "Je manager heeft een vraag over je uren",
+        copy.heading,
         `
-          <p>Bij <strong>${escapeHtml(companyName)}</strong> heeft je manager een vraag over je
-          uren van <strong>${escapeHtml(dateLabel)}</strong>
-          (${escapeHtml(entry.startTime)}–${escapeHtml(entry.endTime || "?")}):</p>
-          <p style="margin-top: 12px; padding: 12px 14px; background: #F4EFE6; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(comment)}</p>
-          <p style="margin-top: 16px;">Pas je uren aan (of licht ze toe) en dien ze opnieuw in.</p>
+          <p>${copy.intro}</p>
+          ${
+            copy.showComment
+              ? `<p style="margin-top: 12px; padding: 12px 14px; background: #F4EFE6; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(comment)}</p>`
+              : ""
+          }
+          ${copy.outro ? `<p style="margin-top: 16px;">${copy.outro}</p>` : ""}
           <p style="margin-top: 20px;">
             <a href="${url}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
-              Naar mijn uren
+              ${copy.button}
             </a>
           </p>
         `
       ),
     });
   } catch (err) {
-    console.error(`[time-entries] melding over vraag mislukt (${companySlug})`, err);
+    console.error(`[time-entries] melding over beoordeling mislukt (${companySlug})`, err);
   }
 }

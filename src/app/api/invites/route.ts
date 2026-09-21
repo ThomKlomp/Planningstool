@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
-import { getNextMemberTierWarning } from "@/lib/billing";
+import { getNextMemberTierWarning, hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 
 function roleLabel(role: string) {
   return role === "MANAGER" ? "manager" : "medewerker";
@@ -27,6 +27,10 @@ export async function POST(req: Request) {
   const membership = session.user.memberships[0];
   if (!membership || (membership.role !== "OWNER" && membership.role !== "MANAGER")) {
     return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
+  }
+
+  if (!(await hasRoomForMember(membership.companyId, true))) {
+    return NextResponse.json(maxMembersResponse(), { status: 403 });
   }
 
   // Puur informatief: als deze uitnodiging geaccepteerd wordt, duwt dat de

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildHoursWorkbook } from "@/lib/hours-export";
+import { buildHoursWorkbook, parsePeriod } from "@/lib/hours-export";
 
 // Excel-export van goedgekeurde uren. Alleen eigenaar/manager.
 // ?from=YYYY-MM-DD&to=YYYY-MM-DD (inclusief), of ?month=YYYY-MM.
@@ -16,21 +16,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Geen rechten" }, { status: 403 });
   }
 
-  const params = new URL(req.url).searchParams;
-  let from: Date;
-  let to: Date;
-  const month = params.get("month");
-  if (month && /^\d{4}-\d{2}$/.test(month)) {
-    const [y, m] = month.split("-").map(Number);
-    from = new Date(Date.UTC(y, m - 1, 1));
-    to = new Date(Date.UTC(y, m, 0));
-  } else {
-    from = new Date(`${params.get("from") ?? ""}T00:00:00Z`);
-    to = new Date(`${params.get("to") ?? ""}T00:00:00Z`);
-  }
-  if (isNaN(from.getTime()) || isNaN(to.getTime()) || from > to) {
+  const period = parsePeriod(new URL(req.url).searchParams);
+  if (!period) {
     return NextResponse.json({ error: "Ongeldige periode" }, { status: 400 });
   }
+  const { from, to } = period;
 
   const entries = await prisma.timeEntry.findMany({
     where: {
