@@ -6,10 +6,31 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 
+// NextAuth geeft bij een mislukte OAuth-poging alleen een technische code
+// terug (?error=...), niet een mensvriendelijke tekst. Deze vertaalt de
+// meest voorkomende codes; bij een onbekende code tonen we 'm gewoon erbij,
+// zodat we bij het volgende gesprek precies weten waar het misging.
+function describeAuthError(code: string) {
+  switch (code) {
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+    case "Callback":
+      return `Inloggen met Google is niet gelukt (foutcode: ${code}). Dit gebeurt vaak als cookies geblokkeerd worden, bijvoorbeeld in een in-app browser (zoals vanuit WhatsApp of Instagram geopend) of bij strikte privacy-instellingen. Probeer het in Safari of Chrome zelf te openen, of log in met e-mail + wachtwoord.`;
+    case "OAuthAccountNotLinked":
+      return "Dit e-mailadres heeft al een account met een wachtwoord. Log in met e-mail + wachtwoord.";
+    case "AccessDenied":
+      return "Toegang geweigerd door Google. Probeer het opnieuw.";
+    default:
+      return `Inloggen is niet gelukt (foutcode: ${code}). Probeer het opnieuw, of log in met e-mail + wachtwoord.`;
+  }
+}
+
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const authErrorCode = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,9 +80,15 @@ function SignInContent() {
 
   return (
     <>
+      {authErrorCode && (
+        <div className="mb-4 rounded-lg bg-red-50 px-3 py-2.5 text-left text-xs text-red-700">
+          {describeAuthError(authErrorCode)}
+        </div>
+      )}
+
       <button
         onClick={() => signIn("google", { callbackUrl })}
-        className="mt-6 w-full rounded-full bg-ink px-4 py-3 font-medium text-paper hover:bg-awning transition-colors"
+        className="mt-2 w-full rounded-full bg-ink px-4 py-3 font-medium text-paper hover:bg-awning transition-colors"
       >
         Inloggen met Google
       </button>
@@ -97,7 +124,7 @@ function SignInContent() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         {needsVerification && (
           <div className="rounded-lg bg-amber/10 px-3 py-2 text-sm text-amber-dark">
-            <p>Bevestig eerst je e-mailadres — check je inbox voor de link.</p>
+            <p>Bevestig eerst je e-mailadres, check je inbox voor de link.</p>
             {resent ? (
               <p className="mt-1 text-xs">Opnieuw verstuurd, check je inbox.</p>
             ) : (
