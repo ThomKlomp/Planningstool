@@ -28,6 +28,41 @@ export default function MemberList({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [roleBusyId, setRoleBusyId] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
+
+  // Rol wijzigen mag alleen de eigenaar, en alleen tussen manager en
+  // medewerker (het eigenaarschap zelf verander je hier niet).
+  function canChangeRole(member: Member) {
+    if (viewerRole !== "OWNER") return false;
+    if (member.role === "OWNER") return false;
+    if (member.id === viewerMembershipId) return false;
+    return true;
+  }
+
+  async function changeRole(member: Member, role: "MANAGER" | "EMPLOYEE") {
+    const label = role === "MANAGER" ? "manager" : "medewerker";
+    if (!confirm(`${member.name} instellen als ${label}?`)) return;
+
+    setRoleBusyId(member.id);
+    setRoleError(null);
+    const previous = members;
+    setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, role } : m)));
+
+    const res = await fetch(`/api/team-members/${member.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+
+    setRoleBusyId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setRoleError(data.error ?? "Rol wijzigen mislukt.");
+      setMembers(previous);
+    }
+  }
+
   function canRemove(member: Member) {
     if (!canManage) return false;
     if (member.id === viewerMembershipId) return false;
@@ -105,7 +140,19 @@ export default function MemberList({
                     <p className="text-xs text-ink/50">{m.email}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs uppercase tracking-wide text-ink/40">{m.role}</span>
+                    {canChangeRole(m) ? (
+                      <select
+                        value={m.role}
+                        disabled={roleBusyId === m.id}
+                        onChange={(e) => changeRole(m, e.target.value as "MANAGER" | "EMPLOYEE")}
+                        className="rounded-full border border-line bg-white px-2 py-1 text-xs uppercase tracking-wide text-ink/70 hover:border-ink disabled:opacity-50"
+                      >
+                        <option value="EMPLOYEE">EMPLOYEE</option>
+                        <option value="MANAGER">MANAGER</option>
+                      </select>
+                    ) : (
+                      <span className="text-xs uppercase tracking-wide text-ink/40">{m.role}</span>
+                    )}
                     {isDemoCompany && m.id !== viewerMembershipId && (
                       <a
                         href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
@@ -133,6 +180,7 @@ export default function MemberList({
         );
       })}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {roleError && <p className="mt-2 text-sm text-red-600">{roleError}</p>}
     </div>
   );
 }
