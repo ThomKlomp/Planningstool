@@ -42,9 +42,9 @@ export default function CookieConsentBanner() {
     <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white px-4 py-4 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] sm:px-6">
       <div className="mx-auto flex max-w-5xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-ink/70">
-          We houden geanonimiseerde bezoekstatistieken bij (welke pagina, waar je vandaan komt) om te
-          zien hoe Shiftje gevonden wordt. Geen IP-adres, geen advertentiecookies — en er wordt niets op
-          je apparaat opgeslagen om dit te meten.{" "}
+          We houden geanonimiseerde bezoekstatistieken bij (welke pagina, waar je vandaan komt, uit
+          welk land) om te zien hoe Shiftje gevonden wordt. Je IP-adres wordt niet opgeslagen, en er
+          wordt niets op je apparaat bewaard om dit te meten.{" "}
           <Link href="/privacy" className="text-awning hover:underline">
             Meer info
           </Link>

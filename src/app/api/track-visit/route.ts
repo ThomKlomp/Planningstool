@@ -1,7 +1,25 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import geoip from "geoip-country";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+/**
+ * Landcode uit het IP-adres van het verzoek, puur lokaal opgezocht (geen
+ * aanroep naar een externe dienst, dus het IP-adres verlaat de server niet).
+ * Het IP-adres zelf wordt nergens opgeslagen of teruggegeven, alleen de
+ * afgeleide (grove) landcode.
+ */
+function countryFromRequest(req: Request): string | null {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor?.split(",")[0]?.trim();
+  if (!ip) return null;
+  try {
+    return geoip.lookup(ip)?.country ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Legt één paginabezoek vast: welk pad, waar de bezoeker vandaan kwam
@@ -40,6 +58,7 @@ export async function POST(req: Request) {
         companyId: membership?.companyId,
         companyName: membership?.companyName,
         role: membership?.role,
+        country: countryFromRequest(req),
       },
     });
 

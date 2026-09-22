@@ -567,6 +567,7 @@ model PageView {
   companyId  String?
   companyName String? // snapshot, zodat de naam blijft kloppen ook als de zaak later verwijderd wordt
   role       Role?
+  country    String? // ISO-landcode (bv. "NL"), bepaald uit het IP-adres op het moment zelf; het IP-adres wordt nooit opgeslagen
   createdAt  DateTime @default(now())
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)

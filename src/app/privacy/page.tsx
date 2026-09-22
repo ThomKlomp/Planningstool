@@ -28,9 +28,15 @@ export default function PrivacyPage() {
         <ul className="mt-3 list-disc space-y-1 pl-5 text-ink/70">
           <li>Welke pagina je bezocht (bijvoorbeeld de homepage of de inlogpagina)</li>
           <li>Vanaf welke website of zoekmachine je kwam (alleen de domeinnaam, niet de volledige link)</li>
+          <li>Uit welk land je verzoek kwam (bijvoorbeeld "Nederland")</li>
           <li>Of je op dat moment al bent ingelogd bij een zaak, en zo ja: bij welke</li>
           <li>Tijdstip van bezoek</li>
         </ul>
+        <p className="mt-3 text-ink/70">
+          Om het land te bepalen kijken we op het moment zelf naar je IP-adres, maar dat adres zelf
+          slaan we niet op: we bewaren alleen het land dat daaruit volgt, en dat land wordt niet ergens
+          extern opgezocht (er gaat dus geen IP-adres naar een andere partij).
+        </p>
         <p className="mt-3 text-ink/70">
           Dit gebeurt zonder dat we iets op jouw apparaat opslaan (geen cookie, geen lokale opslag), dus
           er is voor déze meting geen voorafgaande toestemming nodig. Wil je liever niet dat we dit
@@ -40,8 +46,8 @@ export default function PrivacyPage() {
 
         <h2 className="mt-8 font-display text-xl">Wat we niet vastleggen</h2>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-ink/70">
-          <li>Geen IP-adres</li>
-          <li>Geen locatiegegevens</li>
+          <li>Geen IP-adres (alleen tijdelijk gebruikt om het land te bepalen, daarna weggegooid)</li>
+          <li>Geen locatiegegevens preciezer dan land (geen stad, geen coördinaten)</li>
           <li>Geen advertentie- of trackingcookies van derden</li>
         </ul>
         <p className="mt-3 text-ink/70">

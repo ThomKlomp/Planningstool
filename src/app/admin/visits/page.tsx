@@ -37,6 +37,7 @@ export default async function VisitsPage() {
   const topReferrers = topCounts(
     views.map((v) => v.referrer || (v.utmSource ? `utm: ${v.utmSource}` : "Direct / onbekend"))
   );
+  const topCountries = topCounts(views.map((v) => countryLabel(v.country)));
 
   return (
     <div>
@@ -54,12 +55,15 @@ export default async function VisitsPage() {
         <Stat label="Zaken die langskwamen (30 dgn)" value={distinctCompanies.length} />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <Panel title="Meest bezochte pagina's (30 dgn)">
           <CountList items={topPages} />
         </Panel>
-        <Panel title="Waar bezoekers vandaan komen (30 dgn)">
+        <Panel title="Verwijzende site (30 dgn)">
           <CountList items={topReferrers} />
+        </Panel>
+        <Panel title="Land van herkomst (30 dgn)">
+          <CountList items={topCountries} />
         </Panel>
       </div>
 
@@ -77,7 +81,8 @@ export default async function VisitsPage() {
             <tr>
               <th className="px-4 py-2 font-medium">Tijd</th>
               <th className="px-4 py-2 font-medium">Pagina</th>
-              <th className="px-4 py-2 font-medium">Vandaan</th>
+              <th className="px-4 py-2 font-medium">Verwijzer</th>
+              <th className="px-4 py-2 font-medium">Land</th>
               <th className="px-4 py-2 font-medium">Zaak</th>
             </tr>
           </thead>
@@ -96,6 +101,7 @@ export default async function VisitsPage() {
                 <td className="px-4 py-2 text-ink/60">
                   {v.referrer || (v.utmSource ? `utm: ${v.utmSource}` : "—")}
                 </td>
+                <td className="px-4 py-2 text-ink/60">{countryLabel(v.country)}</td>
                 <td className="px-4 py-2">
                   {v.companyName ? (
                     <span className="rounded-full bg-awning/10 px-2 py-0.5 text-xs text-awning">
@@ -118,6 +124,22 @@ export default async function VisitsPage() {
       </div>
     </div>
   );
+}
+
+// Landcode -> leesbare naam voor Nederlandse gebruikers; onbekend/leeg apart
+// gelabeld zodat het niet als "0 bezoekers" verdwijnt in de lijst.
+const COUNTRY_NAMES: Record<string, string> = {
+  NL: "Nederland",
+  BE: "België",
+  DE: "Duitsland",
+  GB: "Verenigd Koninkrijk",
+  US: "Verenigde Staten",
+  FR: "Frankrijk",
+};
+
+function countryLabel(code: string | null) {
+  if (!code) return "Onbekend";
+  return COUNTRY_NAMES[code] ?? code;
 }
 
 function topCounts(values: string[], limit = 8) {
