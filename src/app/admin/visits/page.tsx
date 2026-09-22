@@ -31,7 +31,8 @@ export default async function VisitsPage() {
   ]);
 
   const withCompany = views.filter((v) => v.companyId);
-  const anonymous = views.length - withCompany.length;
+  const platformAdminOnly = views.filter((v) => !v.companyId && v.isPlatformAdmin);
+  const anonymous = views.length - withCompany.length - platformAdminOnly.length;
 
   const topPages = topCounts(views.map((v) => v.path));
   const topReferrers = topCounts(
@@ -70,8 +71,11 @@ export default async function VisitsPage() {
       <div className="mt-6 rounded-xl border border-line bg-white p-5">
         <p className="text-sm text-ink/60">
           Van de laatste {views.length} bezoeken (max. 500 getoond) kwamen er{" "}
-          <strong className="text-ink">{withCompany.length}</strong> van iemand die al bij een zaak hoort,
-          en <strong className="text-ink">{anonymous}</strong> van een anonieme bezoeker.
+          <strong className="text-ink">{withCompany.length}</strong> van iemand die al bij een zaak hoort,{" "}
+          <strong className="text-ink">{platformAdminOnly.length}</strong> van een platform-admin zonder
+          eigen zaak (jij/collega's, bijvoorbeeld tijdens testen), en{" "}
+          <strong className="text-ink">{anonymous}</strong> van een echt anonieme (niet-ingelogde)
+          bezoeker.
         </p>
       </div>
 
@@ -107,6 +111,10 @@ export default async function VisitsPage() {
                     <span className="rounded-full bg-awning/10 px-2 py-0.5 text-xs text-awning">
                       {v.companyName}
                       {v.role ? ` (${v.role === "OWNER" ? "eigenaar" : v.role === "MANAGER" ? "manager" : "medewerker"})` : ""}
+                    </span>
+                  ) : v.isPlatformAdmin ? (
+                    <span className="rounded-full bg-amber/20 px-2 py-0.5 text-xs text-amber-dark">
+                      Platform-admin (geen zaak)
                     </span>
                   ) : (
                     <span className="text-xs text-ink/30">anoniem</span>

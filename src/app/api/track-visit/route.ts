@@ -58,6 +58,7 @@ export async function POST(req: Request) {
         companyId: membership?.companyId,
         companyName: membership?.companyName,
         role: membership?.role,
+        isPlatformAdmin: Boolean(session?.user?.isPlatformAdmin),
         country: countryFromRequest(req),
       },
     });
