@@ -17,10 +17,43 @@ const plex = IBM_Plex_Sans({
   weight: ["400", "500", "600"],
 });
 
+const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
+
 export const metadata: Metadata = {
-  title: "Shiftje: planning voor kleine horeca",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Shiftje: roosterprogramma voor kleine horeca",
+    template: "%s | Shiftje",
+  },
   description:
-    "Beschikbaarheid, rooster en uren op één plek. Gemaakt voor kleinere horecazaken.",
+    "Rooster software voor kleine horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. Begin gratis.",
+  keywords: [
+    "rooster software horeca",
+    "personeelsplanning horeca",
+    "dienstroosterapp",
+    "rooster app kleine horeca",
+    "personeelsplanning café",
+    "planning restaurant",
+  ],
+  authors: [{ name: "Shiftje" }],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "nl_NL",
+    siteName: "Shiftje",
+    url: SITE_URL,
+    title: "Shiftje: roosterprogramma voor kleine horeca",
+    description:
+      "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje — rooster software voor kleine horeca" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shiftje: roosterprogramma voor kleine horeca",
+    description: "Beschikbaarheid, personeelsplanning en uren op één plek voor kleine horecazaken.",
+    images: ["/api/og"],
+  },
 };
 
 export default async function RootLayout({

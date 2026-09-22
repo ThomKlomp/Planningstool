@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import ContactButton from "@/components/contact-button";
+import SiteHeader from "@/components/marketing/site-header";
+import SiteFooter from "@/components/marketing/site-footer";
 import {
   PRICE_TIERS,
   MAX_STANDARD_MEMBERS,
@@ -7,25 +10,49 @@ import {
   yearlyExclForTier,
 } from "@/lib/pricing";
 
+export const metadata: Metadata = {
+  title: "Roosterprogramma voor kleine horeca",
+  description:
+    "Shiftje is rooster software voor kleine horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak tot 40 medewerkers, geen kosten per gebruiker. Begin gratis, 7 dagen.",
+  alternates: { canonical: "/" },
+};
+
+const softwareApplicationSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Shiftje",
+  applicationCategory: "BusinessApplication",
+  applicationSubCategory: "Personeelsplanning / roostersoftware",
+  operatingSystem: "Web, iOS, Android",
+  description:
+    "Rooster software voor kleine horeca: beschikbaarheid, personeelsplanning, dienstruil en urenregistratie op één plek.",
+  offers: {
+    "@type": "AggregateOffer",
+    priceCurrency: "EUR",
+    lowPrice: PRICE_TIERS[0].monthlyExcl.toFixed(2),
+    highPrice: PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl.toFixed(2),
+    offerCount: PRICE_TIERS.length,
+  },
+  // Geen aggregateRating: we voegen die pas toe zodra er échte, verifieerbare
+  // reviews zijn. Verzonnen sterren in structured data schendt Google's
+  // richtlijnen en kan tot een handmatige actie leiden.
+};
+
+const faqSchema = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Voor wie is Shiftje gemaakt?", "acceptedAnswer": {"@type": "Answer", "text": "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf."}}, {"@type": "Question", "name": "Wat kost Shiftje?", "acceptedAnswer": {"@type": "Answer", "text": "Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen."}}, {"@type": "Question", "name": "Kan ik Shiftje eerst gratis proberen?", "acceptedAnswer": {"@type": "Answer", "text": "Ja, je kunt 7 dagen gratis beginnen zonder creditcard."}}, {"@type": "Question", "name": "Werkt Shiftje ook voor een restaurant met keuken én bediening?", "acceptedAnswer": {"@type": "Answer", "text": "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in."}}, {"@type": "Question", "name": "Wat gebeurt er als iemand een dienst niet kan werken?", "acceptedAnswer": {"@type": "Answer", "text": "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster."}}]};
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-paper text-ink">
-      <header className="sticky top-0 z-50 border-b border-line/60 bg-paper/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <span className="font-display text-xl">Shiftje</span>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link href="/signin" className="hover:text-awning">
-              Inloggen
-            </Link>
-            <Link
-              href="/onboarding"
-              className="rounded-full bg-ink px-4 py-2 text-paper hover:bg-awning transition-colors"
-            >
-              Start met je zaak
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* eslint-disable-next-line react/no-danger */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <SiteHeader />
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 pb-20 pt-8 md:pt-16">
@@ -35,9 +62,12 @@ export default function HomePage() {
               Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
             </p>
             <h1 className="font-display text-4xl leading-tight md:text-5xl">
-              Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
+              Rooster software voor kleine horeca
             </h1>
-            <p className="mt-6 max-w-md text-lg text-ink/70">
+            <p className="mt-5 max-w-md font-display text-2xl leading-snug text-ink/90">
+              Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
+            </p>
+            <p className="mt-4 max-w-md text-lg text-ink/70">
               Medewerkers geven hun beschikbaarheid door, jij zet er in een
               paar klikken een rooster overheen. Aan het eind van de week
               keur je de uren goed. Geen groepsapp vol foto's van een
@@ -78,11 +108,17 @@ export default function HomePage() {
       </section>
 
       {/* Functies */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="divide-y divide-line">
+      <section id="functies" className="mx-auto max-w-5xl px-6 py-20">
+        <h2 className="font-display text-2xl">Alles wat je nodig hebt, op één pagina</h2>
+        <p className="mt-3 max-w-2xl text-ink/70">
+          Of je nu een café, restaurant of bar runt: Shiftje vervangt de spreadsheet voor je rooster en
+          de WhatsApp-groep voor alles daaromheen. Beschikbaarheid, personeelsplanning, ruilen en uren
+          zitten allemaal in dezelfde app, zodat jij en je team maar op één plek hoeven te kijken.
+        </p>
+        <div className="mt-10 divide-y divide-line">
           <Feature
             title="Beschikbaarheid"
-            body="Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Jij zet weken vooraf open, zodat er nooit een gat valt."
+            body="Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Handig of je nu vooral in het weekend plant (café, bar) of ook doordeweeks met lunch en diner (restaurant): jij zet weken vooraf open, zodat er nooit een gat valt."
           />
           <Feature
             title="Rooster"
@@ -90,7 +126,7 @@ export default function HomePage() {
           />
           <Feature
             title="Teams"
-            body="Deel medewerkers in bij bediening, keuken of bar. Op het rooster zie je in één oogopslag wie waar hoort."
+            body="Deel medewerkers in bij bediening, keuken of bar. Handig zodra je met meerdere onderdelen tegelijk plant, zoals keuken en bediening in een restaurant: op het rooster zie je in één oogopslag wie waar hoort."
           />
           <Feature
             title="Ruilen &amp; overnemen"
@@ -103,8 +139,45 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Veelgestelde vragen */}
+      <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
+        <h2 className="font-display text-2xl">Veelgestelde vragen</h2>
+        <div className="mt-6 divide-y divide-line">
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Voor wie is Shiftje gemaakt?
+            </summary>
+            <p className="mt-2 text-ink/70">Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Wat kost Shiftje?
+            </summary>
+            <p className="mt-2 text-ink/70">Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Kan ik Shiftje eerst gratis proberen?
+            </summary>
+            <p className="mt-2 text-ink/70">Ja, je kunt 7 dagen gratis beginnen zonder creditcard.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Werkt Shiftje ook voor een restaurant met keuken én bediening?
+            </summary>
+            <p className="mt-2 text-ink/70">Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Wat gebeurt er als iemand een dienst niet kan werken?
+            </summary>
+            <p className="mt-2 text-ink/70">Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.</p>
+          </details>
+        </div>
+      </section>
+
       {/* Prijs */}
-      <section className="border-t border-line bg-ink text-paper">
+      <section id="prijs" className="border-t border-line bg-ink text-paper">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-start">
             <div>
@@ -185,10 +258,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-sm text-ink/50">
-        <span>© {new Date().getFullYear()} Shiftje</span>
-        <span>Gemaakt voor kleine horecazaken</span>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
