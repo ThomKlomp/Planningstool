@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Space_Grotesk, IBM_Plex_Sans } from "next/font/google";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ChatWidget from "@/components/chat-widget";
+import PageViewTracker from "@/components/page-view-tracker";
+import CookieConsentBanner from "@/components/cookie-consent-banner";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -66,7 +69,13 @@ export default async function RootLayout({
   return (
     <html lang="nl" className={`${spaceGrotesk.variable} ${plex.variable}`}>
       <body className="font-body">
+        <Suspense fallback={null}>
+          <PageViewTracker />
+        </Suspense>
         {children}
+        {/* Cookiebanner staat voorlopig on hold — niet verwijderd, alleen
+            hier uitgecommentarieerd. Component en /privacy staan klaar. */}
+        {/* <CookieConsentBanner /> */}
         <ChatWidget
           defaultName={session?.user?.name ?? ""}
           defaultEmail={session?.user?.email ?? ""}

@@ -17,6 +17,9 @@ export default function SiteFooter() {
           <Link href="/signin" className="hover:text-ink">
             Inloggen
           </Link>
+          <Link href="/privacy" className="hover:text-ink">
+            Privacy
+          </Link>
         </nav>
         <span>© {new Date().getFullYear()} Shiftje — gemaakt voor kleine horecazaken</span>
       </div>

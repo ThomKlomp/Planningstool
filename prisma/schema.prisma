@@ -77,6 +77,7 @@ model Company {
   closedDays  ClosedDay[]
   rosterWeeks RosterWeek[]
   rosterEvents RosterEvent[]
+  pageViews   PageView[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
@@ -548,5 +549,29 @@ model TierUpgradeCharge {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, toTierId, periodKey])
+  @@index([companyId])
+}
+
+// Lichtgewicht, first-party bezoekersstatistiek voor de publieke pagina's
+// (homepage, /signin, /onboarding, etc. — niet het ingelogde dashboard/admin).
+// Bewust geen tracking-cookie en geen IP-adres: elke pageview is een los
+// event, niet gekoppeld aan een blijvend "bezoeker"-profiel. Is de bezoeker
+// wél ingelogd, dan leggen we vast bij welke zaak (en rol) diegene hoort.
+model PageView {
+  id         String   @id @default(cuid())
+  path       String
+  referrer   String? // document.referrer, alleen het hostname-gedeelte
+  utmSource  String?
+  utmMedium  String?
+  utmCampaign String?
+  companyId  String?
+  companyName String? // snapshot, zodat de naam blijft kloppen ook als de zaak later verwijderd wordt
+  role       Role?
+  createdAt  DateTime @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([path])
   @@index([companyId])
 }
