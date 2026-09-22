@@ -15,6 +15,13 @@ export default function ToggleAdminButton({
   const [error, setError] = useState<string | null>(null);
 
   async function toggle() {
+    // Platform-admin geeft toegang tot alle zaken, support-chats en
+    // kortingscodes, dus bij het toekennen (niet bij intrekken) eerst een
+    // bevestiging.
+    if (!isAdmin && !confirm("Weet je zeker dat je deze gebruiker platform-admin wilt maken? Diegene krijgt dan volledige toegang tot het adminportaal, inclusief alle zaken en support-chats.")) {
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
