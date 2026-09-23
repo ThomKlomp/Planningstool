@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { requireAcceptedTerms } from "@/lib/auth-guards";
 import OnboardingForm from "./onboarding-form";
 
 export default async function OnboardingPage() {
@@ -9,6 +10,8 @@ export default async function OnboardingPage() {
   if (!session?.user) {
     redirect("/signin?callbackUrl=/onboarding");
   }
+
+  requireAcceptedTerms(session, "/onboarding");
 
   // Als de gebruiker al een company heeft, stuur meteen door naar het dashboard.
   if (session.user.memberships.length > 0) {

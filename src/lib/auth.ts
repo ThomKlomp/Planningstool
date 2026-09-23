@@ -74,6 +74,12 @@ export const authOptions: NextAuthOptions = {
         });
         session.user.isPlatformAdmin = Boolean(platformAdmin);
 
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { termsAcceptedAt: true },
+        });
+        session.user.hasAcceptedTerms = Boolean(dbUser?.termsAcceptedAt);
+
         const memberships = await prisma.membership.findMany({
           where: { userId },
           include: { company: true },

@@ -6,6 +6,7 @@ declare module "next-auth" {
     user: {
       id: string;
       isPlatformAdmin: boolean;
+      hasAcceptedTerms: boolean;
       memberships: {
         membershipId: string;
         companyId: string;

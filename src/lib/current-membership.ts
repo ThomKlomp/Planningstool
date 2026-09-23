@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { requireAcceptedTerms } from "@/lib/auth-guards";
 
 /**
  * Haalt de sessie op en de "actieve" membership (bedrijf + rol) van de gebruiker.
@@ -16,6 +17,8 @@ export async function requireMembership() {
   if (!session?.user) {
     redirect("/signin?callbackUrl=/dashboard");
   }
+
+  requireAcceptedTerms(session, "/dashboard");
 
   if (session.user.memberships.length === 0) {
     redirect("/onboarding");

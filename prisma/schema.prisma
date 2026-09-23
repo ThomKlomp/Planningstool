@@ -221,6 +221,7 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String? // alleen gezet voor accounts die met e-mail+wachtwoord zijn aangemaakt
+  termsAcceptedAt DateTime? // wanneer de algemene voorwaarden + privacybeleid zijn geaccepteerd; verplicht voordat iemand de app kan gebruiken
 
   accounts Account[]
   sessions Session[]

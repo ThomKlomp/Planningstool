@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAcceptedTerms } from "@/lib/auth-guards";
 import JoinLanding from "./join-landing";
 import JoinConfirm from "./join-confirm";
 
@@ -47,6 +48,8 @@ export default async function JoinPage({
   if (alreadyMember) {
     redirect("/dashboard");
   }
+
+  requireAcceptedTerms(session, `/join/${params.slug}`);
 
   return (
     <JoinConfirm

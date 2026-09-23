@@ -20,6 +20,9 @@ export default function SiteFooter() {
           <Link href="/privacy" className="hover:text-ink">
             Privacy
           </Link>
+          <Link href="/voorwaarden" className="hover:text-ink">
+            Voorwaarden
+          </Link>
         </nav>
         <span>© {new Date().getFullYear()} Shiftje — gemaakt voor kleine horecazaken</span>
       </div>

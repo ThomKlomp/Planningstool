@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { requireAcceptedTerms } from "@/lib/auth-guards";
 import SignOutButton from "@/components/sign-out-button";
 import { countChatsAwaitingReply } from "@/lib/support-notify";
 
@@ -15,6 +16,7 @@ export default async function AdminLayout({
   if (!session?.user) {
     redirect("/signin?callbackUrl=/admin");
   }
+  requireAcceptedTerms(session, "/admin");
   if (!session.user.isPlatformAdmin) {
     redirect("/dashboard");
   }
