@@ -134,20 +134,18 @@ export default async function VisitsPage() {
   );
 }
 
-// Landcode -> leesbare naam voor Nederlandse gebruikers; onbekend/leeg apart
+// Landcode -> leesbare Nederlandse naam via de ingebouwde Intl API (dekt elk
+// ISO-landcode automatisch, geen handmatige lijst nodig); onbekend/leeg apart
 // gelabeld zodat het niet als "0 bezoekers" verdwijnt in de lijst.
-const COUNTRY_NAMES: Record<string, string> = {
-  NL: "Nederland",
-  BE: "België",
-  DE: "Duitsland",
-  GB: "Verenigd Koninkrijk",
-  US: "Verenigde Staten",
-  FR: "Frankrijk",
-};
+const countryDisplayNames = new Intl.DisplayNames(["nl"], { type: "region" });
 
 function countryLabel(code: string | null) {
   if (!code) return "Onbekend";
-  return COUNTRY_NAMES[code] ?? code;
+  try {
+    return countryDisplayNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
 }
 
 function topCounts(values: string[], limit = 8) {
