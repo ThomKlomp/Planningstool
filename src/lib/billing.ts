@@ -122,12 +122,20 @@ export async function computeSubscriptionAmount(
 
   const incl =
     discountActive && discount ? applyDiscount(baseIncl, discount, interval, tier.id) : baseIncl;
+  // Zelfde korting ook op het excl.-btw-bedrag, zodat het getoonde
+  // hoofdbedrag (meestal excl. btw) en de incl.-btw-subtekst elkaar niet
+  // tegenspreken. Rekenkundig consistent: bij een percentagekorting blijft
+  // incl = excl × 1,21 kloppen; bij een vast bedrag trek je gewoon hetzelfde
+  // bedrag van beide af.
+  const excl =
+    discountActive && discount ? applyDiscount(baseExcl, discount, interval, tier.id) : baseExcl;
 
   return {
     memberCount,
     tier,
     baseExcl,
     baseIncl,
+    excl,
     incl,
     discountApplied: discountActive,
   };

@@ -148,7 +148,8 @@ export default async function BillingPage() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <PlanCard
               title="Maandelijks"
-              price={`${formatEuro(monthly.baseExcl)} / maand`}
+              price={`${formatEuro(monthly.excl)} / maand`}
+              originalPrice={monthly.discountApplied ? `${formatEuro(monthly.baseExcl)} / maand` : undefined}
               subtext={`${formatEuro(monthly.incl)} incl. btw${
                 monthly.discountApplied ? " · korting toegepast" : ""
               }`}
@@ -156,7 +157,8 @@ export default async function BillingPage() {
             />
             <PlanCard
               title="Jaarlijks"
-              price={`${formatEuro(yearly.baseExcl)} / jaar`}
+              price={`${formatEuro(yearly.excl)} / jaar`}
+              originalPrice={yearly.discountApplied ? `${formatEuro(yearly.baseExcl)} / jaar` : undefined}
               subtext={`${formatEuro(yearly.incl)} incl. btw · 2 maanden gratis${
                 yearly.discountApplied ? " · korting toegepast" : ""
               }`}
@@ -253,12 +255,14 @@ function StatusBanner({
 function PlanCard({
   title,
   price,
+  originalPrice,
   subtext,
   interval,
   highlight = false,
 }: {
   title: string;
   price: string;
+  originalPrice?: string;
   subtext: string;
   interval: "MONTHLY" | "YEARLY";
   highlight?: boolean;
@@ -270,7 +274,14 @@ function PlanCard({
       }`}
     >
       <p className="font-display text-lg">{title}</p>
-      <p className="mt-1 text-2xl font-display">{price}</p>
+      <p className="mt-1 font-display text-2xl">
+        {originalPrice && (
+          <span className="mr-2 text-base font-normal text-ink/40 line-through">
+            {originalPrice}
+          </span>
+        )}
+        {price}
+      </p>
       <p className="text-xs text-ink/50">{subtext}</p>
       <div className="mt-4">
         <BillingActions mode="subscribe" interval={interval} />
