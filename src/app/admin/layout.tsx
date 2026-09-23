@@ -42,6 +42,7 @@ export default async function AdminLayout({
         </div>
         <nav className="mt-4 flex gap-1 overflow-x-auto text-sm">
           <AdminNavLink href="/admin">Overzicht</AdminNavLink>
+          <AdminNavLink href="/admin/pages">Pagina's</AdminNavLink>
           <AdminNavLink href="/admin/visits">Bezoekers</AdminNavLink>
           <AdminNavLink href="/admin/companies">Zaken</AdminNavLink>
           <AdminNavLink href="/admin/users">Gebruikers</AdminNavLink>
