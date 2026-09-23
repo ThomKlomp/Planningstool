@@ -55,9 +55,9 @@ export async function POST(req: Request) {
     const payment = await mollie.payments.create({
       customerId,
       amount: { currency: "EUR", value: incl.toFixed(2) },
-      description: `Shiftje abonnement — ${company.name} (${
+      description: `Shiftje — ${company.name} (${
         interval === "YEARLY" ? "jaarlijks" : "maandelijks"
-      }, staffel ${tier.label})`,
+      })`,
       redirectUrl: `${baseUrl}/dashboard/settings/billing?status=pending`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
       sequenceType: "first",
