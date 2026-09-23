@@ -7,6 +7,11 @@ import TeamSection from "./team-section";
 import MemberList from "./member-list";
 import JoinLink from "./settings/join-link";
 
+// Zelfde reden als dashboard/layout.tsx en dashboard/notifications: dit
+// overzicht toont tellers (open diensten, wachtende overnames) die anders
+// een tijdje verouderd kunnen blijven staan na een actie elders in de app.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardOverviewPage() {
   const { membership } = await requireMembership();
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";

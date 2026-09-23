@@ -3,6 +3,13 @@ import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
 
+// Zonder dit blijft Next.js de vorige render van deze layout (en dus het
+// aantal ongelezen meldingen) een tijdje hergebruiken bij client-side
+// navigatie, ook nadat een melding al als gelezen is gemarkeerd. Force-
+// dynamic zorgt dat unreadCount bij elke navigatie binnen /dashboard opnieuw
+// wordt opgehaald.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

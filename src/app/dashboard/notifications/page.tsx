@@ -1,6 +1,11 @@
-import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
+import NotificationItem from "./notification-item";
+
+// Zie dashboard/layout.tsx: zonder dit kan Next.js een verouderde lijst
+// (met meldingen die net als gelezen zijn gemarkeerd) blijven tonen bij
+// client-side navigatie terug naar deze pagina.
+export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
   const { membership } = await requireMembership();
@@ -30,13 +35,7 @@ export default async function NotificationsPage() {
       <ul className="mt-6 divide-y divide-line rounded-xl border border-line bg-white">
         {notifications.map((n) => (
           <li key={n.id} className="px-4 py-3">
-            {n.link ? (
-              <Link href={n.link} className="block hover:opacity-80">
-                <NotificationContent notification={n} />
-              </Link>
-            ) : (
-              <NotificationContent notification={n} />
-            )}
+            <NotificationItem notification={n} />
           </li>
         ))}
         {notifications.length === 0 && (
@@ -45,35 +44,6 @@ export default async function NotificationsPage() {
           </li>
         )}
       </ul>
-    </div>
-  );
-}
-
-function NotificationContent({
-  notification,
-}: {
-  notification: { title: string; body: string | null; createdAt: Date; read: boolean };
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      {!notification.read && (
-        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-awning" />
-      )}
-      <div className={notification.read ? "opacity-70" : ""}>
-        <p className="text-sm font-medium">{notification.title}</p>
-        {notification.body && (
-          <p className="mt-0.5 text-sm text-ink/60">{notification.body}</p>
-        )}
-        <p className="mt-1 text-xs text-ink/40">
-          {notification.createdAt.toLocaleDateString("nl-NL", {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-      </div>
     </div>
   );
 }
