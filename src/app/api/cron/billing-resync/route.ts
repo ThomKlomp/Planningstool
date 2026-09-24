@@ -10,7 +10,7 @@ import { chargeYearlyTierUpgrade } from "@/lib/tier-upgrade";
 // Authorization: Bearer <CRON_SECRET>.
 //
 // Combineert twee taken die voorheen apart waren (cron/billing-resync en
-// cron/discount-expiry — dat laatste bestaat niet meer, dit vervangt het):
+// cron/discount-expiry, dat laatste bestaat niet meer, dit vervangt het):
 //  1. Een verlopen kortingscode (LIMITED_MONTHS, op) verwijderen en de
 //     eigenaar daarover mailen.
 //  2. De Mollie-prijs bijwerken als de staffel of het kortingsbedrag sinds

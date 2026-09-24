@@ -24,7 +24,7 @@ export default function SiteFooter() {
             Voorwaarden
           </Link>
         </nav>
-        <span>© {new Date().getFullYear()} Shiftje — gemaakt voor kleine horecazaken</span>
+        <span>© {new Date().getFullYear()} Shiftje, gemaakt voor kleine horecazaken</span>
       </div>
     </footer>
   );

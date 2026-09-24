@@ -554,7 +554,7 @@ model TierUpgradeCharge {
 }
 
 // Lichtgewicht, first-party bezoekersstatistiek voor de publieke pagina's
-// (homepage, /signin, /onboarding, etc. — niet het ingelogde dashboard/admin).
+// (homepage, /signin, /onboarding, etc., niet het ingelogde dashboard/admin).
 // Bewust geen tracking-cookie en geen IP-adres: elke pageview is een los
 // event, niet gekoppeld aan een blijvend "bezoeker"-profiel. Is de bezoeker
 // wél ingelogd, dan leggen we vast bij welke zaak (en rol) diegene hoort.

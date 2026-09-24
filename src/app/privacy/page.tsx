@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         <p className="mt-3 text-ink/70">
           Dit gebeurt zonder dat we iets op jouw apparaat opslaan (geen cookie, geen lokale opslag), dus
           er is voor déze meting geen voorafgaande toestemming nodig. Wil je liever niet dat we dit
-          meten? Klik dan op "Weigeren" bij de melding onderaan de pagina — dat stopt het direct voor
+          meten? Klik dan op "Weigeren" bij de melding onderaan de pagina. Dat stopt het direct voor
           jou.
         </p>
 

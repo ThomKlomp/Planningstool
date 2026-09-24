@@ -15,8 +15,8 @@ function toUrls(token: string | null) {
   return { url, webcalUrl: url.replace(/^https?:\/\//, "webcal://") };
 }
 
-// Haalt de bestaande agenda-link op zonder er een nieuwe aan te maken —
-// handig bij het laden van de instellingenpagina.
+// Haalt de bestaande agenda-link op zonder er een nieuwe aan te maken
+// (handig bij het laden van de instellingenpagina).
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {

@@ -61,7 +61,7 @@ export default function ClosedWeekdaysSetting({
         {saved && <span className="self-center text-xs text-awning">Opgeslagen</span>}
       </div>
       <p className="mt-2 text-xs text-ink/40">
-        Aangevinkte dagen zijn elke week automatisch dicht — geen
+        Aangevinkte dagen zijn elke week automatisch dicht: geen
         beschikbaarheid nodig, geen shifts, geen uren.
       </p>
     </div>

@@ -103,7 +103,7 @@ export default function TimeEntryForm({
       {isClosed && (
         <p className="w-full text-sm text-red-600">
           De zaak was dicht op deze dag
-          {closedReasons[date] ? ` (${closedReasons[date]})` : ""} — hier kun je geen uren op
+          {closedReasons[date] ? ` (${closedReasons[date]})` : ""}, hier kun je geen uren op
           indienen.
         </p>
       )}

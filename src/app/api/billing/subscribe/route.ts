@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const payment = await mollie.payments.create({
       customerId,
       amount: { currency: "EUR", value: incl.toFixed(2) },
-      description: `Shiftje — ${company.name} (${
+      description: `Shiftje · ${company.name} (${
         interval === "YEARLY" ? "jaarlijks" : "maandelijks"
       })`,
       redirectUrl: `${baseUrl}/dashboard/settings/billing?status=pending`,

@@ -37,7 +37,7 @@ export async function GET(req: Request) {
           {title}
         </div>
         <div style={{ display: "flex", marginTop: 40, fontSize: 26, color: "#DDD5C7" }}>
-          shiftje.nl — beschikbaarheid, rooster &amp; uren op één plek
+          shiftje.nl · beschikbaarheid, rooster &amp; uren op één plek
         </div>
       </div>
     ),

@@ -103,7 +103,7 @@ export default async function VisitsPage() {
                 </td>
                 <td className="px-4 py-2 font-mono text-xs">{v.path}</td>
                 <td className="px-4 py-2 text-ink/60">
-                  {v.referrer || (v.utmSource ? `utm: ${v.utmSource}` : "—")}
+                  {v.referrer || (v.utmSource ? `utm: ${v.utmSource}` : "-")}
                 </td>
                 <td className="px-4 py-2 text-ink/60">{countryLabel(v.country)}</td>
                 <td className="px-4 py-2">

@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     title: "Shiftje: roosterprogramma voor kleine horeca",
     description:
       "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje — rooster software voor kleine horeca" }],
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: rooster software voor kleine horeca" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -73,7 +73,7 @@ export default async function RootLayout({
           <PageViewTracker />
         </Suspense>
         {children}
-        {/* Cookiebanner staat voorlopig on hold — niet verwijderd, alleen
+        {/* Cookiebanner staat voorlopig on hold (niet verwijderd, alleen
             hier uitgecommentarieerd. Component en /privacy staan klaar. */}
         {/* <CookieConsentBanner /> */}
         <ChatWidget

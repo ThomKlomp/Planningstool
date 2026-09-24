@@ -1,11 +1,11 @@
-# Shiftje — fix: staffelprijzen + agenda-koppeling samengevoegd met je bestaande kortingscodesysteem
+# Shiftje: fix, staffelprijzen + agenda-koppeling samengevoegd met je bestaande kortingscodesysteem
 
 ## Wat er mis was
 
 Ik kon je repo nu inzien (raw.githubusercontent.com, nu hij publiek staat) en
-zag dat er al een **eigen, volwaardig kortingscodesysteem** in zat —
+zag dat er al een **eigen, volwaardig kortingscodesysteem** in zat:
 `DiscountCode` / `CompanyDiscount`, admin-beheer op `/admin/discount-codes`,
-een eigen cron voor verlopen kortingen — van vóór dit gesprek. De zip die ik
+een eigen cron voor verlopen kortingen: van vóór dit gesprek. De zip die ik
 eerder gaf botste daarmee: die verwees naar velden die niet bestaan
 (`Company.appliedCouponId`) en de bestaande discount-expiry-cron gebruikte
 prijsconstanten die ik had verwijderd. Kortom: zoals het er nu bij staat
@@ -20,24 +20,24 @@ zetten.
 ## 1. Bestanden overschrijven (compleet, direct te uploaden)
 
 ```
-prisma/schema.prisma                              — je eigen bestand + 3 nieuwe velden (zie hieronder)
-src/lib/billing.ts                                 — staffelprijzen, rekent nu met jouw CompanyDiscount
-src/app/api/billing/subscribe/route.ts              — gebruikt de staffelprijs
-src/app/api/webhooks/mollie/route.ts                — gebruikt de staffelprijs
-src/app/api/cron/billing-resync/route.ts            — combineert staffel-sync mét korting-verloop (zie punt 3)
-src/app/dashboard/settings/billing/page.tsx          — staffeltabel + je bestaande DiscountCodeForm
-src/app/dashboard/layout.tsx                        — jouw huidige layout + 1 nav-link naar Agenda-koppeling
-src/app/api/invites/route.ts                        — jouw huidige route + staffel-waarschuwing
-src/app/dashboard/invite-form.tsx                   — jouw huidige form + die waarschuwing zichtbaar
+prisma/schema.prisma                             : je eigen bestand + 3 nieuwe velden (zie hieronder)
+src/lib/billing.ts                                : staffelprijzen, rekent nu met jouw CompanyDiscount
+src/app/api/billing/subscribe/route.ts             : gebruikt de staffelprijs
+src/app/api/webhooks/mollie/route.ts               : gebruikt de staffelprijs
+src/app/api/cron/billing-resync/route.ts           : combineert staffel-sync mét korting-verloop (zie punt 3)
+src/app/dashboard/settings/billing/page.tsx         : staffeltabel + je bestaande DiscountCodeForm
+src/app/dashboard/layout.tsx                       : jouw huidige layout + 1 nav-link naar Agenda-koppeling
+src/app/api/invites/route.ts                       : jouw huidige route + staffel-waarschuwing
+src/app/dashboard/invite-form.tsx                  : jouw huidige form + die waarschuwing zichtbaar
 ```
 
 `prisma/schema.prisma` is nu je **eigen, volledige** bestand met alleen deze
-3 regels toegevoegd (verder niets gewijzigd — ik heb het gediffed om dat te
+3 regels toegevoegd (verder niets gewijzigd: ik heb het gediffed om dat te
 garanderen):
 - `Membership.calendarToken` (voor de agenda-feature)
 - `Company.currentTierId` en `Company.lastBilledAmountIncl` (voor de staffel-sync)
 
-Er is dus geen apart `Coupon`-model meer nodig — dat gebruikte ik in de
+Er is dus geen apart `Coupon`-model meer nodig: dat gebruikte ik in de
 vorige versie, maar dat was overbodig naast je bestaande `DiscountCode`/
 `CompanyDiscount`.
 
@@ -50,10 +50,10 @@ Daarna: `npx prisma db push`.
 Deze zijn overbodig geworden of botsten met je bestaande systeem:
 
 ```
-src/app/api/billing/coupon/route.ts              — vervangen door je bestaande /api/billing/redeem-discount
-src/app/dashboard/settings/billing/coupon-form.tsx — vervangen door je bestaande discount-code-form.tsx
-src/app/api/cron/discount-expiry/route.ts         — samengevoegd in cron/billing-resync (zie punt 3)
-prisma/schema-additions.prisma                    — was alleen een instructiebestand, niet meer nodig
+src/app/api/billing/coupon/route.ts             : vervangen door je bestaande /api/billing/redeem-discount
+src/app/dashboard/settings/billing/coupon-form.tsx: vervangen door je bestaande discount-code-form.tsx
+src/app/api/cron/discount-expiry/route.ts        : samengevoegd in cron/billing-resync (zie punt 3)
+prisma/schema-additions.prisma                   : was alleen een instructiebestand, niet meer nodig
 ```
 
 ---
@@ -79,7 +79,7 @@ bijwerken als dat is veranderd.
 - **Interval:** 1x per dag
 - **Methode:** GET
 
-Ik heb hier geen toegang toe (geen cron-job.org-koppeling beschikbaar) — dit
+Ik heb hier geen toegang toe (geen cron-job.org-koppeling beschikbaar): dit
 moet je zelf 2 minuten instellen. Alternatief: je hebt Render als host, en
 daar is wél een koppeling voor beschikbaar waarmee ik dit voor je zou kunnen
 aanmaken als je die aanzet.
@@ -99,7 +99,7 @@ src/app/dashboard/calendar/page.tsx
 src/app/dashboard/calendar/calendar-sync-card.tsx
 ```
 De admin-kant van kortingscodes (`/admin/discount-codes` en de bijbehorende
-API) is niet aangeraakt — die werkte al goed en heeft niets met staffels te
+API) is niet aangeraakt: die werkte al goed en heeft niets met staffels te
 maken.
 
 ---

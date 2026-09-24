@@ -121,7 +121,7 @@ export default async function BillingPage() {
         <h2 className="font-display text-xl">Kortingscode</h2>
         {discountActive && company?.discount ? (
           <p className="mt-1 text-sm text-ink/60">
-            {describeDiscount(company.discount)} — actief sinds{" "}
+            {describeDiscount(company.discount)}, actief sinds{" "}
             {company.discount.redeemedAt.toLocaleDateString("nl-NL", {
               day: "numeric",
               month: "long",

@@ -5,8 +5,8 @@ import { computeSubscriptionAmount } from "@/lib/billing";
 import { handleTierUpgradePayment } from "@/lib/tier-upgrade";
 
 // Mollie stuurt hier een POST naartoe met de betaalinformatie ALTIJD als
-// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON — een
-// veelgemaakte misvatting. We lezen 'm daarom als tekst en parsen zelf.
+// application/x-www-form-urlencoded (dus id=tr_xxx), niet als JSON (een
+// veelgemaakte misvatting). We lezen 'm daarom als tekst en parsen zelf.
 // De rest van de betaalinformatie halen we op bij Mollie zelf (nooit
 // vertrouwen op wat er verder in de webhook-body staat).
 export async function POST(req: Request) {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   if (payment.status === "paid" && payment.sequenceType === "first") {
-    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie) —
+    // Eerste betaling geslaagd (en het mandaat is nu bekend bij Mollie):
     // zet 'm om in een terugkerend abonnement, tegen de actuele staffelprijs.
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       const subscription = await mollie.subscriptions.create(payment.customerId, {
         amount: { currency: "EUR", value: incl.toFixed(2) },
         interval: interval === "YEARLY" ? "12 months" : "1 month",
-        description: `Shiftje abonnement — ${company.name}`,
+        description: `Shiftje abonnement · ${company.name}`,
         webhookUrl: `${baseUrl}/api/webhooks/mollie`,
         metadata: { companyId: company.id, interval },
       });
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
   } else if (payment.status === "paid" && payment.sequenceType === "recurring") {
     // Een volgende, automatische termijnbetaling is gelukt. Staffel- en
     // kortingswijzigingen worden niet hier verwerkt, maar door de
-    // dagelijkse cron/billing-resync — die is de bron van waarheid voor
+    // dagelijkse cron/billing-resync (die is de bron van waarheid voor
     // "wat zou dit bedrag nu moeten zijn" en houdt ook de
     // korting-verloopt-logica bij.
     const interval = company.billingInterval ?? "MONTHLY";

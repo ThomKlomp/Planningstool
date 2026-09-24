@@ -35,3 +35,22 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* Subtiele "lift" voor kaartachtige oppervlakken (statistiekkaarten, panelen,
+   prijskaarten, enz.) voor een iets moderner gevoel dan de vorige platte
+   rand. Gebruikt dezelfde lijnkleur als de rest van het ontwerp (#DDD5C7,
+   "line" in tailwind.config.ts) in plaats van een generieke grijze
+   waas-schaduw, zodat het bij de bestaande, wat illustratieve stijl blijft
+   passen (zie ook de prijskaart op de homepage en de roostermock, die deze
+   schaduwstijl al gebruikten).
+   :not([class*="shadow-"]) sluit elementen uit die zelf al een Tailwind
+   schaduwklasse hebben (shadow-lg, shadow-xl, shadow-[...], ...), zoals de
+   dropdownmenu's, de chat-widget en het zijpaneel: die houden hun eigen,
+   grotere schaduw. Let op: Tailwind compileert @tailwind base/components/
+   utilities naar gewone CSS zonder native cascade-lagen, dus alleen
+   specificiteit (en deze expliciete uitsluiting) bepaalt hier de uitkomst,
+   niet de volgorde van de @tailwind-directives. */
+.rounded-xl.border-line.bg-white:not([class*="shadow-"]),
+.rounded-2xl.border-line.bg-white:not([class*="shadow-"]) {
+  box-shadow: 0 2px 0 0 #ddd5c7;
+}

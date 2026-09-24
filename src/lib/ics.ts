@@ -2,7 +2,7 @@
 // gebruik als agenda-abonnement in Google Agenda en Apple Agenda.
 //
 // Gebruikt TZID=Europe/Amsterdam (met een meegeleverde VTIMEZONE-definitie)
-// zodat tijden ook rond de overgang naar/van zomertijd kloppen — puur UTC
+// zodat tijden ook rond de overgang naar/van zomertijd kloppen (puur UTC
 // zou shifts in de zomer een uur laten verschuiven.
 
 type ShiftForFeed = {
@@ -76,7 +76,7 @@ export function buildShiftsICS(opts: {
   lines.push("PRODID:-//Shiftje//Roosterfeed//NL");
   lines.push("CALSCALE:GREGORIAN");
   lines.push("METHOD:PUBLISH");
-  lines.push(fold(`X-WR-CALNAME:Shiftje — ${escapeText(opts.companyName)}`));
+  lines.push(fold(`X-WR-CALNAME:Shiftje: ${escapeText(opts.companyName)}`));
   lines.push("X-WR-TIMEZONE:Europe/Amsterdam");
   // De meeste clients (Google, Apple) hanteren hun eigen ververs-interval en
   // negeren dit, maar het kan geen kwaad om het toch mee te geven.
@@ -94,7 +94,7 @@ export function buildShiftsICS(opts: {
     lines.push(`DTSTAMP:${utcStamp(shift.updatedAt)}`);
     lines.push(`DTSTART;TZID=Europe/Amsterdam:${localDateTime(shift.date, shift.startTime)}`);
     lines.push(`DTEND;TZID=Europe/Amsterdam:${localDateTime(shift.date, shift.endTime)}`);
-    lines.push(fold(`SUMMARY:${escapeText(shift.role ? `Dienst — ${shift.role}` : "Dienst")}`));
+    lines.push(fold(`SUMMARY:${escapeText(shift.role ? `Dienst: ${shift.role}` : "Dienst")}`));
     lines.push(fold(`LOCATION:${escapeText(opts.companyName)}`));
     if (shift.note) {
       lines.push(fold(`DESCRIPTION:${escapeText(shift.note)}`));

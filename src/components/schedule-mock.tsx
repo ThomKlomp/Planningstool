@@ -4,7 +4,7 @@ import { useState } from "react";
 
 // Zelfde teams, mensen en standaarddiensten als de echte demo-zaak
 // (api/admin/demo-company/reset), zodat dit precies aanvoelt als de tool
-// zelf — geen verzonnen namen of afwijkende flow.
+// zelf, geen verzonnen namen of afwijkende flow.
 type Team = "Bediening" | "Keuken";
 
 type Person = { id: string; name: string; team: Team };

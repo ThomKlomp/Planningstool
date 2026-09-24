@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
   // Credentials-login werkt in NextAuth alleen met JWT-sessies, niet met
   // database-sessies. We slaan daarom alleen de user-id in de JWT op, en
   // vragen bij elke request de actuele memberships/platform-admin-status
-  // vers uit de database op in de session-callback hieronder — zo blijft
+  // vers uit de database op in de session-callback hieronder: zo blijft
   // een rolwijziging (bv. via het adminportaal) direct zichtbaar, ook al
   // gebruiken we JWT-sessies.
   session: {

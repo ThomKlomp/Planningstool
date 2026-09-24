@@ -3,7 +3,7 @@
 // BTW-tarief voor SaaS-diensten in Nederland is het standaardtarief (21%).
 //
 // Kortingscodes lopen via het bestaande DiscountCode/CompanyDiscount-systeem
-// (zie prisma/schema.prisma en src/lib/discount.ts) — dit bestand voegt daar
+// (zie prisma/schema.prisma en src/lib/discount.ts): dit bestand voegt daar
 // geen nieuw kortingsmechanisme aan toe, het rekent er alleen mee.
 import { prisma } from "@/lib/prisma";
 import { applyDiscount, discountAppliesToTier } from "@/lib/discount";
@@ -52,7 +52,7 @@ export async function countBillableMembers(companyId: string) {
  *  - duration FOREVER: altijd actief zolang het record bestaat.
  *  - duration LIMITED_MONTHS met monthsRemaining = null: dit was een 100%-
  *    korting die bij het inwisselen al direct verwerkt is als een verlengde
- *    proefperiode (zie /api/billing/redeem-discount) — telt NIET meer mee
+ *    proefperiode (zie /api/billing/redeem-discount): telt NIET meer mee
  *    voor de lopende facturering, ook al bestaat het record nog.
  *  - duration LIMITED_MONTHS met een getal: nog actief zolang er, gerekend
  *    vanaf redeemedAt, nog complete termijnen over zijn. Zelfde rekenwijze
@@ -144,7 +144,7 @@ export async function computeSubscriptionAmount(
 /**
  * Voor UI-waarschuwingen bij het uitnodigen van een medewerker: als er nu
  * nóg iemand bij zou komen, verhuist de zaak dan naar een duurdere staffel?
- * Geeft null terug als dat niet zo is. Puur informatief — de daadwerkelijke
+ * Geeft null terug als dat niet zo is. Puur informatief: de daadwerkelijke
  * afdwinging gebeurt bij de eerstvolgende afrekening (zie cron/billing-resync).
  */
 export async function getNextMemberTierWarning(companyId: string) {

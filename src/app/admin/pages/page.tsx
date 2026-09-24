@@ -12,7 +12,7 @@ export default function AdminPagesOverview() {
         </p>
       </div>
       <p className="mt-2 max-w-2xl text-sm text-ink/60">
-        Handmatig bijgehouden overzicht (src/lib/site-routes.ts) — wordt niet automatisch
+        Handmatig bijgehouden overzicht (src/lib/site-routes.ts). Wordt niet automatisch
         gesynchroniseerd met de code. "Openbaar" betekent bereikbaar zonder in te loggen; sommige
         openbare pagina's zijn alleen bruikbaar met een geldige link of token, zie de toelichting.
       </p>

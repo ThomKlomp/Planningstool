@@ -116,7 +116,7 @@ export async function chargeYearlyTierUpgrade(
     amount: { currency: "EUR", value: amountIncl.toFixed(2) },
     description: `Shiftje bijbetaling staffel ${baseline.label} → ${newTier.label} (${months} ${
       months === 1 ? "maand" : "maanden"
-    }) — ${company.name}`,
+    }) · ${company.name}`,
     webhookUrl: `${baseUrl}/api/webhooks/mollie`,
     sequenceType: "recurring",
     metadata: { companyId: company.id, kind: "tier_upgrade" },

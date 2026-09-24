@@ -1,5 +1,5 @@
 // Lichte wrapper rond Mollie's REST API (v2), rechtstreeks met fetch i.p.v.
-// een SDK-package — de v2 REST API is al jaren stabiel en dit voorkomt
+// een SDK-package: de v2 REST API is al jaren stabiel en dit voorkomt
 // afhankelijkheid van een specifieke SDK-versie.
 //
 // NIEUW t.o.v. de vorige versie: subscriptions.update(), nodig om het

@@ -4,7 +4,7 @@ import { buildShiftsICS } from "@/lib/ics";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
 
 // Publieke, niet-ingelogde route: de beveiliging zit in de onraadbare
-// token, niet in een sessie-check — dit endpoint wordt rechtstreeks door
+// token, niet in een sessie-check: dit endpoint wordt rechtstreeks door
 // Google/Apple Agenda aangeroepen, niet door een ingelogde browser.
 export async function GET(_req: Request, { params }: { params: { token: string } }) {
   const membership = await prisma.membership.findUnique({
@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
   }
 
   // Vanaf 2 weken terug (voor recent gewijzigde diensten) tot een half jaar
-  // vooruit — voorkomt een onbeperkt groeiende feed.
+  // vooruit (voorkomt een onbeperkt groeiende feed).
   const from = new Date();
   from.setDate(from.getDate() - 14);
   const to = new Date();
