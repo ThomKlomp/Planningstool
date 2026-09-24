@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SignOutButton from "@/components/sign-out-button";
 
 export type AdminNavItem = {
   href: string;
@@ -28,25 +29,25 @@ export default function AdminNav({
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
   return (
-    <nav className="relative mt-4">
-      {/* Mobiel: knop rechts; het paneel hoort NIET in dezelfde flex-rij (dat
-          rekte de knop eerder per ongeluk uit tot een lange ovale vorm). */}
-      <div className="relative z-30 flex justify-end sm:hidden">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label="Menu"
-          className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink"
-        >
-          <span aria-hidden className="text-base leading-none">☰</span>
-          Menu
-        </button>
-      </div>
+    <nav>
+      {/* Mobiel: knop staat rechtsboven op de plek waar "Uitloggen" op
+          desktop staat (die verhuist hieronder naar de uitklaplijst zelf).
+          Absoluut gepositioneerd t.o.v. de <header>, dus onafhankelijk van
+          waar deze component in de DOM zit. */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Menu"
+        className="absolute right-4 top-4 z-30 flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink sm:hidden"
+      >
+        <span aria-hidden className="text-base leading-none">☰</span>
+        Menu
+      </button>
 
       {/* Zwevend paneel: neemt geen ruimte in, klapt over de pagina heen in
           plaats van de inhoud omlaag te duwen. */}
       <div
-        className={`absolute right-0 top-full z-30 mt-2 w-64 origin-top-right rounded-xl border border-line bg-white p-2 shadow-lg transition duration-150 ease-out sm:hidden ${
+        className={`absolute right-4 top-16 z-30 w-64 origin-top-right rounded-xl border border-line bg-white p-2 shadow-lg transition duration-150 ease-out sm:hidden ${
           open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
         }`}
       >
@@ -76,6 +77,9 @@ export default function AdminNav({
             {backLink.label}
           </Link>
         )}
+        <div className="mt-1 border-t border-line pt-1">
+          <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-paper hover:text-ink" />
+        </div>
       </div>
 
       {/* Achtergrond: tik ernaast om te sluiten */}
@@ -87,8 +91,8 @@ export default function AdminNav({
         />
       )}
 
-      {/* Vanaf sm: horizontale rij, zoals voorheen */}
-      <div className="hidden sm:flex sm:gap-1 sm:overflow-x-auto sm:text-sm">
+      {/* Vanaf sm: horizontale rij, zoals voorheen. */}
+      <div className="hidden sm:mt-4 sm:flex sm:gap-1 sm:overflow-x-auto sm:text-sm">
         {items.map((item) => (
           <Link
             key={item.href}

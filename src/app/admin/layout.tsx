@@ -36,7 +36,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink">
-      <header className="border-b border-line bg-white px-4 py-5 sm:px-8">
+      <header className="relative border-b border-line bg-white px-4 py-5 sm:px-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-display text-xl">Adminportaal</p>
@@ -44,7 +44,10 @@ export default async function AdminLayout({
               Intern overzicht, niet zichtbaar voor klanten.
             </p>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+          {/* Op mobiel staat hier nu de menuknop (zie AdminNav, absoluut
+              gepositioneerd t.o.v. deze <header>); "Uitloggen" staat daar
+              onderaan het uitklappaneel. Vanaf sm: blijft dit gewoon zichtbaar. */}
+          <div className="hidden shrink-0 items-center gap-3 sm:flex">
             <span className="hidden max-w-[14rem] truncate text-xs text-ink/50 sm:inline">
               {session.user.email}
             </span>
