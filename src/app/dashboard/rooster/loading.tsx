@@ -1,6 +1,7 @@
 export default function Loading() {
   return (
     <div className="animate-pulse">
+      <p className="mb-3 text-xs text-ink/40">Het rooster wordt opgehangen…</p>
       <div className="h-8 w-32 rounded bg-line/60" />
       <div className="mt-2 h-4 w-80 rounded bg-line/40" />
       <div className="mt-4 h-8 w-48 rounded-full bg-line/40" />

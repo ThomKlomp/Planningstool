@@ -227,7 +227,7 @@ export default function RosterBoard({
                 </div>
               ))}
               {dayShifts.length === 0 && (
-                <p className="text-xs text-ink/40">Geen shifts</p>
+                <p className="text-xs text-ink/40">Nog potdicht</p>
               )}
             </div>
 

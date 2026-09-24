@@ -40,7 +40,7 @@ export default async function NotificationsPage() {
         ))}
         {notifications.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-ink/40">
-            Nog geen meldingen.
+            Nog geen meldingen. Rustig aan de bar.
           </li>
         )}
       </ul>

@@ -192,6 +192,9 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-start">
             <div>
+              <p className="mb-2 text-xs uppercase tracking-[0.15em] text-amber underline decoration-wavy decoration-1 underline-offset-4">
+                Ons menu
+              </p>
               <h2 className="font-display text-3xl md:text-4xl">
                 Eén prijs per zaak, op basis van de grootte van je team.
               </h2>
@@ -206,7 +209,13 @@ export default function HomePage() {
                 <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
               </ul>
             </div>
-            <div className="rounded-2xl border border-paper/20 bg-paper/5 p-6 md:p-8">
+            <div
+              className="rounded-2xl border border-dashed border-paper/30 bg-paper/5 p-6 md:p-8"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(115deg, rgba(250,247,242,0.03) 0px, rgba(250,247,242,0.03) 1px, transparent 1px, transparent 5px)",
+              }}
+            >
               <table className="w-full text-left text-sm">
                 <thead className="text-xs uppercase tracking-wide text-paper/50">
                   <tr>
@@ -215,7 +224,7 @@ export default function HomePage() {
                     <th className="pb-3 text-right font-medium">Per jaar (met korting)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-paper/10">
+                <tbody className="divide-y divide-dashed divide-paper/20">
                   {PRICE_TIERS.map((tier) => (
                     <tr key={tier.id}>
                       <td className="py-3">{tier.label.replace(" medewerkers", "")}</td>
