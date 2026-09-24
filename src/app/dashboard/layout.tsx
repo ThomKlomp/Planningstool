@@ -48,7 +48,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
-      <aside className="border-b border-line bg-white sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
+      <aside className="sticky top-0 z-40 border-b border-line bg-white sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
         <div>
           <div className="px-4 py-4 sm:px-4 sm:py-6">
             <p className="truncate font-display text-lg">{membership.companyName}</p>
