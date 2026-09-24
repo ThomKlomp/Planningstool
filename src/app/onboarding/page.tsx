@@ -8,7 +8,7 @@ export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/signin?callbackUrl=/onboarding");
+    redirect("/signin?callbackUrl=/onboarding&intent=signup");
   }
 
   requireAcceptedTerms(session, "/onboarding");
