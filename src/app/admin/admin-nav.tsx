@@ -29,8 +29,8 @@ export default function AdminNav({
 
   return (
     <nav className="mt-4">
-      {/* Mobiel: hamburgermenu */}
-      <div className="sm:hidden">
+      {/* Mobiel: hamburgermenu, rechts uitgelijnd */}
+      <div className="flex justify-end sm:hidden">
         <button
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
