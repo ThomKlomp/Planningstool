@@ -3,6 +3,7 @@ import Link from "next/link";
 import ContactButton from "@/components/contact-button";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
+import ScheduleMock from "@/components/schedule-mock";
 import {
   PRICE_TIERS,
   MAX_STANDARD_MEMBERS,
@@ -268,98 +269,6 @@ function Feature({ title, body }: { title: string; body: string }) {
     <div className="grid gap-2 py-8 md:grid-cols-[220px_1fr] md:gap-8">
       <h2 className="font-display text-2xl">{title}</h2>
       <p className="max-w-xl text-ink/70">{body}</p>
-    </div>
-  );
-}
-
-/** Kleine, gestileerde weergave van een weekrooster: geen screenshot, gewoon opgebouwd uit divs. */
-function ScheduleMock() {
-  const days = [
-    {
-      label: "Wo 16",
-      groups: [
-        {
-          team: "Bediening",
-          color: "text-awning",
-          dot: "bg-awning",
-          shifts: [
-            { name: "Julia Bakker", time: "12–18" },
-            { name: "Tom Visser", time: "17–23" },
-          ],
-        },
-        {
-          team: "Keuken",
-          color: "text-amber-dark",
-          dot: "bg-amber",
-          shifts: [{ name: "Ahmed · Kok", time: "17–23" }],
-        },
-      ],
-    },
-    {
-      label: "Do 17",
-      groups: [
-        {
-          team: "Bediening",
-          color: "text-awning",
-          dot: "bg-awning",
-          shifts: [{ name: "Nina de Boer", time: "12–18" }],
-        },
-        {
-          team: "Keuken",
-          color: "text-amber-dark",
-          dot: "bg-amber",
-          shifts: [{ name: "Lotte · Kok", time: "17–23" }],
-        },
-      ],
-    },
-    {
-      label: "Vr 18",
-      groups: [
-        {
-          team: "Bediening",
-          color: "text-awning",
-          dot: "bg-awning",
-          shifts: [{ name: "Mark Jansen", time: "17–23" }],
-        },
-      ],
-    },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-line bg-white p-4 shadow-[0_2px_0_0_#DDD5C7] md:p-5">
-      <div className="flex items-center justify-between px-1">
-        <p className="text-xs uppercase tracking-wide text-ink/40">Week 38</p>
-        <span className="rounded-full bg-awning/10 px-2 py-0.5 text-[11px] font-medium text-awning">
-          Open
-        </span>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {days.map((d) => (
-          <div key={d.label}>
-            <p className="text-center text-[10px] text-ink/40">{d.label}</p>
-            <div className="mt-1.5 space-y-2">
-              {d.groups.map((g) => (
-                <div key={g.team}>
-                  <p
-                    className={`flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wide ${g.color}`}
-                  >
-                    <span className={`h-1 w-1 rounded-full ${g.dot}`} />
-                    {g.team}
-                  </p>
-                  <div className="mt-1 space-y-1">
-                    {g.shifts.map((s, i) => (
-                      <div key={i} className="rounded-md bg-paper px-1.5 py-1">
-                        <p className="truncate text-[9px] font-medium leading-tight">{s.name}</p>
-                        <p className="text-[8px] leading-tight text-ink/50">{s.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
