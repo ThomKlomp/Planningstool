@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function SiteFooter() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-sm text-ink/50">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-sm text-ink/50">
         <Link href="/" className="font-display text-base text-ink">
           Shiftje
         </Link>

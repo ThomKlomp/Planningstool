@@ -39,7 +39,7 @@ const softwareApplicationSchema = {
   // richtlijnen en kan tot een handmatige actie leiden.
 };
 
-const faqSchema = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Voor wie is Shiftje gemaakt?", "acceptedAnswer": {"@type": "Answer", "text": "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf."}}, {"@type": "Question", "name": "Wat kost Shiftje?", "acceptedAnswer": {"@type": "Answer", "text": "Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen."}}, {"@type": "Question", "name": "Kan ik Shiftje eerst gratis proberen?", "acceptedAnswer": {"@type": "Answer", "text": "Ja, je kunt 7 dagen gratis beginnen zonder creditcard."}}, {"@type": "Question", "name": "Werkt Shiftje ook voor een restaurant met keuken én bediening?", "acceptedAnswer": {"@type": "Answer", "text": "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in."}}, {"@type": "Question", "name": "Wat gebeurt er als iemand een dienst niet kan werken?", "acceptedAnswer": {"@type": "Answer", "text": "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster."}}]};
+const faqSchema = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Voor wie is Shiftje gemaakt?", "acceptedAnswer": {"@type": "Answer", "text": "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf."}}, {"@type": "Question", "name": "Wat kost Shiftje?", "acceptedAnswer": {"@type": "Answer", "text": "Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen."}}, {"@type": "Question", "name": "Kan ik Shiftje eerst gratis proberen?", "acceptedAnswer": {"@type": "Answer", "text": "Ja, je kunt 7 dagen gratis beginnen zonder creditcard."}}, {"@type": "Question", "name": "Werkt Shiftje ook voor een restaurant met keuken én bediening?", "acceptedAnswer": {"@type": "Answer", "text": "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in."}}, {"@type": "Question", "name": "Wat gebeurt er als iemand een dienst niet kan werken?", "acceptedAnswer": {"@type": "Answer", "text": "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster."}}, {"@type": "Question", "name": "Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?", "acceptedAnswer": {"@type": "Answer", "text": "Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt."}}]};
 
 export default function HomePage() {
   return (
@@ -56,7 +56,7 @@ export default function HomePage() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="mx-auto max-w-5xl px-6 pb-20 pt-8 md:pt-16">
+      <section className="mx-auto max-w-6xl px-6 pb-20 pt-8 md:pt-16">
         <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="mb-4 text-sm text-awning">
@@ -73,6 +73,10 @@ export default function HomePage() {
               paar klikken een rooster overheen. Aan het eind van de week
               keur je de uren goed. Geen groepsapp vol foto's van een
               geprint rooster.
+            </p>
+            <p className="mt-3 max-w-md text-sm text-ink/50">
+              Of je er nu een planningstool, roostertool, planningsprogramma of
+              beschikbaarheidsprogramma voor gebruikt: dit is 'm.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
@@ -109,7 +113,7 @@ export default function HomePage() {
       </section>
 
       {/* Functies */}
-      <section id="functies" className="mx-auto max-w-5xl px-6 py-20">
+      <section id="functies" className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="font-display text-2xl">Alles wat je nodig hebt, op één pagina</h2>
         <p className="mt-3 max-w-2xl text-ink/70">
           Of je nu een café, restaurant of bar runt: Shiftje vervangt de spreadsheet voor je rooster en
@@ -174,12 +178,18 @@ export default function HomePage() {
             </summary>
             <p className="mt-2 text-ink/70">Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.</p>
           </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?
+            </summary>
+            <p className="mt-2 text-ink/70">Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt.</p>
+          </details>
         </div>
       </section>
 
       {/* Prijs */}
       <section id="prijs" className="border-t border-line bg-ink text-paper">
-        <div className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-start">
             <div>
               <h2 className="font-display text-3xl md:text-4xl">

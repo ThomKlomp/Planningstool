@@ -9,6 +9,15 @@ html {
 body {
   background-color: #faf7f2;
   color: #1b1b18;
+  /* Subtiel stippenraster over de hele pagina, zodat de ruimte naast de
+     inhoud op brede schermen niet helemaal leeg aanvoelt. Puur CSS (geen
+     losse afbeelding nodig), heel licht contrast zodat het nooit met de
+     inhoud concurreert. Secties met een eigen ondoorzichtige achtergrond
+     (bg-white, bg-ink) dekken dit gewoon af, dat is prima: het patroon is
+     bedoeld voor de open, papierkleurige stukken (hero, footer, tussen de
+     kaarten), niet als iets dat overal zichtbaar moet zijn. */
+  background-image: radial-gradient(circle, #ddd5c7 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 ::selection {
