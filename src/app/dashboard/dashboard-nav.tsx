@@ -26,23 +26,23 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
 
   return (
     <>
-      {/* Mobiel: knop rechts + zwevend paneel, neemt geen ruimte in en klapt
-          over de pagina heen in plaats van de inhoud omlaag te duwen. */}
-      <div className="relative sm:hidden">
-        <div className="relative z-30 flex justify-end px-4 pb-2">
-          <button
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            aria-label="Menu"
-            className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink"
-          >
-            <span aria-hidden className="text-base leading-none">☰</span>
-            Menu
-          </button>
-        </div>
+      {/* Mobiel: knop rechtsboven, los van de tekststroom (absoluut
+          gepositioneerd t.o.v. de gezamenlijke wrapper in layout.tsx), zodat
+          een lange zaaknaam gewoon naar een tweede regel kan doorlopen
+          zonder dat de knop meezakt. */}
+      <div className="sm:hidden">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-label="Menu"
+          className="absolute right-4 top-4 z-30 flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink"
+        >
+          <span aria-hidden className="text-base leading-none">☰</span>
+          Menu
+        </button>
 
         <nav
-          className={`absolute right-4 top-full z-30 w-64 origin-top-right space-y-0.5 rounded-xl border border-line bg-white p-2 shadow-lg transition duration-150 ease-out ${
+          className={`absolute right-4 top-16 z-30 w-64 origin-top-right space-y-0.5 rounded-xl border border-line bg-white p-2 shadow-lg transition duration-150 ease-out ${
             open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
           }`}
         >

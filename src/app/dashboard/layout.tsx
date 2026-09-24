@@ -50,13 +50,15 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-paper text-ink sm:flex">
       <aside className="sticky top-0 z-40 border-b border-line bg-white sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
         <div>
-          <div className="px-4 py-4 sm:px-4 sm:py-6">
-            <p className="truncate font-display text-lg">{membership.companyName}</p>
-            <p className="text-xs uppercase tracking-wide text-ink/40">
-              {roleLabel(membership.role)}
-            </p>
+          <div className="relative">
+            <div className="px-4 py-4 pr-28 sm:px-4 sm:py-6 sm:pr-4">
+              <p className="font-display text-lg sm:truncate">{membership.companyName}</p>
+              <p className="text-xs uppercase tracking-wide text-ink/40">
+                {roleLabel(membership.role)}
+              </p>
+            </div>
+            <DashboardNav items={navItems} />
           </div>
-          <DashboardNav items={navItems} />
         </div>
         <div className="hidden border-t border-line px-4 py-3 sm:block sm:px-4 sm:py-6">
           <p className="min-w-0 truncate text-xs text-ink/50 sm:mb-2">
