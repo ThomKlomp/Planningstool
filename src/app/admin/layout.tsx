@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { requireAcceptedTerms } from "@/lib/auth-guards";
 import SignOutButton from "@/components/sign-out-button";
 import { countChatsAwaitingReply } from "@/lib/support-notify";
+import AdminNav, { type AdminNavItem } from "./admin-nav";
 
 export default async function AdminLayout({
   children,
@@ -23,6 +23,17 @@ export default async function AdminLayout({
 
   const chatsAwaitingReply = await countChatsAwaitingReply();
 
+  const navItems: AdminNavItem[] = [
+    { href: "/admin", label: "Overzicht" },
+    { href: "/admin/pages", label: "Pagina's" },
+    { href: "/admin/visits", label: "Bezoekers" },
+    { href: "/admin/companies", label: "Zaken" },
+    { href: "/admin/users", label: "Gebruikers" },
+    { href: "/admin/support", label: "Support-chats", badge: chatsAwaitingReply },
+    { href: "/admin/discount-codes", label: "Kortingscodes" },
+    { href: "/admin/demo-company", label: "Demo-zaak" },
+  ];
+
   return (
     <div className="min-h-screen bg-paper text-ink">
       <header className="border-b border-line bg-white px-4 py-5 sm:px-8">
@@ -40,44 +51,16 @@ export default async function AdminLayout({
             <SignOutButton />
           </div>
         </div>
-        <nav className="mt-4 flex gap-1 overflow-x-auto text-sm">
-          <AdminNavLink href="/admin">Overzicht</AdminNavLink>
-          <AdminNavLink href="/admin/pages">Pagina's</AdminNavLink>
-          <AdminNavLink href="/admin/visits">Bezoekers</AdminNavLink>
-          <AdminNavLink href="/admin/companies">Zaken</AdminNavLink>
-          <AdminNavLink href="/admin/users">Gebruikers</AdminNavLink>
-          <AdminNavLink href="/admin/support">
-            Support-chats
-            {chatsAwaitingReply > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
-                {chatsAwaitingReply}
-              </span>
-            )}
-          </AdminNavLink>
-          <AdminNavLink href="/admin/discount-codes">Kortingscodes</AdminNavLink>
-          <AdminNavLink href="/admin/demo-company">Demo-zaak</AdminNavLink>
-          {session.user.memberships.length > 0 && (
-            <Link
-              href="/dashboard"
-              className="ml-auto shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/50 hover:bg-paper hover:text-ink"
-            >
-              ← Terug naar dashboard
-            </Link>
-          )}
-        </nav>
+        <AdminNav
+          items={navItems}
+          backLink={
+            session.user.memberships.length > 0
+              ? { href: "/dashboard", label: "← Terug naar dashboard" }
+              : undefined
+          }
+        />
       </header>
       <main className="px-4 py-8 sm:px-8">{children}</main>
     </div>
-  );
-}
-
-function AdminNavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/70 hover:bg-paper hover:text-ink"
-    >
-      {children}
-    </Link>
   );
 }
