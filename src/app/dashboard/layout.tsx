@@ -58,7 +58,7 @@ export default async function DashboardLayout({
           </div>
           <DashboardNav items={navItems} />
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 sm:block sm:px-4 sm:py-6">
+        <div className="hidden border-t border-line px-4 py-3 sm:block sm:px-4 sm:py-6">
           <p className="min-w-0 truncate text-xs text-ink/50 sm:mb-2">
             {session.user.email}
           </p>

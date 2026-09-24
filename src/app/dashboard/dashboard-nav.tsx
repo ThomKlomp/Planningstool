@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SignOutButton from "@/components/sign-out-button";
 
 export type DashboardNavItem = {
   href: string;
@@ -62,6 +63,9 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
               ) : null}
             </Link>
           ))}
+          <div className="mt-1 border-t border-line pt-1">
+            <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-paper hover:text-ink" />
+          </div>
         </nav>
 
         {open && (
