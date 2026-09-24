@@ -4,22 +4,47 @@ import { useState } from "react";
 
 type OpenHours = { submitted: number; queried: number; draft: number; total: number };
 
-// Download van goedgekeurde uren als Excel (3 tabbladen), per maand. Staan er
-// in die maand nog uren open, dan krijgt de manager eerst een waarschuwing.
+function toDateParam(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Eerste en laatste dag van de maand die `monthsAgo` maanden terug ligt (0 = deze maand). */
+function monthRange(monthsAgo: number) {
+  const now = new Date();
+  const from = new Date(Date.UTC(now.getFullYear(), now.getMonth() - monthsAgo, 1));
+  const to = new Date(Date.UTC(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0));
+  return { from: toDateParam(from), to: toDateParam(to) };
+}
+
+// Download van goedgekeurde uren als Excel (3 tabbladen), voor een zelf
+// gekozen periode (begin- en einddatum). Staan er in die periode nog uren
+// open, dan krijgt de manager eerst een waarschuwing.
 export default function ExportHours() {
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const thisMonth = monthRange(0);
+  const [from, setFrom] = useState(thisMonth.from);
+  const [to, setTo] = useState(thisMonth.to);
   const [checking, setChecking] = useState(false);
   const [open, setOpen] = useState<OpenHours | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const url = `/api/hours/export?month=${month}`;
+  const validRange = Boolean(from) && Boolean(to) && from <= to;
+  const url = `/api/hours/export?from=${from}&to=${to}`;
+
+  function applyPreset(monthsAgo: number) {
+    const range = monthRange(monthsAgo);
+    setFrom(range.from);
+    setTo(range.to);
+    setOpen(null);
+    setError(null);
+  }
 
   async function handleExport() {
+    if (!validRange) return;
     setChecking(true);
     setError(null);
     setOpen(null);
 
-    const res = await fetch(`/api/hours/export/check?month=${month}`);
+    const res = await fetch(`/api/hours/export/check?from=${from}&to=${to}`);
     setChecking(false);
 
     if (!res.ok) {
@@ -41,27 +66,56 @@ export default function ExportHours() {
 
   return (
     <div className="rounded-xl border border-line bg-white p-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="block text-xs text-ink/60">Goedgekeurde uren exporteren</label>
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => {
-              setMonth(e.target.value);
-              setOpen(null);
-            }}
-            className="mt-1 rounded-lg border border-line px-3 py-2 text-sm"
-          />
-        </div>
+      <label className="block text-xs text-ink/60">Goedgekeurde uren exporteren</label>
+
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => {
+            setFrom(e.target.value);
+            setOpen(null);
+          }}
+          className="rounded-lg border border-line px-3 py-2 text-sm"
+        />
+        <span className="text-sm text-ink/40">t/m</span>
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => {
+            setTo(e.target.value);
+            setOpen(null);
+          }}
+          className="rounded-lg border border-line px-3 py-2 text-sm"
+        />
         <button
           onClick={handleExport}
-          disabled={checking || !month}
+          disabled={checking || !validRange}
           className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
         >
           {checking ? "Controleren..." : "Downloaden (Excel)"}
         </button>
       </div>
+
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <button
+          onClick={() => applyPreset(0)}
+          className="rounded-full border border-line px-2.5 py-1 text-xs text-ink/70 hover:border-ink hover:text-ink"
+        >
+          Deze maand
+        </button>
+        <button
+          onClick={() => applyPreset(1)}
+          className="rounded-full border border-line px-2.5 py-1 text-xs text-ink/70 hover:border-ink hover:text-ink"
+        >
+          Vorige maand
+        </button>
+      </div>
+
+      {!validRange && from && to && (
+        <p className="mt-2 text-xs text-red-600">De einddatum moet na de begindatum liggen.</p>
+      )}
+
       <p className="mt-3 text-xs text-ink/50">
         Bevat 3 tabbladen: maand-, week- en dagoverzicht per medewerker. Alleen goedgekeurde
         uren worden meegenomen.
@@ -72,7 +126,7 @@ export default function ExportHours() {
       {open && (
         <div className="mt-3 rounded-lg bg-amber/10 px-4 py-3 text-sm text-amber-dark">
           <p className="font-medium">
-            Let op: er staan nog uren open in deze maand. Die komen niet in de export.
+            Let op: er staan nog uren open in deze periode. Die komen niet in de export.
           </p>
           <ul className="mt-1 list-disc pl-5 text-xs">
             {open.submitted > 0 && <li>{open.submitted} wachten op jouw beoordeling</li>}
