@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
+import DashboardNav, { type DashboardNavItem } from "./dashboard-nav";
 
 // Zonder dit blijft Next.js de vorige render van deze layout (en dus het
 // aantal ongelezen meldingen) een tijdje hergebruiken bij client-side
@@ -31,6 +32,20 @@ export default async function DashboardLayout({
     ? Math.ceil((company.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
     : null;
 
+  const navItems: DashboardNavItem[] = [
+    { href: "/dashboard", label: "Overzicht" },
+    { href: "/dashboard/availability", label: "Beschikbaarheid" },
+    { href: "/dashboard/rooster", label: "Rooster" },
+    { href: "/dashboard/hours", label: "Uren" },
+    { href: "/dashboard/calendar", label: "Agenda-koppeling" },
+    { href: "/dashboard/notifications", label: "Meldingen", badge: unreadCount },
+    ...(membership.role === "OWNER" || membership.role === "MANAGER"
+      ? [{ href: "/dashboard/settings", label: "Instellingen" }]
+      : []),
+    { href: "/dashboard/account", label: "Mijn account" },
+    ...(session.user.isPlatformAdmin ? [{ href: "/admin", label: "Adminportaal" }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
       <aside className="border-b border-line bg-white sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
@@ -41,28 +56,7 @@ export default async function DashboardLayout({
               {roleLabel(membership.role)}
             </p>
           </div>
-          <nav className="flex gap-1 overflow-x-auto border-t border-line px-2 py-2 text-sm sm:flex-col sm:gap-0 sm:space-y-1 sm:overflow-visible sm:border-t-0 sm:px-2 sm:py-0">
-            <NavLink href="/dashboard">Overzicht</NavLink>
-            <NavLink href="/dashboard/availability">Beschikbaarheid</NavLink>
-            <NavLink href="/dashboard/rooster">Rooster</NavLink>
-            <NavLink href="/dashboard/hours">Uren</NavLink>
-            <NavLink href="/dashboard/calendar">Agenda-koppeling</NavLink>
-            <NavLink href="/dashboard/notifications">
-              Meldingen
-              {unreadCount > 0 && (
-                <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
-                  {unreadCount}
-                </span>
-              )}
-            </NavLink>
-            {(membership.role === "OWNER" || membership.role === "MANAGER") && (
-              <NavLink href="/dashboard/settings">Instellingen</NavLink>
-            )}
-            <NavLink href="/dashboard/account">Mijn account</NavLink>
-            {session.user.isPlatformAdmin && (
-              <NavLink href="/admin">Adminportaal</NavLink>
-            )}
-          </nav>
+          <DashboardNav items={navItems} />
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 sm:block sm:px-4 sm:py-6">
           <p className="min-w-0 truncate text-xs text-ink/50 sm:mb-2">
@@ -94,17 +88,6 @@ export default async function DashboardLayout({
         <main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
-  );
-}
-
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/70 hover:bg-paper hover:text-ink sm:w-full sm:rounded-lg sm:px-3 sm:py-2 sm:text-left sm:whitespace-normal"
-    >
-      {children}
-    </Link>
   );
 }
 
