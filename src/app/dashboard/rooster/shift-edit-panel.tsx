@@ -54,7 +54,12 @@ export default function ShiftEditPanel({
   }
 
   async function remove() {
-    if (!confirm("Deze shift verwijderen? Dit kan niet ongedaan gemaakt worden.")) return;
+    if (
+      !confirm(
+        "Deze dienst van de kaart halen? Diegene hoeft dan niet te komen opdraven. Dit kan niet ongedaan gemaakt worden."
+      )
+    )
+      return;
     setSaving(true);
     setError(null);
 

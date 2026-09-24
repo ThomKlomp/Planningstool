@@ -265,6 +265,9 @@ export default async function RosterPage({
           />
         </div>
       )}
+      {canManage && pendingApprovals.length === 0 && (
+        <p className="mt-4 text-xs text-ink/30">Iedereen staat gewoon te werken, mooi zo.</p>
+      )}
 
       {hideRosterFromViewer ? (
         <p className="mt-6 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">

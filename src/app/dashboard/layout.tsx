@@ -83,7 +83,7 @@ export default async function DashboardLayout({
                   ? "Je abonnement is opgezegd, kies een plan om door te gaan →"
                   : trialDaysLeft !== null && trialDaysLeft <= 0
                   ? "Je proefperiode is afgelopen, kies een abonnement →"
-                  : `Nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode, kies alvast een abonnement →`}
+                  : `Happy hour bijna voorbij: nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode, kies alvast een abonnement →`}
               </Link>
             </div>
           )}

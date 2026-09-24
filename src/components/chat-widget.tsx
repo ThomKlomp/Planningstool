@@ -182,7 +182,7 @@ export default function ChatWidget({
               <input
                 type="text"
                 required
-                placeholder="Typ een bericht..."
+                placeholder="Wat kan ik voor je bestellen?"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 className="flex-1 rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"

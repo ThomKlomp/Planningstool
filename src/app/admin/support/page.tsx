@@ -81,7 +81,7 @@ export default async function AdminSupportPage() {
         })}
         {conversations.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-ink/40">
-            Nog geen chats.
+            Niemand aan de bel.
           </li>
         )}
       </ul>
