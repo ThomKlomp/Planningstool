@@ -20,3 +20,18 @@ body {
   outline: 2px solid #3f6e5b;
   outline-offset: 2px;
 }
+
+/* iOS Safari zoomt automatisch in zodra een invoerveld met een lettergrootte
+   onder 16px focus krijgt (om de tekst leesbaar te maken), en dat zoomt de
+   rest van de pagina dan ook mee uit beeld. Forceer daarom op telefoon-brede
+   schermen minimaal 16px op alle formuliervelden, ongeacht welke (kleinere)
+   Tailwind-tekstklasse een component verder gebruikt. !important is hier
+   bewust: een los component zou deze regel anders per ongeluk kunnen
+   overschrijven met een eigen kleinere tekstklasse. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
