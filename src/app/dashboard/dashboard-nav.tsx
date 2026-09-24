@@ -25,39 +25,51 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
 
   return (
     <>
-      {/* Mobiel: hamburgermenu, rechts uitgelijnd */}
-      <div className="sm:hidden">
-        <div className="flex justify-end px-4 pb-2">
+      {/* Mobiel: knop rechts + zwevend paneel, neemt geen ruimte in en klapt
+          over de pagina heen in plaats van de inhoud omlaag te duwen. */}
+      <div className="relative sm:hidden">
+        <div className="relative z-30 flex justify-end px-4 pb-2">
           <button
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label="Menu"
-            className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink"
+            className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink/70 hover:border-ink hover:text-ink"
           >
             <span aria-hidden className="text-base leading-none">☰</span>
             Menu
           </button>
         </div>
+
+        <nav
+          className={`absolute right-4 top-full z-30 w-64 origin-top-right space-y-0.5 rounded-xl border border-line bg-white p-2 shadow-lg transition duration-150 ease-out ${
+            open ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
+          }`}
+        >
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
+                isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
+              }`}
+            >
+              {item.label}
+              {item.badge ? (
+                <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
+                  {item.badge}
+                </span>
+              ) : null}
+            </Link>
+          ))}
+        </nav>
+
         {open && (
-          <nav className="mx-4 mb-3 space-y-0.5 rounded-xl border border-line bg-white p-2">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                  isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
-                }`}
-              >
-                {item.label}
-                {item.badge ? (
-                  <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber px-1 text-[10px] font-semibold text-ink">
-                    {item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            ))}
-          </nav>
+          <div
+            onClick={() => setOpen(false)}
+            aria-hidden
+            className="fixed inset-0 z-20"
+          />
         )}
       </div>
 
