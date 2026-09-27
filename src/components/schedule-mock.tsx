@@ -172,7 +172,7 @@ export default function ScheduleMock() {
                         <div className="mt-1 space-y-1">
                           {shiftsForTeam.map((s) => {
                             const person = personById(s.personId);
-                            const delayMs = 1100 + Math.min(shiftLandIndex * 55, 480);
+                            const delayMs = 1300 + Math.min(shiftLandIndex * 55, 480);
                             shiftLandIndex += 1;
                             return (
                               <button

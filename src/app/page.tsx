@@ -119,7 +119,7 @@ export default function HomePage() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-20 pt-8 md:pt-16">
+      <section className="mx-auto max-w-6xl overflow-x-hidden px-6 pb-20 pt-8 md:pt-16">
         <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="mb-4 text-sm text-awning">
