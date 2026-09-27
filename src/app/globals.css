@@ -63,3 +63,66 @@ body {
 .rounded-2xl.border-line.bg-white:not([class*="shadow-"]) {
   box-shadow: 0 2px 0 0 #ddd5c7;
 }
+
+/* Hero: het rooster (met de diensten erop) vliegt bij het laden van de
+   pagina in en landt op de laptop, net als bij een "bird lands on branch"
+   hero-animatie. Puur CSS, draait automatisch één keer bij het laden, geen
+   JS nodig. `animation-fill-mode: backwards` zorgt dat het element vóór de
+   animatie al in de begintoestand staat (dus niet even zichtbaar op de
+   eindpositie flitst voordat de animatie start). */
+@keyframes hero-roster-land {
+  0% {
+    transform: translate(46px, -36px) rotate(7deg) scale(0.88);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(32px, -25px) rotate(5deg) scale(0.92);
+    opacity: 0.5;
+  }
+  65% {
+    transform: translate(-5px, 3px) rotate(-1.5deg) scale(1.015);
+    opacity: 1;
+  }
+  85% {
+    transform: translate(2px, -1px) rotate(0.5deg) scale(0.998);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.hero-roster-land {
+  /* Lineaire tijdverdeling: de keyframes hierboven bepalen zelf de
+     versnelling/vertraging (eerst rustig aanvliegen, dan een korte overshoot
+     en settle aan het eind). Een extra ease-curve bovenop deze keyframes
+     zou de vlucht dubbel zo snel laten aanvoelen (precies wat er eerst
+     misging: bij 150ms van de 900ms was 'ie al bijna geland). */
+  animation: hero-roster-land 1.1s linear both;
+}
+
+/* Losse diensten binnen de roostermock landen net iets ná het rooster zelf,
+   met een kleine vertraging per dienst (zie de inline animationDelay in
+   schedule-mock.tsx), zodat het net als de vogel-video oogt als "het
+   rooster èn wat erop staat" samen invliegen, niet als één plat plaatje. */
+@keyframes hero-shift-land {
+  0% {
+    transform: translateY(-10px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.hero-shift-land {
+  animation: hero-shift-land 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-roster-land,
+  .hero-shift-land {
+    animation: none;
+  }
+}

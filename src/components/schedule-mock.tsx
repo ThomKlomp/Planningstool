@@ -136,6 +136,12 @@ export default function ScheduleMock() {
     close();
   }
 
+  // Telt hoeveel diensten er al gerenderd zijn tijdens deze render-pas, puur
+  // om ze bij het laden van de pagina na elkaar (gestaffeld) te laten
+  // "landen" i.p.v. allemaal tegelijk. Lokale, wegwerp-teller per render,
+  // hoort niet in state/een ref.
+  let shiftLandIndex = 0;
+
   return (
     <div>
       <div className="relative rounded-2xl border border-line bg-white p-4 shadow-[0_2px_0_0_#DDD5C7] md:p-5">
@@ -166,11 +172,14 @@ export default function ScheduleMock() {
                         <div className="mt-1 space-y-1">
                           {shiftsForTeam.map((s) => {
                             const person = personById(s.personId);
+                            const delayMs = 1100 + Math.min(shiftLandIndex * 55, 480);
+                            shiftLandIndex += 1;
                             return (
                               <button
                                 key={s.id}
                                 onClick={() => openEdit(dayIndex, s)}
-                                className="block w-full rounded-md bg-paper px-1.5 py-1 text-left transition-colors hover:bg-line/60"
+                                className="hero-shift-land block w-full rounded-md bg-paper px-1.5 py-1 text-left transition-colors hover:bg-line/60"
+                                style={{ animationDelay: `${delayMs}ms` }}
                               >
                                 <p className="truncate text-[9px] font-medium leading-tight">
                                   {person?.name}

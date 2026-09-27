@@ -39,7 +39,70 @@ const softwareApplicationSchema = {
   // richtlijnen en kan tot een handmatige actie leiden.
 };
 
-const faqSchema = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Voor wie is Shiftje gemaakt?", "acceptedAnswer": {"@type": "Answer", "text": "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf."}}, {"@type": "Question", "name": "Wat kost Shiftje?", "acceptedAnswer": {"@type": "Answer", "text": "Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen."}}, {"@type": "Question", "name": "Kan ik Shiftje eerst gratis proberen?", "acceptedAnswer": {"@type": "Answer", "text": "Ja, je kunt 7 dagen gratis beginnen zonder creditcard."}}, {"@type": "Question", "name": "Werkt Shiftje ook voor een restaurant met keuken én bediening?", "acceptedAnswer": {"@type": "Answer", "text": "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in."}}, {"@type": "Question", "name": "Wat gebeurt er als iemand een dienst niet kan werken?", "acceptedAnswer": {"@type": "Answer", "text": "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster."}}, {"@type": "Question", "name": "Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?", "acceptedAnswer": {"@type": "Answer", "text": "Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt."}}]};
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Wat is Shiftje?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Voor wie is Shiftje gemaakt?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Wat kost Shiftje?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: `Vanaf ${formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot ${formatEuro(
+          PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl
+        )} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.`,
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Kan ik Shiftje eerst gratis proberen?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Ja, je kunt 7 dagen gratis beginnen zonder creditcard.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Werkt Shiftje ook voor een restaurant met keuken én bediening?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Wat gebeurt er als iemand een dienst niet kan werken?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt.",
+      },
+    },
+  ],
+};
 
 export default function HomePage() {
   return (
@@ -97,7 +160,19 @@ export default function HomePage() {
             </p>
           </div>
 
-          <ScheduleMock />
+          <div className="hero-roster-land mx-auto w-full max-w-sm">
+            {/* Laptop: donkere schermrand met het rooster erin, een dun
+                toetsenbord-onderstel eronder, en een zachte schaduw die 'm
+                op een tafel laat lijken te staan. */}
+            <div className="rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
+              <div className="overflow-hidden rounded-lg bg-paper p-1.5">
+                <ScheduleMock />
+              </div>
+            </div>
+            <div className="relative mx-auto h-3 w-full rounded-b-xl bg-gradient-to-b from-ink to-ink/80" />
+            <div className="mx-auto h-1.5 w-1/5 rounded-b-lg bg-ink/60" />
+            <div className="mx-auto mt-3 h-4 w-[92%] rounded-[50%] bg-ink/10 blur-md" />
+          </div>
         </div>
       </section>
 
@@ -150,6 +225,12 @@ export default function HomePage() {
         <div className="mt-6 divide-y divide-line">
           <details className="group py-4">
             <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Wat is Shiftje?
+            </summary>
+            <p className="mt-2 text-ink/70">Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
               Voor wie is Shiftje gemaakt?
             </summary>
             <p className="mt-2 text-ink/70">Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.</p>
@@ -158,7 +239,7 @@ export default function HomePage() {
             <summary className="cursor-pointer list-none font-medium marker:content-none">
               Wat kost Shiftje?
             </summary>
-            <p className="mt-2 text-ink/70">Eén vast bedrag per maand, gebaseerd op het aantal medewerkers, niet per gebruiker. Je ziet de actuele staffels hieronder bij Prijzen.</p>
+            <p className="mt-2 text-ink/70">Vanaf {formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot {formatEuro(PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl)} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.</p>
           </details>
           <details className="group py-4">
             <summary className="cursor-pointer list-none font-medium marker:content-none">
