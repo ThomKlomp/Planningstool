@@ -163,14 +163,38 @@ export default function HomePage() {
           <div className="mx-auto w-full max-w-sm">
             {/* Laptop: staat dicht en gaat langzaam open (deksel draait om het
                 scharnier), daarna gaat het scherm aan met het rooster erin. */}
-            <div className="hero-lid rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
+            <div className="hero-lid relative z-10 rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
               <div className="hero-screen-on overflow-hidden rounded-lg bg-paper p-1.5">
                 <ScheduleMock />
               </div>
             </div>
-            <div className="relative mx-auto h-3 w-full rounded-b-xl bg-gradient-to-b from-ink to-ink/80" />
-            <div className="mx-auto h-1.5 w-1/5 rounded-b-lg bg-ink/60" />
-            <div className="mx-auto mt-3 h-4 w-[92%] rounded-[50%] bg-ink/10 blur-md" />
+            {/* Onderstel: even diep als het deksel hoog is (0,84 x de breedte) en
+                schuin naar achteren gekanteld (rotateX), zodat je het van boven
+                ziet en het echt op een laptop lijkt. perspective() zit in de
+                transform en is gelijk aan die van het deksel, zodat een dicht
+                deksel precies op het toetsenbord past. */}
+            <div className="relative aspect-[100/21] w-full">
+              <div
+                className="absolute inset-x-0 top-0 aspect-[100/84] origin-top rounded-b-xl bg-[#2d2d29]"
+                style={{ transform: "perspective(3200px) rotateX(77deg)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-[2%] bg-black/50" />
+                <div
+                  className="absolute inset-x-[5%] top-[5%] h-[55%] rounded-sm"
+                  style={{
+                    backgroundColor: "#3d3d38",
+                    backgroundImage:
+                      "linear-gradient(90deg, #232320 3px, transparent 3px), linear-gradient(0deg, #232320 7px, transparent 7px)",
+                    backgroundSize: "7.1428% 100%, 100% 16.6667%",
+                  }}
+                />
+                <div className="absolute bottom-[8%] left-1/2 h-[26%] w-[36%] -translate-x-1/2 rounded-md border border-white/10 bg-white/[0.03]" />
+              </div>
+            </div>
+            <div className="relative left-1/2 h-[7px] w-[110.8%] -translate-x-1/2 rounded-b-2xl bg-gradient-to-b from-[#3a3a35] to-ink">
+              <div className="absolute left-1/2 top-0 h-[3px] w-[16%] -translate-x-1/2 rounded-b-md bg-black/50" />
+            </div>
+            <div className="mx-auto mt-3 h-4 w-[96%] rounded-[50%] bg-ink/10 blur-md" />
           </div>
         </div>
       </section>

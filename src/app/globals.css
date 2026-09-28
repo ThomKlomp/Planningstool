@@ -74,7 +74,7 @@ body {
    er geen perspective op een ouder-element nodig is. */
 @keyframes hero-lid-open {
   0% {
-    transform: perspective(3200px) rotateX(-86deg);
+    transform: perspective(3200px) rotateX(-103deg);
   }
   85% {
     transform: perspective(3200px) rotateX(2.5deg);
