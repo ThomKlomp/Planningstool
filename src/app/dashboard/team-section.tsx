@@ -8,8 +8,10 @@ type Invite = { id: string; email: string; role: string; token: string };
 
 export default function TeamSection({
   initialPendingInvites,
+  departments = [],
 }: {
   initialPendingInvites: Invite[];
+  departments?: { id: string; name: string }[];
 }) {
   const [pendingInvites, setPendingInvites] = useState(initialPendingInvites);
 
@@ -17,6 +19,7 @@ export default function TeamSection({
     <section className="mt-10">
       <h2 className="font-display text-xl">Medewerker uitnodigen</h2>
       <InviteForm
+        departments={departments}
         onInvited={(invite) => setPendingInvites((prev) => [invite, ...prev])}
       />
 

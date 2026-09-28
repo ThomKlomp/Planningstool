@@ -61,7 +61,27 @@ export async function PATCH(
     data.role = body.role;
   }
 
-  if (Object.keys(data).length === 0) {
+  // Extra teams (naast het hoofdteam): alleen door een manager/eigenaar in te
+  // stellen. De hele lijst wordt vervangen. Het hoofdteam telt hier niet mee.
+  let extraDepartmentIds: string[] | undefined;
+  if (body?.extraDepartmentIds !== undefined) {
+    if (!Array.isArray(body.extraDepartmentIds)) {
+      return NextResponse.json({ error: "Ongeldige teams" }, { status: 400 });
+    }
+    const requested: string[] = Array.from(
+      new Set(body.extraDepartmentIds.filter((id: unknown): id is string => typeof id === "string"))
+    );
+    const found = await prisma.department.findMany({
+      where: { id: { in: requested }, companyId: membership.companyId },
+      select: { id: true },
+    });
+    if (found.length !== requested.length) {
+      return NextResponse.json({ error: "Team niet gevonden" }, { status: 404 });
+    }
+    extraDepartmentIds = requested;
+  }
+
+  if (Object.keys(data).length === 0 && extraDepartmentIds === undefined) {
     return NextResponse.json({ error: "Niets om aan te passen" }, { status: 400 });
   }
 
@@ -69,6 +89,39 @@ export async function PATCH(
     where: { id: params.membershipId },
     data,
   });
+
+  // Hoofdteam en extra teams mogen elkaar niet overlappen: het (nieuwe)
+  // hoofdteam wordt uit de extra teams gehaald. Diensten die expliciet voor
+  // een team waren ingepland dat niet meer bij deze medewerker hoort, vallen
+  // terug op het hoofdteam.
+  const nextExtras =
+    extraDepartmentIds ??
+    (
+      await prisma.membershipDepartment.findMany({
+        where: { membershipId: params.membershipId },
+        select: { departmentId: true },
+      })
+    ).map((e) => e.departmentId);
+  const cleanedExtras = nextExtras.filter((id) => id !== updated.departmentId);
+  if (extraDepartmentIds !== undefined || data.departmentId !== undefined) {
+    await prisma.$transaction([
+      prisma.membershipDepartment.deleteMany({ where: { membershipId: params.membershipId } }),
+      prisma.membershipDepartment.createMany({
+        data: cleanedExtras.map((departmentId) => ({
+          membershipId: params.membershipId,
+          departmentId,
+        })),
+      }),
+      prisma.shift.updateMany({
+        where: {
+          membershipId: params.membershipId,
+          departmentId: { notIn: cleanedExtras },
+          NOT: { departmentId: null },
+        },
+        data: { departmentId: null },
+      }),
+    ]);
+  }
 
   if (data.role && data.role !== target.role) {
     await notifyRoleChange({ ...updated, role: data.role }, membership.companyName);

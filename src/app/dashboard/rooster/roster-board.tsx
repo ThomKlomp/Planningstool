@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import DayPanel from "./day-panel";
 import ShiftEditPanel from "./shift-edit-panel";
 import EventPanel, { type RosterEventData } from "./event-panel";
+import { type MemberTeam } from "./shift-team-select";
+import { useTodayKey } from "@/lib/use-today-key";
 
 type Shift = {
   id: string;
@@ -14,6 +16,7 @@ type Shift = {
   role: string | null;
   membershipId: string | null;
   memberName: string | null;
+  departmentId?: string | null; // expliciet team van de dienst (leeg = hoofdteam van de medewerker)
   departmentName: string | null;
   departmentColor: string | null;
 };
@@ -43,6 +46,7 @@ type Member = {
   name: string;
   departmentName: string | null;
   departmentColor: string | null;
+  teams?: MemberTeam[]; // hoofdteam eerst; alleen gevuld bij meerdere teams
 };
 type ShiftTemplate = {
   id: string;
@@ -101,6 +105,7 @@ export default function RosterBoard({
   weekStartIso: string;
 }) {
   const router = useRouter();
+  const todayKey = useTodayKey();
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [eventPanel, setEventPanel] = useState<{
@@ -174,8 +179,22 @@ export default function RosterBoard({
         ).length;
 
         return (
-          <div key={dateIso} className="rounded-xl border border-line bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-ink/40">
+          <div
+            key={dateIso}
+            className={
+              todayKey === dayKey
+                ? "rounded-xl border border-ink bg-white p-3 shadow-[0_2px_0_0_#1B1B18]"
+                : "rounded-xl border border-line bg-white p-3"
+            }
+          >
+            {/* Vandaag: donkere pil + donkere rand, zodat je in één oogopslag ziet welke dag het is. */}
+            <p
+              className={
+                todayKey === dayKey
+                  ? "inline-block rounded-full bg-ink px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-paper"
+                  : "text-xs uppercase tracking-wide text-ink/40"
+              }
+            >
               {date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" })}
             </p>
 

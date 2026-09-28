@@ -63,7 +63,7 @@ export async function POST(
         passwordHash,
       },
     });
-    await tx.membership.create({
+    const created = await tx.membership.create({
       data: {
         userId: user.id,
         companyId: invite.companyId,
@@ -71,6 +71,15 @@ export async function POST(
         departmentId,
       },
     });
+    // Extra teams die de manager bij het uitnodigen had aangegeven (niet
+    // dubbel met het gekozen hoofdteam).
+    const extraIds = invite.extraDepartmentIds.filter((id) => id !== departmentId);
+    if (extraIds.length > 0) {
+      await tx.membershipDepartment.createMany({
+        data: extraIds.map((extraId) => ({ membershipId: created.id, departmentId: extraId })),
+        skipDuplicates: true,
+      });
+    }
     await tx.invite.update({
       where: { id: invite.id },
       data: { acceptedAt: new Date() },

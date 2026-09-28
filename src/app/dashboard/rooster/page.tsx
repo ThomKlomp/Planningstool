@@ -8,6 +8,7 @@ import RosterActions from "./roster-actions";
 import PendingSwapApprovals from "./pending-swap-approvals";
 import RosterPublishToggle from "./roster-publish-toggle";
 import { isPastWeek } from "@/lib/roster-publish";
+import { teamIdsOf } from "@/lib/teams";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 
@@ -26,7 +27,7 @@ export default async function RosterPage({
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
-        include: { user: true, department: true },
+        include: { user: true, department: true, extraDepartments: { include: { department: true } } },
       }),
       prisma.availability.findMany({
         where: {
@@ -36,7 +37,7 @@ export default async function RosterPage({
       }),
       prisma.shift.findMany({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
-        include: { membership: { include: { user: true, department: true } } },
+        include: { membership: { include: { user: true, department: true } }, department: true },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       }),
       prisma.weekStatus.findUnique({
@@ -138,8 +139,25 @@ export default async function RosterPage({
   const hideRosterFromViewer = !canManage && !rosterPublished;
 
   const showCompanyRoster = company?.showCompanyRosterToEmployees ?? true;
-  const ownDepartmentId =
-    members.find((m) => m.id === membership.membershipId)?.departmentId ?? null;
+  // Een medewerker kan in meerdere teams zitten (hoofdteam + extra teams), en
+  // een dienst kan voor een van die teams zijn. Het team van een dienst is dat
+  // van de dienst zelf, anders het hoofdteam van de medewerker.
+  const ownMember = members.find((m) => m.id === membership.membershipId);
+  const ownTeamIds = ownMember ? teamIdsOf(ownMember) : [];
+  type RawShift = (typeof shiftsRaw)[number];
+  const shiftTeam = (s: RawShift) => s.department ?? s.membership?.department ?? null;
+  const shiftTeamId = (s: RawShift) => s.departmentId ?? s.membership?.departmentId ?? null;
+  // Lijst met teams van een lid (hoofdteam eerst), alleen als het er meer dan één zijn.
+  const teamsOfMember = (m: (typeof members)[number]) => {
+    const list: { id: string; name: string }[] = [];
+    if (m.department) list.push({ id: m.department.id, name: m.department.name });
+    for (const e of m.extraDepartments) {
+      if (!list.some((t) => t.id === e.department.id)) {
+        list.push({ id: e.department.id, name: e.department.name });
+      }
+    }
+    return list.length > 1 ? list : undefined;
+  };
 
   const requestedView = searchParams?.view;
   const view: View = canManage
@@ -154,10 +172,11 @@ export default async function RosterPage({
   let visibleShifts = shiftsRaw;
 
   if (view === "team") {
-    visibleMembers = members.filter((m) => m.departmentId && m.departmentId === ownDepartmentId);
-    visibleShifts = shiftsRaw.filter(
-      (s) => s.membership?.departmentId && s.membership.departmentId === ownDepartmentId
-    );
+    visibleMembers = members.filter((m) => teamIdsOf(m).some((id) => ownTeamIds.includes(id)));
+    visibleShifts = shiftsRaw.filter((s) => {
+      const id = shiftTeamId(s);
+      return id !== null && ownTeamIds.includes(id);
+    });
   } else if (view === "personal") {
     visibleMembers = members.filter((m) => m.id === membership.membershipId);
     visibleShifts = shiftsRaw.filter((s) => s.membershipId === membership.membershipId);
@@ -244,7 +263,7 @@ export default async function RosterPage({
               role: s.role,
               memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
               membershipId: s.membershipId,
-              departmentName: s.membership?.department?.name ?? null,
+              departmentName: shiftTeam(s)?.name ?? null,
             }))}
           />
         )}
@@ -274,7 +293,7 @@ export default async function RosterPage({
           Het rooster van week {getISOWeekNumber(week[0])} is nog niet gepubliceerd.
           Je manager zet het online zodra het klaar is, je krijgt dan een melding.
         </p>
-      ) : view === "team" && !ownDepartmentId ? (
+      ) : view === "team" && ownTeamIds.length === 0 ? (
         <p className="mt-6 rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
           Je bent nog niet bij een team ingedeeld. Vraag je manager om je aan
           een team toe te voegen bij Instellingen.
@@ -315,6 +334,7 @@ export default async function RosterPage({
               name: m.user.name ?? m.user.email ?? "Onbekend",
               departmentName: m.department?.name ?? null,
               departmentColor: m.department?.color ?? null,
+              teams: teamsOfMember(m),
             }))}
             shiftTemplates={shiftTemplates.map((t) => ({
               id: t.id,
@@ -338,8 +358,9 @@ export default async function RosterPage({
               role: s.role,
               membershipId: s.membershipId,
               memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
-              departmentName: s.membership?.department?.name ?? null,
-              departmentColor: s.membership?.department?.color ?? null,
+              departmentId: s.departmentId,
+              departmentName: shiftTeam(s)?.name ?? null,
+              departmentColor: shiftTeam(s)?.color ?? null,
             }))}
             closedDates={closedDates}
             closedReasons={closedReasons}

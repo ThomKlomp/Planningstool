@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
 import { notifyShiftChanges, describeShift } from "@/lib/roster-change";
+import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -59,6 +60,11 @@ export async function POST(req: Request) {
     );
   }
 
+  const team = await resolveShiftDepartment(membership.companyId, membershipId, body?.departmentId);
+  if (!team.ok) {
+    return NextResponse.json({ error: team.error }, { status: 400 });
+  }
+
   const shift = await prisma.shift.create({
     data: {
       companyId: membership.companyId,
@@ -67,6 +73,7 @@ export async function POST(req: Request) {
       endTime,
       role: role || null,
       membershipId: membershipId || null,
+      departmentId: team.departmentId,
     },
   });
 

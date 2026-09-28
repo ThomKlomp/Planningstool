@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifyShiftChanges, describeShift, shiftDateLabel, type ShiftChange } from "@/lib/roster-change";
+import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function PATCH(
   req: Request,
@@ -30,6 +31,7 @@ export async function PATCH(
     endTime?: string;
     role?: string | null;
     membershipId?: string | null;
+    departmentId?: string | null;
   } = {};
 
   if (body?.startTime !== undefined) {
@@ -60,6 +62,25 @@ export async function PATCH(
     }
     data.membershipId = requested;
     newMembershipId = requested;
+  }
+
+  // Team van de dienst: alleen relevant bij een medewerker met extra teams.
+  // Wisselt de medewerker, dan valt de dienst terug op het hoofdteam van de
+  // nieuwe medewerker, tenzij er expliciet een team is meegegeven.
+  const finalMembershipId =
+    newMembershipId !== undefined ? newMembershipId : shift.membershipId;
+  if (body?.departmentId !== undefined) {
+    const team = await resolveShiftDepartment(
+      membership.companyId,
+      finalMembershipId,
+      body.departmentId || null
+    );
+    if (!team.ok) {
+      return NextResponse.json({ error: team.error }, { status: 400 });
+    }
+    data.departmentId = team.departmentId;
+  } else if (newMembershipId !== undefined && newMembershipId !== shift.membershipId) {
+    data.departmentId = null;
   }
 
   const updated = await prisma.shift.update({
@@ -165,9 +186,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
   }
 
-  // Een eventuele urenregel blijft gewoon bestaan (raakt alleen ontkoppeld
-  // van de shift, via onDelete: SetNull), een eventueel ruilverzoek wordt
+  // Een nog niet ingediende concept-urenregel hoort bij de dienst en gaat mee
+  // weg (anders blijft er een spookregel bij Uren staan). Een al ingediende of
+  // beoordeelde urenregel blijft gewoon bestaan, die raakt alleen ontkoppeld
+  // van de shift (onDelete: SetNull). Een eventueel ruilverzoek wordt
   // automatisch mee opgeruimd (onDelete: Cascade).
+  await prisma.timeEntry.deleteMany({ where: { shiftId: shift.id, status: "DRAFT" } });
   await prisma.shift.delete({ where: { id: shift.id } });
 
   if (shift.membershipId) {

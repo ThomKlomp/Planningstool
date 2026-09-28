@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import ShiftTeamSelect, { type MemberTeam } from "./shift-team-select";
 
-type Member = { membershipId: string; name: string; departmentName: string | null };
+type Member = {
+  membershipId: string;
+  name: string;
+  departmentName: string | null;
+  teams?: MemberTeam[];
+};
 
 export default function ShiftEditPanel({
   shift,
@@ -17,6 +23,7 @@ export default function ShiftEditPanel({
     endTime: string;
     role: string | null;
     membershipId: string | null;
+    departmentId?: string | null;
   };
   members: Member[];
   onClose: () => void;
@@ -26,6 +33,8 @@ export default function ShiftEditPanel({
   const [endTime, setEndTime] = useState(shift.endTime);
   const [role, setRole] = useState(shift.role ?? "");
   const [membershipId, setMembershipId] = useState(shift.membershipId ?? "");
+  const [departmentId, setDepartmentId] = useState(shift.departmentId ?? "");
+  const selectedTeams = members.find((m) => m.membershipId === membershipId)?.teams ?? [];
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +50,7 @@ export default function ShiftEditPanel({
         endTime,
         role: role || null,
         membershipId: membershipId || null,
+        departmentId: departmentId || null,
       }),
     });
 
@@ -127,7 +137,10 @@ export default function ShiftEditPanel({
             <label className="block text-xs text-ink/60">Medewerker</label>
             <select
               value={membershipId}
-              onChange={(e) => setMembershipId(e.target.value)}
+              onChange={(e) => {
+                setMembershipId(e.target.value);
+                setDepartmentId("");
+              }}
               className="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-sm focus:border-awning focus:outline-none"
             >
               <option value="">Nog niet toegewezen</option>
@@ -139,6 +152,8 @@ export default function ShiftEditPanel({
               ))}
             </select>
           </div>
+
+          <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
 
           <div>
             <label className="block text-xs text-ink/60">Functie/rol (optioneel)</label>

@@ -71,6 +71,14 @@ const faqSchema = {
     },
     {
       "@type": "Question",
+      name: "Kan ik maandelijks opzeggen?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Ja, met een maandabonnement kun je elke maand opzeggen. Kies je een jaarabonnement (2 maanden korting), dan loopt dat een jaar.",
+      },
+    },
+    {
+      "@type": "Question",
       name: "Kan ik Shiftje eerst gratis proberen?",
       acceptedAnswer: {
         "@type": "Answer",
@@ -266,6 +274,12 @@ export default function HomePage() {
           </details>
           <details className="group py-4">
             <summary className="cursor-pointer list-none font-medium marker:content-none">
+              Kan ik maandelijks opzeggen?
+            </summary>
+            <p className="mt-2 text-ink/70">Ja, met een maandabonnement kun je elke maand opzeggen. Kies je een jaarabonnement (2 maanden korting), dan loopt dat een jaar.</p>
+          </details>
+          <details className="group py-4">
+            <summary className="cursor-pointer list-none font-medium marker:content-none">
               Kan ik Shiftje eerst gratis proberen?
             </summary>
             <p className="mt-2 text-ink/70">Ja, je kunt 7 dagen gratis beginnen zonder creditcard.</p>
@@ -311,6 +325,7 @@ export default function HomePage() {
                 <li>Beschikbaarheid, rooster, teams, uren</li>
                 <li>7 dagen gratis proberen</li>
                 <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
+                <li>Maandelijks opzegbaar*</li>
               </ul>
             </div>
             <div
@@ -354,6 +369,7 @@ export default function HomePage() {
                 </tbody>
               </table>
               <p className="mt-3 text-xs text-paper/50">Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van 12 maanden.</p>
+              <p className="mt-1 text-xs text-paper/50">*Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.</p>
 
               <Link
                 href="/onboarding"

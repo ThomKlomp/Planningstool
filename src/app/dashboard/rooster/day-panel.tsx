@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ShiftTeamSelect, { type MemberTeam } from "./shift-team-select";
 
 type Availability = {
   membershipId: string;
@@ -14,6 +15,7 @@ type Member = {
   name: string;
   departmentName: string | null;
   departmentColor: string | null;
+  teams?: MemberTeam[]; // hoofdteam eerst; alleen gevuld als de medewerker meerdere teams heeft
 };
 type ShiftTemplate = {
   id: string;
@@ -180,7 +182,9 @@ function AddShiftForm({
   const [endTime, setEndTime] = useState(dayTemplates[0]?.endTime ?? "23:00");
   const [membershipId, setMembershipId] = useState("");
   const [role, setRole] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [saving, setSaving] = useState(false);
+  const selectedTeams = members.find((m) => m.membershipId === membershipId)?.teams ?? [];
 
   function applyTemplate(t: ShiftTemplate) {
     setStartTime(t.startTime);
@@ -199,6 +203,7 @@ function AddShiftForm({
         endTime,
         role: role || undefined,
         membershipId: membershipId || undefined,
+        departmentId: departmentId || undefined,
       }),
     });
     setSaving(false);
@@ -237,7 +242,10 @@ function AddShiftForm({
       </div>
       <select
         value={membershipId}
-        onChange={(e) => setMembershipId(e.target.value)}
+        onChange={(e) => {
+          setMembershipId(e.target.value);
+          setDepartmentId("");
+        }}
         className="w-full rounded-lg border border-line px-2 py-1.5 text-sm"
       >
         <option value="">Nog niet toewijzen</option>
@@ -251,6 +259,7 @@ function AddShiftForm({
           </optgroup>
         ))}
       </select>
+      <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
       <input
         type="text"
         value={role}

@@ -9,17 +9,8 @@ export type ExportEntry = {
   departmentName: string | null;
 };
 
-/** Gewerkte uren (decimaal) van één urenregel; over middernacht wordt ondersteund. */
-export function workedHours(e: { startTime: string; endTime: string; breakMinutes: number }): number {
-  const toMin = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + (m || 0);
-  };
-  if (!e.startTime || !e.endTime) return 0;
-  let diff = toMin(e.endTime) - toMin(e.startTime);
-  if (diff <= 0) diff += 24 * 60;
-  return Math.max(0, diff - (e.breakMinutes || 0)) / 60;
-}
+import { workedHours } from "@/lib/worked-hours";
+export { workedHours };
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 

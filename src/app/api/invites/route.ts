@@ -39,10 +39,24 @@ export async function POST(req: Request) {
   // is alleen om de eigenaar/manager vooraf niet te laten verrassen.
   const tierWarning = await getNextMemberTierWarning(membership.companyId);
 
+  // Extra teams (optioneel, weinig gebruikt): alleen teams van deze zaak.
+  let extraDepartmentIds: string[] = [];
+  if (Array.isArray(body?.extraDepartmentIds) && body.extraDepartmentIds.length > 0) {
+    const requested: string[] = Array.from(
+      new Set(body.extraDepartmentIds.filter((id: unknown): id is string => typeof id === "string"))
+    );
+    const found = await prisma.department.findMany({
+      where: { id: { in: requested }, companyId: membership.companyId },
+      select: { id: true },
+    });
+    extraDepartmentIds = found.map((d) => d.id);
+  }
+
   const invite = await prisma.invite.create({
     data: {
       email,
       role,
+      extraDepartmentIds,
       companyId: membership.companyId,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14), // 14 dagen geldig
     },

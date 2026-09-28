@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import ShiftTemplatesManager from "./shift-templates-manager";
+import RecurringShiftsManager from "./recurring-shifts-manager";
 import AutoOpenWeeksSetting from "./auto-open-weeks-setting";
 import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
@@ -53,10 +54,28 @@ export default async function SettingsPage() {
     }),
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
-      include: { user: true },
+      include: { user: true, extraDepartments: true },
       orderBy: { createdAt: "asc" },
     }),
   ]);
+
+  // Terugkerende diensten (weinig gebruikt, staat ingeklapt onderaan).
+  const recurringPatterns = await prisma.recurringShift.findMany({
+    where: { companyId: membership.companyId },
+    include: { membership: { include: { user: true } }, department: true },
+    orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
+  });
+  const departmentById = new Map(departments.map((d) => [d.id, d]));
+  const teamsOfMember = (m: (typeof members)[number]) => {
+    const list: { id: string; name: string }[] = [];
+    const primary = m.departmentId ? departmentById.get(m.departmentId) : undefined;
+    if (primary) list.push({ id: primary.id, name: primary.name });
+    for (const e of m.extraDepartments) {
+      const d = departmentById.get(e.departmentId);
+      if (d && !list.some((t) => t.id === d.id)) list.push({ id: d.id, name: d.name });
+    }
+    return list;
+  };
 
   const trialDaysLeft = company?.trialEndsAt
     ? Math.max(
@@ -179,6 +198,7 @@ export default async function SettingsPage() {
               membershipId: m.id,
               name: m.user.name ?? m.user.email ?? "Onbekend",
               departmentId: m.departmentId,
+              extraDepartmentIds: m.extraDepartments.map((e) => e.departmentId),
             }))}
           />
         </div>
@@ -230,6 +250,42 @@ export default async function SettingsPage() {
             }))}
           />
         </div>
+      </section>
+
+      {/* Weinig gebruikt, dus standaard ingeklapt en onderaan. */}
+      <section className="mt-10">
+        <details>
+          <summary className="cursor-pointer font-display text-xl">Vaste diensten</summary>
+          <p className="mt-1 text-sm text-ink/60">
+            Voor iemand die steeds op dezelfde dag werkt, bijvoorbeeld altijd op zaterdag van
+            12:00 tot 18:00. De diensten worden vooruit in het rooster gezet.
+          </p>
+          <div className="mt-4">
+            <RecurringShiftsManager
+              members={members.map((m) => ({
+                id: m.id,
+                name: m.user.name ?? m.user.email ?? "Onbekend",
+                teams: teamsOfMember(m),
+              }))}
+              templates={shiftTemplates.map((t) => ({
+                id: t.id,
+                name: t.name,
+                startTime: t.startTime,
+                endTime: t.endTime,
+              }))}
+              initialPatterns={recurringPatterns.map((p) => ({
+                id: p.id,
+                membershipId: p.membershipId,
+                memberName: p.membership.user.name ?? p.membership.user.email ?? "Onbekend",
+                weekday: p.weekday,
+                startTime: p.startTime,
+                endTime: p.endTime,
+                role: p.role,
+                departmentName: p.department?.name ?? null,
+              }))}
+            />
+          </div>
+        </details>
       </section>
     </div>
   );

@@ -1,6 +1,7 @@
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import AvailabilityGrid from "./availability-grid";
+import { AvailabilitySaveProvider, AvailabilitySaveButton } from "./availability-save";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
@@ -79,22 +80,30 @@ export default async function AvailabilityPage({
     if (c.reason) closedReasons[c.date.toDateString()] = c.reason;
   }
 
+  const locked = !isWeekOpen && !canManage;
+
   return (
+    <AvailabilitySaveProvider>
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Beschikbaarheid</h1>
           <p className="mt-1 text-sm text-ink/60">
             Geef per dag aan of je kunt werken.
           </p>
         </div>
-        <WeekStatusToggle
-          key={weekStartIso}
-          weekStart={weekStartIso}
-          initialIsOpen={isWeekOpen}
-          hasOverride={Boolean(weekStatus)}
-          canManage={canManage}
-        />
+        <div className="flex flex-col items-end gap-2">
+          <WeekStatusToggle
+            key={weekStartIso}
+            weekStart={weekStartIso}
+            initialIsOpen={isWeekOpen}
+            hasOverride={Boolean(weekStatus)}
+            canManage={canManage}
+          />
+          {/* Opslaan onder de open/dicht-status: elke klik wordt al direct
+              opgeslagen, deze knop bevestigt dat alles is aangekomen. */}
+          <AvailabilitySaveButton locked={locked} />
+        </div>
       </div>
 
       <div className="mt-4">
@@ -138,7 +147,7 @@ export default async function AvailabilityPage({
           }))}
           closedDates={closedDates}
           closedReasons={closedReasons}
-          locked={!isWeekOpen && !canManage}
+          locked={locked}
         />
       </div>
 
@@ -195,6 +204,7 @@ export default async function AvailabilityPage({
         </section>
       )}
     </div>
+    </AvailabilitySaveProvider>
   );
 }
 

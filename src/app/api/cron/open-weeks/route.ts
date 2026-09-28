@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { getWeekDates, getISOWeekNumber } from "@/lib/week";
+import { topUpAllRecurringShifts } from "@/lib/recurring-shifts";
 
 // Bedoeld om 1x per dag aangeroepen te worden door een externe cron-dienst
 // (bv. cron-job.org), met header: Authorization: Bearer <CRON_SECRET>.
@@ -80,5 +81,15 @@ export async function GET(req: Request) {
     notifiedCompanies += 1;
   }
 
-  return NextResponse.json({ ok: true, notifiedCompanies });
+  // Terugkerende diensten: elke dag bijvullen tot 8 weken vooruit. Zit hier
+  // in zodat er geen extra cron-taak ingesteld hoeft te worden. Mag de rest
+  // niet blokkeren als het misgaat.
+  let recurring: { patterns: number; created: number } | null = null;
+  try {
+    recurring = await topUpAllRecurringShifts();
+  } catch (err) {
+    console.error("[cron/open-weeks] terugkerende diensten bijvullen mislukt", err);
+  }
+
+  return NextResponse.json({ ok: true, notifiedCompanies, recurring });
 }

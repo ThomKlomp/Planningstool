@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTodayKey } from "@/lib/use-today-key";
+import { useAvailabilitySave } from "./availability-save";
 
 type Status = "AVAILABLE" | "UNAVAILABLE" | "UNSURE";
 
@@ -37,6 +39,8 @@ export default function AvailabilityGrid({
   locked?: boolean;
 }) {
   const router = useRouter();
+  const todayKey = useTodayKey();
+  const { track } = useAvailabilitySave();
   const [entries, setEntries] = useState<Record<string, Status | undefined>>(() => {
     const map: Record<string, Status | undefined> = {};
     for (const e of ownEntries) {
@@ -55,14 +59,21 @@ export default function AvailabilityGrid({
 
   async function save(dateIso: string, daypart: string, status: Status, note: string) {
     const key = `${new Date(dateIso).toDateString()}::${daypart}`;
+    const previous = entries[key];
     setSaving(key);
     setEntries((prev) => ({ ...prev, [key]: status }));
 
-    await fetch("/api/availability", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: dateIso, daypart, status, note: note || undefined }),
-    });
+    // Controleer of de server het echt heeft opgeslagen. Zo niet, dan zetten
+    // we de oude kleur terug: liever een eerlijk scherm dan een kleur die
+    // niet is doorgekomen.
+    const ok = await track(
+      fetch("/api/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateIso, daypart, status, note: note || undefined }),
+      }).then((res) => res.ok)
+    );
+    if (!ok) setEntries((prev) => ({ ...prev, [key]: previous }));
 
     setSaving(null);
     router.refresh();
@@ -106,12 +117,28 @@ export default function AvailabilityGrid({
         return (
           <div
             key={dateIso}
-            className="rounded-xl border border-line bg-white px-3 py-3 text-center"
+            className={
+              todayKey === date.toDateString()
+                ? "rounded-xl border border-ink bg-white px-3 py-3 text-center shadow-[0_2px_0_0_#1B1B18]"
+                : "rounded-xl border border-line bg-white px-3 py-3 text-center"
+            }
           >
-            <p className="text-xs uppercase tracking-wide text-ink/40">
+            <p
+              className={`text-xs uppercase tracking-wide ${
+                todayKey === date.toDateString() ? "font-semibold text-ink" : "text-ink/40"
+              }`}
+            >
               {date.toLocaleDateString("nl-NL", { weekday: "short" })}
             </p>
-            <p className="font-display text-lg">{date.getDate()}</p>
+            <p
+              className={
+                todayKey === date.toDateString()
+                  ? "mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-ink font-display text-lg text-paper"
+                  : "font-display text-lg"
+              }
+            >
+              {date.getDate()}
+            </p>
 
             <div className="mt-3 space-y-3">
               {shifts.map((shift) => {

@@ -57,6 +57,15 @@ export default async function DashboardOverviewPage() {
         : Promise.resolve(null),
     ]);
 
+  // Teams voor het uitnodigingsformulier (alleen nodig voor managers/eigenaren).
+  const departmentsForInvite = canManage
+    ? await prisma.department.findMany({
+        where: { companyId: membership.companyId },
+        orderBy: { order: "asc" },
+        select: { id: true, name: true },
+      })
+    : [];
+
   // Medewerkers tellen alleen mee wat ze ook in het rooster mogen zien.
   const weekShifts = canManage
     ? allWeekShifts
@@ -142,6 +151,7 @@ export default async function DashboardOverviewPage() {
 
       {canManage && (
         <TeamSection
+          departments={departmentsForInvite}
           initialPendingInvites={pendingInvites.map((i) => ({
             id: i.id,
             email: i.email,

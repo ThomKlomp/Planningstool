@@ -14,8 +14,10 @@ type TierWarning = {
 
 export default function InviteForm({
   onInvited,
+  departments = [],
 }: {
   onInvited?: (invite: Invite) => void;
+  departments?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -28,6 +30,9 @@ export default function InviteForm({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [maxReached, setMaxReached] = useState(false);
+  // Extra teams: een uitzondering, dus ingeklapt achter een klein linkje.
+  const [showExtras, setShowExtras] = useState(false);
+  const [extraIds, setExtraIds] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +44,7 @@ export default function InviteForm({
     const res = await fetch("/api/invites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, role }),
+      body: JSON.stringify({ email, role, extraDepartmentIds: extraIds }),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -60,6 +65,8 @@ export default function InviteForm({
       onInvited?.(data.invite);
     }
     setEmail("");
+    setExtraIds([]);
+    setShowExtras(false);
     setLoading(false);
     router.refresh();
   }
@@ -96,6 +103,45 @@ export default function InviteForm({
       >
         {loading ? "Versturen..." : "Uitnodigen"}
       </button>
+
+      {/* Extra teams: klein en ingeklapt, dit is een uitzondering. De medewerker
+          kiest zelf het hoofdteam; deze teams komen er automatisch bij. */}
+      {departments.length > 1 && (
+        <div className="w-full">
+          <button
+            type="button"
+            onClick={() => setShowExtras((v) => !v)}
+            className="text-xs text-ink/40 hover:text-ink hover:underline"
+          >
+            {extraIds.length > 0 ? `Extra teams (${extraIds.length})` : "+ Extra teams (optioneel)"}
+          </button>
+          {showExtras && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {departments.map((d) => {
+                const active = extraIds.includes(d.id);
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() =>
+                      setExtraIds((prev) =>
+                        prev.includes(d.id) ? prev.filter((id) => id !== d.id) : [...prev, d.id]
+                      )
+                    }
+                    className={`rounded-full border px-2.5 py-1 text-xs ${
+                      active
+                        ? "border-ink bg-ink text-paper"
+                        : "border-line text-ink/60 hover:border-ink"
+                    }`}
+                  >
+                    {d.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <p className="w-full text-sm text-red-600">{error}</p>}
       {result && (

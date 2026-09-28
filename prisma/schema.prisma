@@ -76,6 +76,7 @@ model Company {
   shiftTemplates ShiftTemplate[]
   closedDays  ClosedDay[]
   rosterWeeks RosterWeek[]
+  recurringShifts RecurringShift[]
   rosterEvents RosterEvent[]
   pageViews   PageView[]
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
@@ -122,6 +123,9 @@ model Department {
 
   company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   memberships Membership[]
+  extraMemberships MembershipDepartment[]
+  shifts           Shift[]
+  recurringShifts  RecurringShift[]
 
   @@index([companyId])
 }
@@ -193,8 +197,24 @@ model Membership {
   availabilities Availability[]
   shifts         Shift[]
   timeEntries    TimeEntry[]
+  extraDepartments MembershipDepartment[]
+  recurringShifts  RecurringShift[]
 
   @@unique([userId, companyId])
+}
+
+// Extra teams van een medewerker, náást het hoofdteam (Membership.departmentId).
+// Alleen door een manager/eigenaar in te stellen. Wordt weinig gebruikt.
+model MembershipDepartment {
+  id           String @id @default(cuid())
+  membershipId String
+  departmentId String
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, departmentId])
+  @@index([departmentId])
 }
 
 // Uitnodiging van een medewerker per e-mail, voordat die een account heeft.
@@ -208,6 +228,7 @@ model Invite {
   createdAt DateTime @default(now())
   expiresAt DateTime
   acceptedAt DateTime?
+  extraDepartmentIds String[] @default([]) // extra teams die de medewerker bij het accepteren erbij krijgt
 
   @@index([companyId])
 }
@@ -331,8 +352,13 @@ model Shift {
   role         String? // bv. "bediening", "keuken", "bar"
   note         String?
 
+  departmentId    String? // team waarvoor deze dienst gewerkt wordt; leeg = hoofdteam van de medewerker
+  recurringShiftId String? // gezet als deze dienst uit een terugkerend patroon komt
+
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  recurringShift RecurringShift? @relation(fields: [recurringShiftId], references: [id], onDelete: SetNull)
   timeEntry  TimeEntry?
   swapRequest ShiftSwapRequest?
 
@@ -340,6 +366,31 @@ model Shift {
   updatedAt DateTime @updatedAt
 
   @@index([companyId, date])
+}
+
+// Terugkerende dienst: "deze medewerker werkt elke zaterdag van 12 tot 18".
+// De echte diensten worden vooruit aangemaakt (zie lib/recurring-shifts.ts) en
+// zijn daarna gewone diensten die je los kunt aanpassen of verwijderen.
+model RecurringShift {
+  id             String   @id @default(cuid())
+  companyId      String
+  membershipId   String
+  departmentId   String?
+  weekday        Int // 0 = zondag ... 6 = zaterdag (zoals Date.getDay())
+  startTime      String
+  endTime        String
+  role           String?
+  startDate      DateTime @db.Date // eerste datum waarop dit patroon geldt
+  generatedUntil DateTime @db.Date // t/m deze datum zijn de diensten al aangemaakt
+  createdAt      DateTime @default(now())
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membership Membership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shifts     Shift[]
+
+  @@index([companyId])
+  @@index([membershipId])
 }
 
 // ---------- Overnemen / ruilen van diensten ----------
