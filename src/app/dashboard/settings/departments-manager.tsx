@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const PALETTE = [
   "#3F6E5B",
@@ -48,6 +49,7 @@ export default function DepartmentsManager({
   const [color, setColor] = useState(PALETTE[0]);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const router = useRouter();
 
   async function addDepartment(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +67,7 @@ export default function DepartmentsManager({
       setDepartments((prev) => [...prev, data.department]);
       setName("");
       setColor(PALETTE[(departments.length + 1) % PALETTE.length]);
+      router.refresh();
     }
     setSaving(false);
   }
@@ -87,6 +90,7 @@ export default function DepartmentsManager({
     });
     await fetch(`/api/departments/${id}`, { method: "DELETE" });
     setBusyId(null);
+    router.refresh();
   }
 
   async function move(index: number, direction: -1 | 1) {
@@ -107,6 +111,7 @@ export default function DepartmentsManager({
         })
       )
     );
+    router.refresh();
   }
 
   async function assignMember(membershipId: string, departmentId: string) {
@@ -121,6 +126,7 @@ export default function DepartmentsManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ departmentId: departmentId || null }),
     });
+    router.refresh();
   }
 
   async function toggleExtra(membershipId: string, departmentId: string) {
@@ -134,6 +140,7 @@ export default function DepartmentsManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ extraDepartmentIds: next }),
     });
+    router.refresh();
   }
 
   return (

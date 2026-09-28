@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const WEEKDAYS = [
   { value: 1, label: "Ma" },
@@ -17,27 +18,40 @@ export default function ClosedWeekdaysSetting({
 }: {
   initialWeekdays: number[];
 }) {
+  const router = useRouter();
   const [weekdays, setWeekdays] = useState(initialWeekdays);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function toggle(day: number) {
     const next = weekdays.includes(day)
       ? weekdays.filter((d) => d !== day)
       : [...weekdays, day];
+    const previous = weekdays;
     setWeekdays(next);
     setSaving(true);
     setSaved(false);
+    setFailed(false);
 
-    await fetch("/api/company/settings", {
+    // Alleen "Opgeslagen" tonen als de server het echt heeft opgeslagen.
+    const ok = await fetch("/api/company/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ closedWeekdays: next }),
-    });
+    })
+      .then((res) => res.ok)
+      .catch(() => false);
 
     setSaving(false);
+    if (!ok) {
+      setWeekdays(previous);
+      setFailed(true);
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    router.refresh();
   }
 
   return (
@@ -59,6 +73,9 @@ export default function ClosedWeekdaysSetting({
           </button>
         ))}
         {saved && <span className="self-center text-xs text-awning">Opgeslagen</span>}
+        {failed && (
+          <span className="self-center text-xs text-red-600">Opslaan mislukt, probeer het opnieuw</span>
+        )}
       </div>
       <p className="mt-2 text-xs text-ink/40">
         Aangevinkte dagen zijn elke week automatisch dicht: geen

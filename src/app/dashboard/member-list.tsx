@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Member = {
   id: string;
@@ -24,6 +25,7 @@ export default function MemberList({
   viewerMembershipId: string;
   isDemoCompany?: boolean;
 }) {
+  const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,9 @@ export default function MemberList({
       const data = await res.json().catch(() => ({}));
       setRoleError(data.error ?? "Rol wijzigen mislukt.");
       setMembers(previous);
+      return;
     }
+    router.refresh();
   }
 
   function canRemove(member: Member) {
@@ -93,7 +97,9 @@ export default function MemberList({
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Verwijderen mislukt.");
       setMembers(previous);
+      return;
     }
+    router.refresh();
   }
 
   const groups = new Map<string, Member[]>();

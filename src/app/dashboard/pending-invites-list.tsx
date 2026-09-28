@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Invite = { id: string; email: string; role: string; token: string };
 
@@ -11,6 +12,7 @@ export default function PendingInvitesList({
   invites: Invite[];
   onCancelled: (id: string) => void;
 }) {
+  const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function cancelInvite(id: string, token: string, email: string) {
@@ -27,7 +29,9 @@ export default function PendingInvitesList({
       // Kon niet intrekken: de pagina toont 'm nu ten onrechte niet meer.
       // Simpelste herstel: de gebruiker vragen de pagina te verversen.
       alert("Intrekken is niet gelukt. Ververs de pagina en probeer het opnieuw.");
+      return;
     }
+    router.refresh();
   }
 
   if (invites.length === 0) return null;

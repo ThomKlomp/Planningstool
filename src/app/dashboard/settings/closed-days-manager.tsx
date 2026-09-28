@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type ClosedDay = { id: string; date: string; reason: string | null };
 
@@ -9,6 +10,7 @@ export default function ClosedDaysManager({
 }: {
   initialClosedDays: ClosedDay[];
 }) {
+  const router = useRouter();
   const [closedDays, setClosedDays] = useState(initialClosedDays);
   const [date, setDate] = useState("");
   const [reason, setReason] = useState("");
@@ -43,13 +45,23 @@ export default function ClosedDaysManager({
     setDate("");
     setReason("");
     setSaving(false);
+    router.refresh();
   }
 
   async function removeClosedDay(id: string) {
     setBusyId(id);
+    const previous = closedDays;
     setClosedDays((prev) => prev.filter((d) => d.id !== id));
-    await fetch(`/api/closed-days/${id}`, { method: "DELETE" });
+    const ok = await fetch(`/api/closed-days/${id}`, { method: "DELETE" })
+      .then((res) => res.ok)
+      .catch(() => false);
     setBusyId(null);
+    if (!ok) {
+      setClosedDays(previous);
+      setError("Verwijderen mislukt, probeer het opnieuw.");
+      return;
+    }
+    router.refresh();
   }
 
   return (

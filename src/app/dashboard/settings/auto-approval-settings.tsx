@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AutoApprovalSettings({
   initialShiftSwaps,
@@ -9,18 +10,31 @@ export default function AutoApprovalSettings({
   initialShiftSwaps: boolean;
   initialHours: boolean;
 }) {
+  const router = useRouter();
+  const [failed, setFailed] = useState(false);
   const [shiftSwaps, setShiftSwaps] = useState(initialShiftSwaps);
   const [hours, setHours] = useState(initialHours);
   const [saving, setSaving] = useState(false);
 
   async function save(key: "autoApproveShiftSwaps" | "autoApproveHours", value: boolean) {
     setSaving(true);
-    await fetch("/api/company/settings", {
+    setFailed(false);
+    const ok = await fetch("/api/company/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [key]: value }),
-    });
+    })
+      .then((res) => res.ok)
+      .catch(() => false);
     setSaving(false);
+    if (!ok) {
+      // Niet opgeslagen: schakelaar terugzetten en melden.
+      if (key === "autoApproveShiftSwaps") setShiftSwaps(!value);
+      else setHours(!value);
+      setFailed(true);
+      return;
+    }
+    router.refresh();
   }
 
   return (
@@ -62,6 +76,7 @@ export default function AutoApprovalSettings({
           </span>
         </span>
       </label>
+      {failed && <p className="text-xs text-red-600">Opslaan mislukt, probeer het opnieuw.</p>}
     </div>
   );
 }

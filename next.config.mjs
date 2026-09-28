@@ -9,6 +9,13 @@ const nextConfig = {
   // het gewoon vanuit node_modules laden op de server, zoals in gewone Node.
   experimental: {
     serverComponentsExternalPackages: ["geoip-country"],
+    // Next 14 bewaart dynamische pagina's 30 seconden in de browser (de
+    // "Router Cache") en toont die bij terugkeren opnieuw, ook als je er
+    // intussen iets hebt opgeslagen. Gevolg: een instelling lijkt niet
+    // opgeslagen tot je de pagina zelf ververst. dynamic: 0 = bij elke
+    // navigatie vers ophalen (zoals Next 15 standaard doet). Statische
+    // pagina's (homepage e.d.) mogen 30 seconden blijven staan.
+    staleTimes: { dynamic: 0, static: 30 },
   },
   async redirects() {
     // Het rooster stond eerder op /dashboard/roster. Oude links (in e-mails,

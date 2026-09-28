@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { dayName, dayNamePlural } from "@/lib/recurring-shifts-labels";
 
 type Team = { id: string; name: string };
@@ -29,6 +30,7 @@ export default function RecurringShiftsManager({
   templates: Template[];
   initialPatterns: Pattern[];
 }) {
+  const router = useRouter();
   const [patterns, setPatterns] = useState(initialPatterns);
   const [membershipId, setMembershipId] = useState("");
   const [weekday, setWeekday] = useState(6);
@@ -90,6 +92,7 @@ export default function RecurringShiftsManager({
     );
     setRole("");
     setDepartmentId("");
+    router.refresh();
   }
 
   async function remove(pattern: Pattern) {
@@ -111,6 +114,7 @@ export default function RecurringShiftsManager({
     }
     setPatterns((prev) => prev.filter((p) => p.id !== pattern.id));
     setMessage(`Gestopt. ${data.removedShifts} nog niet gewerkte diensten zijn uit het rooster gehaald.`);
+    router.refresh();
   }
 
   return (

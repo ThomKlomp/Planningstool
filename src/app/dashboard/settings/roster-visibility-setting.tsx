@@ -1,27 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RosterVisibilitySetting({
   initialValue,
 }: {
   initialValue: boolean;
 }) {
+  const router = useRouter();
   const [value, setValue] = useState(initialValue);
   const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function toggle() {
     const next = !value;
     setValue(next);
     setSaving(true);
+    setFailed(false);
 
-    await fetch("/api/company/settings", {
+    const ok = await fetch("/api/company/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ showCompanyRosterToEmployees: next }),
-    });
+    })
+      .then((res) => res.ok)
+      .catch(() => false);
 
     setSaving(false);
+    if (!ok) {
+      setValue(!next);
+      setFailed(true);
+      return;
+    }
+    router.refresh();
   }
 
   return (
@@ -39,6 +51,7 @@ export default function RosterVisibilitySetting({
           Uitgezet? Dan zien medewerkers alleen het rooster van hun eigen
           team en hun eigen diensten.
         </span>
+        {failed && <span className="block text-xs text-red-600">Opslaan mislukt, probeer het opnieuw.</span>}
       </span>
     </label>
   );
