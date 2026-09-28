@@ -160,12 +160,11 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="hero-roster-land mx-auto w-full max-w-sm">
-            {/* Laptop: donkere schermrand met het rooster erin, een dun
-                toetsenbord-onderstel eronder, en een zachte schaduw die 'm
-                op een tafel laat lijken te staan. */}
-            <div className="rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
-              <div className="overflow-hidden rounded-lg bg-paper p-1.5">
+          <div className="mx-auto w-full max-w-sm">
+            {/* Laptop: staat dicht en gaat langzaam open (deksel draait om het
+                scharnier), daarna gaat het scherm aan met het rooster erin. */}
+            <div className="hero-lid rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
+              <div className="hero-screen-on overflow-hidden rounded-lg bg-paper p-1.5">
                 <ScheduleMock />
               </div>
             </div>

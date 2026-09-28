@@ -64,51 +64,51 @@ body {
   box-shadow: 0 2px 0 0 #ddd5c7;
 }
 
-/* Hero: het rooster (met de diensten erop) vliegt bij het laden van de
-   pagina van buiten de zichtbare pagina naar binnen en landt op de laptop,
-   net als een vogel die van buiten beeld aan komt vliegen en landt. vw/vh
-   (viewport-breedte/-hoogte) i.p.v. vaste pixels, zodat het startpunt
-   gegarandeerd buiten beeld ligt, ongeacht schermgrootte. Puur CSS, draait
-   automatisch één keer bij het laden, geen JS nodig. */
-@keyframes hero-roster-land {
+/* Hero: een laptop die dicht staat en langzaam opengaat. Het scherm gaat
+   aan zodra het deksel bijna rechtop staat, daarna verschijnen de diensten.
+   Puur CSS, draait één keer bij het laden. Bewust `backwards` als fill-mode
+   (niet `both`): na afloop valt alles terug op de gewone stijl, dus er blijft
+   geen transform op de laptop hangen (dat kan tekst wazig maken en de
+   klikbare demo eronder in de weg zitten). Het deksel draait om zijn
+   onderrand (het scharnier); perspective() zit in de transform zelf zodat
+   er geen perspective op een ouder-element nodig is. */
+@keyframes hero-lid-open {
   0% {
-    transform: translate(115vw, -60vh) rotate(14deg) scale(0.6);
-    opacity: 0;
-  }
-  35% {
-    transform: translate(45vw, -22vh) rotate(8deg) scale(0.8);
-    opacity: 0.7;
-  }
-  65% {
-    transform: translate(-10px, 6px) rotate(-1.5deg) scale(1.02);
-    opacity: 1;
+    transform: perspective(3200px) rotateX(-86deg);
   }
   85% {
-    transform: translate(3px, -2px) rotate(0.5deg) scale(0.997);
+    transform: perspective(3200px) rotateX(2.5deg);
   }
   100% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
+    transform: perspective(3200px) rotateX(0deg);
+  }
+}
+
+.hero-lid {
+  transform-origin: 50% 100%;
+  animation: hero-lid-open 2.1s cubic-bezier(0.45, 0, 0.25, 1) 0.5s backwards;
+}
+
+/* Scherm gaat aan: het rooster wordt zichtbaar terwijl het deksel de laatste
+   stukken opengaat. */
+@keyframes hero-screen-on {
+  from {
+    opacity: 0;
+  }
+  to {
     opacity: 1;
   }
 }
 
-.hero-roster-land {
-  /* Lineaire tijdverdeling: de keyframes hierboven bepalen zelf de
-     versnelling/vertraging (eerst rustig aanvliegen, dan een korte overshoot
-     en settle aan het eind). Een extra ease-curve bovenop deze keyframes
-     zou de vlucht dubbel zo snel laten aanvoelen (precies wat er eerst
-     misging: bij 150ms van de 900ms was 'ie al bijna geland). */
-  animation: hero-roster-land 1.3s linear both;
+.hero-screen-on {
+  animation: hero-screen-on 0.9s ease-out 1.8s backwards;
 }
 
-/* Losse diensten binnen de roostermock landen net iets ná het rooster zelf,
-   met een kleine vertraging per dienst (zie de inline animationDelay in
-   schedule-mock.tsx), en komen net als het rooster zelf van buiten beeld
-   aan vliegen, zodat het net als de vogel-video oogt als "het rooster èn
-   wat erop staat" samen invliegen, niet als één plat plaatje. */
+/* Losse diensten schuiven daarna één voor één het scherm in, met een kleine
+   vertraging per dienst (zie animationDelay in schedule-mock.tsx). */
 @keyframes hero-shift-land {
   0% {
-    transform: translate(70vw, -10px) rotate(6deg) scale(0.75);
+    transform: translate(340px, -6px) rotate(4deg) scale(0.8);
     opacity: 0;
   }
   70% {
@@ -122,11 +122,12 @@ body {
 }
 
 .hero-shift-land {
-  animation: hero-shift-land 0.6s linear both;
+  animation: hero-shift-land 0.55s linear backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-roster-land,
+  .hero-lid,
+  .hero-screen-on,
   .hero-shift-land {
     animation: none;
   }
