@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { formatHours } from "@/lib/worked-hours";
 
 type Summary = {
+  memberName: string | null;
+  companyName: string | null;
   approved: number;
   pending: number;
   approvedCount: number;
@@ -49,7 +51,7 @@ export default function MyHoursSummary() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch(`/api/hours/summary?from=${from}&to=${to}`)
+    fetch(`/api/hours/summary?from=${from}&to=${to}`, { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) throw new Error();
         return (await res.json()) as Summary;
@@ -79,6 +81,12 @@ export default function MyHoursSummary() {
   return (
     <div className="rounded-xl border border-line bg-white p-4">
       <p className="text-sm font-medium">Mijn gewerkte uren</p>
+      {summary?.memberName && (
+        <p className="text-xs text-ink/50">
+          Alleen van {summary.memberName}
+          {summary.companyName ? ` bij ${summary.companyName}` : ""}, niet van collega's.
+        </p>
+      )}
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <input

@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { workedHours } from "@/lib/worked-hours";
 import { getWeekDates, getISOWeekNumber, toDateParam } from "@/lib/week";
 
+// Nooit cachen: dit antwoord hoort bij precies één ingelogde persoon.
+export const dynamic = "force-dynamic";
+
 // Totaal aantal gewerkte uren van de ingelogde persoon in een periode
 // (?from=YYYY-MM-DD&to=YYYY-MM-DD, inclusief). Alleen de eigen uren.
 export async function GET(req: Request) {
@@ -13,7 +16,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
   }
   const membership = session.user.memberships[0];
-  if (!membership) {
+  // Harde stop: Prisma laat een filter met waarde `undefined` stilletjes weg,
+  // en dan zouden alle uren van iedereen terugkomen. Dat mag hier nooit.
+  if (!membership || !membership.membershipId || !membership.companyId) {
     return NextResponse.json({ error: "Geen bedrijf" }, { status: 400 });
   }
 
@@ -27,6 +32,7 @@ export async function GET(req: Request) {
   // Concept (nog niet ingediend) en afgekeurd tellen niet mee als gewerkte uren.
   const entries = await prisma.timeEntry.findMany({
     where: {
+      companyId: membership.companyId,
       membershipId: membership.membershipId,
       date: { gte: from, lte: to },
       status: { in: ["APPROVED", "SUBMITTED", "QUERIED"] },
@@ -62,6 +68,8 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({
+    memberName: session.user.name ?? session.user.email ?? null,
+    companyName: membership.companyName,
     approved,
     pending,
     approvedCount,

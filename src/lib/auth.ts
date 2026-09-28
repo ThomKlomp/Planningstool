@@ -80,9 +80,13 @@ export const authOptions: NextAuthOptions = {
         });
         session.user.hasAcceptedTerms = Boolean(dbUser?.termsAcceptedAt);
 
+        // Vaste volgorde (eerst aangesloten eerst): de app gebruikt overal
+        // memberships[0] als "actieve" zaak, en zonder orderBy is de
+        // volgorde in de database niet gegarandeerd gelijk tussen aanroepen.
         const memberships = await prisma.membership.findMany({
           where: { userId },
           include: { company: true },
+          orderBy: { createdAt: "asc" },
         });
         session.user.memberships = memberships.map((m) => ({
           membershipId: m.id,
