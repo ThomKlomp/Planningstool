@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import { resolveWeek, getISOWeekNumber, isWeekOpenByDefault, toDateParam } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
@@ -20,6 +20,7 @@ export default async function RosterPage({
   searchParams: { week?: string; view?: string };
 }) {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 

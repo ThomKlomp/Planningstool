@@ -1,8 +1,9 @@
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import CalendarSyncCard from "./calendar-sync-card";
 
 export default async function CalendarPage() {
-  await requireMembership();
+  const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
 
   return (
     <div className="max-w-xl">

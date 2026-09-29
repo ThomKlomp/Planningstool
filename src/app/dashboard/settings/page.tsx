@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import ShiftTemplatesManager from "./shift-templates-manager";
 import RecurringShiftsManager from "./recurring-shifts-manager";
@@ -15,6 +15,7 @@ import CompanyDetailsSetting from "./company-details-setting";
 
 export default async function SettingsPage() {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
 
   if (!canManage) {

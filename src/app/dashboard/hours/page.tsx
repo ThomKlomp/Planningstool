@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import TimeEntryForm from "./time-entry-form";
 import HoursWeekBoard from "./hours-week-board";
@@ -16,6 +16,7 @@ export default async function HoursPage({
   searchParams: { week?: string };
 }) {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
   const weekRange = { gte: week[0], lte: week[6] };

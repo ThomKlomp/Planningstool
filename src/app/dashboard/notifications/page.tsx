@@ -1,4 +1,4 @@
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import NotificationItem from "./notification-item";
 
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
 
   const notifications = await prisma.notification.findMany({
     where: { membershipId: membership.membershipId },

@@ -1,4 +1,4 @@
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import AvailabilityGrid from "./availability-grid";
 import { AvailabilitySaveProvider, AvailabilitySaveButton } from "./availability-save";
@@ -13,6 +13,7 @@ export default async function AvailabilityPage({
   searchParams: { week?: string };
 }) {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();

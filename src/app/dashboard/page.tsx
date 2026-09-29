@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireMembership } from "@/lib/current-membership";
+import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import { resolveWeek } from "@/lib/week";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardOverviewPage() {
   const { membership } = await requireMembership();
+  await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek();
 

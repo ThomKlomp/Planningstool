@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
+import CancellationCountdown from "./cancellation-countdown";
 import DashboardNav, { type DashboardNavItem } from "./dashboard-nav";
 
 // Zonder dit blijft Next.js de vorige render van deze layout (en dus het
@@ -24,7 +25,7 @@ export default async function DashboardLayout({
     }),
     prisma.company.findUnique({
       where: { id: membership.companyId },
-      select: { subscriptionStatus: true, trialEndsAt: true },
+      select: { subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true },
     }),
   ]);
 
@@ -68,25 +69,51 @@ export default async function DashboardLayout({
         </div>
       </aside>
       <div className="flex-1">
-        {membership.role === "OWNER" &&
-          company &&
-          (company.subscriptionStatus === "PAST_DUE" ||
-            company.subscriptionStatus === "CANCELED" ||
-            (company.subscriptionStatus === "TRIALING" &&
-              trialDaysLeft !== null &&
-              trialDaysLeft <= 3)) && (
-            <div className="border-b border-amber/40 bg-amber/10 px-4 py-2.5 text-sm sm:px-8">
-              <Link href="/dashboard/settings/billing" className="text-amber-dark hover:underline">
-                {company.subscriptionStatus === "PAST_DUE"
-                  ? "De laatste betaling is mislukt, regel dit om toegang te houden →"
-                  : company.subscriptionStatus === "CANCELED"
-                  ? "Je abonnement is opgezegd, kies een plan om door te gaan →"
-                  : trialDaysLeft !== null && trialDaysLeft <= 0
-                  ? "Je proefperiode is afgelopen, kies een abonnement →"
-                  : `Happy hour bijna voorbij: nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode, kies alvast een abonnement →`}
-              </Link>
-            </div>
-          )}
+        {(() => {
+          const periodEnd = company?.currentPeriodEnd;
+          const withinCancellationWindow =
+            company?.subscriptionStatus === "CANCELED" &&
+            periodEnd &&
+            periodEnd.getTime() - Date.now() <= 48 * 60 * 60 * 1000;
+
+          if (withinCancellationWindow && periodEnd) {
+            // Laatste 48 uur van een opgezegd abonnement: een echt aftellende
+            // melding i.p.v. de gewone statisch tekst, voor iedereen (niet
+            // alleen de eigenaar) want iedereen verliest zo dadelijk toegang.
+            return (
+              <CancellationCountdown
+                periodEndIso={periodEnd.toISOString()}
+                canManage={membership.role === "OWNER"}
+              />
+            );
+          }
+
+          if (
+            membership.role === "OWNER" &&
+            company &&
+            (company.subscriptionStatus === "PAST_DUE" ||
+              company.subscriptionStatus === "CANCELED" ||
+              (company.subscriptionStatus === "TRIALING" &&
+                trialDaysLeft !== null &&
+                trialDaysLeft <= 3))
+          ) {
+            return (
+              <div className="border-b border-amber/40 bg-amber/10 px-4 py-2.5 text-sm sm:px-8">
+                <Link href="/dashboard/settings/billing" className="text-amber-dark hover:underline">
+                  {company.subscriptionStatus === "PAST_DUE"
+                    ? "De laatste betaling is mislukt, regel dit om toegang te houden →"
+                    : company.subscriptionStatus === "CANCELED"
+                    ? "Je abonnement is opgezegd, kies een plan om door te gaan →"
+                    : trialDaysLeft !== null && trialDaysLeft <= 0
+                    ? "Je proefperiode is afgelopen, kies een abonnement →"
+                    : `Happy hour bijna voorbij: nog ${trialDaysLeft} ${trialDaysLeft === 1 ? "dag" : "dagen"} proefperiode, kies alvast een abonnement →`}
+                </Link>
+              </div>
+            );
+          }
+
+          return null;
+        })()}
         <main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
