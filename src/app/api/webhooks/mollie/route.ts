@@ -56,17 +56,26 @@ export async function POST(req: Request) {
     const interval = payment.metadata?.interval === "YEARLY" ? "YEARLY" : "MONTHLY";
     const baseUrl = process.env.NEXTAUTH_URL ?? "";
     const { incl, tier } = await computeSubscriptionAmount(company.id, interval);
+    const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
+
+    // BELANGRIJK: de eerste periode is al betaald via de zojuist gelukte
+    // eenmalige betaling hierboven. Zonder een expliciete startDate laat
+    // Mollie een nieuw abonnement direct bij het aanmaken al de eerste
+    // termijn incasseren (zie Mollie's eigen documentatie: "you can set up
+    // a subscription which starts after the first period. See also the
+    // startDate field"), dus zonder deze regel wordt iemand vrijwel meteen
+    // een tweede keer belast, in plaats van pas na een maand/jaar.
+    const startDate = new Date(Date.now() + periodMs).toISOString().slice(0, 10);
 
     try {
       const subscription = await mollie.subscriptions.create(payment.customerId, {
         amount: { currency: "EUR", value: incl.toFixed(2) },
         interval: interval === "YEARLY" ? "12 months" : "1 month",
+        startDate,
         description: `Shiftje abonnement · ${company.name}`,
         webhookUrl: `${baseUrl}/api/webhooks/mollie`,
         metadata: { companyId: company.id, interval },
       });
-
-      const periodMs = (interval === "YEARLY" ? 365 : 30) * 24 * 60 * 60 * 1000;
 
       await prisma.company.update({
         where: { id: company.id },

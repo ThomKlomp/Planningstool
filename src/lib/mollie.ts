@@ -63,6 +63,7 @@ export const mollie = {
         description: string;
         webhookUrl: string;
         metadata?: Record<string, string>;
+        startDate?: string; // "YYYY-MM-DD": wanneer de EERSTE betaling van dit abonnement plaatsvindt
       }
     ) =>
       mollieFetch(`/customers/${customerId}/subscriptions`, {
