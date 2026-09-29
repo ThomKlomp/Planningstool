@@ -16,15 +16,10 @@ function describeRemaining(ms: number) {
 /**
  * Live aftellende melding, de laatste 48 uur voor het einde van een opgezegd
  * abonnement. Telt echt af (elke minuut bijgewerkt) i.p.v. een vaste tekst
- * die pas klopt na een paginaherlading.
+ * die pas klopt na een paginaherlading. Alleen voor de eigenaar (zie
+ * dashboard/layout.tsx): alleen die kan het abonnement beheren.
  */
-export default function CancellationCountdown({
-  periodEndIso,
-  canManage,
-}: {
-  periodEndIso: string;
-  canManage: boolean;
-}) {
+export default function CancellationCountdown({ periodEndIso }: { periodEndIso: string }) {
   const target = new Date(periodEndIso).getTime();
   const [remaining, setRemaining] = useState(() => target - Date.now());
 
@@ -40,15 +35,10 @@ export default function CancellationCountdown({
 
   return (
     <div className="border-b border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 sm:px-8">
-      Je abonnement is opgezegd. Toegang wordt over <strong>{label}</strong> geblokkeerd.
-      {canManage && (
-        <>
-          {" "}
-          <a href="/dashboard/settings/billing" className="underline hover:no-underline">
-            Kies alsnog een abonnement
-          </a>
-        </>
-      )}
+      Je abonnement is opgezegd. Toegang wordt over <strong>{label}</strong> geblokkeerd.{" "}
+      <a href="/dashboard/settings/billing" className="underline hover:no-underline">
+        Kies alsnog een abonnement
+      </a>
     </div>
   );
 }

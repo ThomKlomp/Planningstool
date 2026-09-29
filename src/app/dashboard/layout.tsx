@@ -72,20 +72,17 @@ export default async function DashboardLayout({
         {(() => {
           const periodEnd = company?.currentPeriodEnd;
           const withinCancellationWindow =
+            membership.role === "OWNER" &&
             company?.subscriptionStatus === "CANCELED" &&
             periodEnd &&
             periodEnd.getTime() - Date.now() <= 48 * 60 * 60 * 1000;
 
           if (withinCancellationWindow && periodEnd) {
             // Laatste 48 uur van een opgezegd abonnement: een echt aftellende
-            // melding i.p.v. de gewone statisch tekst, voor iedereen (niet
-            // alleen de eigenaar) want iedereen verliest zo dadelijk toegang.
-            return (
-              <CancellationCountdown
-                periodEndIso={periodEnd.toISOString()}
-                canManage={membership.role === "OWNER"}
-              />
-            );
+            // melding i.p.v. de gewone statische tekst. Alleen de eigenaar
+            // kan dit oplossen, dus alleen die krijgt 'm te zien (net als de
+            // gewone gele banner hieronder).
+            return <CancellationCountdown periodEndIso={periodEnd.toISOString()} />;
           }
 
           if (
