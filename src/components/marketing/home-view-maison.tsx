@@ -28,16 +28,18 @@ function ReceiptLine({
   label,
   value,
   strong,
+  big,
 }: {
   label: React.ReactNode;
   value: React.ReactNode;
   strong?: boolean;
+  big?: boolean;
 }) {
   return (
     <div className={`flex items-baseline gap-2 ${strong ? "font-semibold" : ""}`}>
       <span>{label}</span>
       <span aria-hidden className="flex-1 translate-y-[-3px] border-b border-dotted border-[#1c1c19]/40" />
-      <span className="whitespace-nowrap">{value}</span>
+      <span className={`whitespace-nowrap ${big ? "text-2xl font-bold" : ""}`}>{value}</span>
     </div>
   );
 }
@@ -208,37 +210,67 @@ export default function HomeViewMaison({
               <ul className="mt-8 space-y-2 text-paper/80">
                 <li>Beschikbaarheid, rooster, teams, uren</li>
                 <li>7 dagen gratis proberen</li>
-                <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
+                <li className="font-semibold text-amber">Jaarlijks betalen? Je krijgt 2 maanden korting</li>
                 <li>Maandelijks opzegbaar*</li>
               </ul>
             </div>
 
             {/* Prijslijst als kassabon */}
-            <div className="mx-auto w-full max-w-sm md:rotate-[1.2deg]">
+            <div className="relative mx-auto w-full max-w-sm md:rotate-[1.2deg]">
               <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_TOP }} />
-              <div className="bg-[#FFFDF6] px-6 pb-2 pt-4 text-[13px] leading-6 text-[#1c1c19] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)] [font-family:var(--bon-font,ui-monospace,monospace)]">
-                <p className="text-center text-xl font-semibold tracking-[0.35em]">SHIFTJE</p>
-                <p className="text-center text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
+              <div className="bg-[#FFFDF6] px-6 pb-2 pt-4 text-[14px] leading-6 text-[#1c1c19] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)] [font-family:var(--bon-font,ui-monospace,monospace)]">
+                <div
+                  aria-hidden
+                  className="absolute right-3 top-7 -rotate-12 border-2 border-[#B3261E] px-2 py-0.5 text-center text-[11px] font-bold uppercase leading-4 tracking-wider text-[#B3261E]"
+                >
+                  Jaarlijks:
+                  <br />2 maanden korting
+                </div>
+                <p className="text-xl font-semibold tracking-[0.35em]">SHIFTJE</p>
+                <p className="max-w-[9rem] text-[11px] uppercase leading-4 tracking-widest text-[#1c1c19]/60">
                   Rooster voor kleine horeca
                 </p>
                 <ReceiptRule />
                 <p className="text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
                   Tarieven per zaak, per maand
                 </p>
-                <ul className="mt-2 space-y-3">
-                  {PRICE_TIERS.map((tier) => (
-                    <li key={tier.id}>
-                      <ReceiptLine label={tier.label} value={formatEuro(tier.monthlyExcl)} strong />
-                      <p className="pl-3 text-[12px] text-[#1c1c19]/65">
-                        per jaar{" "}
-                        <span className="line-through">{formatEuro(tier.monthlyExcl * 12)}</span>{" "}
-                        {formatEuro(yearlyExclForTier(tier))}
-                      </p>
-                    </li>
-                  ))}
+                <ul className="mt-3 space-y-4">
+                  {PRICE_TIERS.map((tier) => {
+                    const yearly = yearlyExclForTier(tier);
+                    const saving = tier.monthlyExcl * 12 - yearly;
+                    return (
+                      <li key={tier.id}>
+                        <ReceiptLine
+                          label={<span className="text-[15px]">{tier.label}</span>}
+                          value={
+                            <>
+                              {formatEuro(tier.monthlyExcl)}
+                              <span className="text-[12px] font-normal"> /mnd</span>
+                            </>
+                          }
+                          strong
+                          big
+                        />
+                        <div className="mt-1.5 flex items-center justify-between gap-2 bg-[#1c1c19] px-2.5 py-1.5 text-[#FFFDF6]">
+                          <span className="text-[12px] uppercase tracking-wider">
+                            Jaarlijks{" "}
+                            <span className="text-[#FFFDF6]/60 line-through">
+                              {formatEuro(tier.monthlyExcl * 12)}
+                            </span>
+                          </span>
+                          <span className="whitespace-nowrap text-base font-bold">
+                            {formatEuro(yearly)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-right text-[12px] font-semibold text-[#B3261E]">
+                          Je bespaart {formatEuro(saving)}
+                        </p>
+                      </li>
+                    );
+                  })}
                   <li>
                     <ReceiptLine
-                      label={`Meer dan ${MAX_STANDARD_MEMBERS} medewerkers`}
+                      label={<span className="text-[15px]">{`Meer dan ${MAX_STANDARD_MEMBERS} medewerkers`}</span>}
                       value="op maat"
                       strong
                     />
@@ -250,7 +282,7 @@ export default function HomeViewMaison({
                 <ul className="space-y-0.5 text-[#1c1c19]/80">
                   <li>1x Beschikbaarheid, rooster, teams, uren</li>
                   <li>1x 7 dagen gratis proberen</li>
-                  <li>1x Jaarlijks betalen = 2 maanden korting</li>
+                  <li className="font-semibold text-[#B3261E]">1x Jaarlijks betalen = 2 maanden korting</li>
                   <li>1x Maandelijks opzegbaar*</li>
                 </ul>
                 <ReceiptRule />
