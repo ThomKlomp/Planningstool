@@ -2,13 +2,14 @@ import Link from "next/link";
 import ContactButton from "@/components/contact-button";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
-import ScheduleMock from "@/components/schedule-mock";
+import HeroLaptop from "@/components/marketing/hero-laptop";
 import {
   PRICE_TIERS,
   MAX_STANDARD_MEMBERS,
   formatEuro,
   yearlyExclForTier,
 } from "@/lib/pricing";
+import { FAQ, FEATURES } from "@/lib/home-content";
 import { CLASSIC_THEME, themeStyle, type HomeTheme } from "@/lib/home-themes";
 
 const softwareApplicationSchema = {
@@ -35,74 +36,11 @@ const softwareApplicationSchema = {
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Wat is Shiftje?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Voor wie is Shiftje gemaakt?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Wat kost Shiftje?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: `Vanaf ${formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot ${formatEuro(
-          PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl
-        )} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.`,
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Kan ik maandelijks opzeggen?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Ja, met een maandabonnement kun je elke maand opzeggen. Kies je een jaarabonnement (2 maanden korting), dan loopt dat een jaar.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Kan ik Shiftje eerst gratis proberen?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Ja, je kunt 7 dagen gratis beginnen zonder creditcard.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Werkt Shiftje ook voor een restaurant met keuken én bediening?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Wat gebeurt er als iemand een dienst niet kan werken?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt.",
-      },
-    },
-  ],
+  mainEntity: FAQ.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
 };
 
 export default function HomeView({ theme = CLASSIC_THEME }: { theme?: HomeTheme }) {
@@ -168,45 +106,7 @@ export default function HomeView({ theme = CLASSIC_THEME }: { theme?: HomeTheme 
             </p>
           </div>
 
-          <div
-            className="mx-auto w-full max-w-sm [container-type:inline-size]"
-            style={themeStyle(t.deviceVars ?? {})}
-          >
-            {/* Laptop: staat dicht en gaat langzaam open (deksel draait om het
-                scharnier), daarna gaat het scherm aan met het rooster erin. */}
-            <div className="hero-lid relative z-10 rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
-              <div className="hero-screen-on overflow-hidden rounded-lg bg-paper p-1.5">
-                <ScheduleMock />
-              </div>
-            </div>
-            {/* Onderstel: even diep als het deksel hoog is (0,84 x de breedte) en
-                schuin naar achteren gekanteld (rotateX), zodat je het van boven
-                ziet en het echt op een laptop lijkt. perspective() zit in de
-                transform en is gelijk aan die van het deksel, zodat een dicht
-                deksel precies op het toetsenbord past. */}
-            <div className="relative aspect-[100/21] w-full">
-              <div
-                className="absolute inset-x-0 top-0 aspect-[100/84] origin-top bg-[#2d2d29]"
-                style={{ transform: "perspective(833.33cqw) rotateX(77deg)" }}
-              >
-                <div className="absolute inset-x-0 top-0 h-[2%] bg-black/50" />
-                <div
-                  className="absolute inset-x-[5%] top-[5%] h-[55%] rounded-sm"
-                  style={{
-                    backgroundColor: "#3d3d38",
-                    backgroundImage:
-                      "linear-gradient(90deg, #232320 3px, transparent 3px), linear-gradient(0deg, #232320 7px, transparent 7px)",
-                    backgroundSize: "7.1428% 100%, 100% 16.6667%",
-                  }}
-                />
-                <div className="absolute bottom-[8%] left-1/2 h-[26%] w-[36%] -translate-x-1/2 rounded-md border border-white/10 bg-white/[0.03]" />
-              </div>
-            </div>
-            <div className="relative left-1/2 -mt-px h-[8px] w-[110.9%] -translate-x-1/2 rounded-b-lg bg-gradient-to-b from-[#2d2d29] to-ink">
-              <div className="absolute left-1/2 top-0 h-[3px] w-[16%] -translate-x-1/2 rounded-b-md bg-black/50" />
-            </div>
-            <div className="mx-auto mt-3 h-4 w-[96%] rounded-[50%] bg-ink/10 blur-md" />
-          </div>
+          <HeroLaptop vars={t.deviceVars} />
         </div>
       </section>
 
@@ -230,31 +130,9 @@ export default function HomeView({ theme = CLASSIC_THEME }: { theme?: HomeTheme 
           zitten allemaal in dezelfde app, zodat jij en je team maar op één plek hoeven te kijken.
         </p>
         <div className={t.featureGrid}>
-          <Feature
-            theme={t}
-            title="Beschikbaarheid"
-            body="Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Handig of je nu vooral in het weekend plant (café, bar) of ook doordeweeks met lunch en diner (restaurant): jij zet weken vooraf open, zodat er nooit een gat valt."
-          />
-          <Feature
-            theme={t}
-            title="Rooster"
-            body="Beschikbaarheid staat er al naast zodra je gaat inplannen. Sleep niemand meer tussen appjes, het staat gewoon in beeld."
-          />
-          <Feature
-            theme={t}
-            title="Teams"
-            body="Deel medewerkers in bij bediening, keuken of bar. Handig zodra je met meerdere onderdelen tegelijk plant, zoals keuken en bediening in een restaurant: op het rooster zie je in één oogopslag wie waar hoort."
-          />
-          <Feature
-            theme={t}
-            title="Ruilen &amp; overnemen"
-            body="Een medewerker kan niet meer? Die biedt de dienst aan, een collega neemt 'm over, en jij geeft (als je dat wil) nog even je akkoord."
-          />
-          <Feature
-            theme={t}
-            title="Uren"
-            body="Gewerkte uren vullen zich deels vanzelf in op basis van het rooster. Medewerkers bevestigen, jij keurt goed of stuurt terug met een vraag."
-          />
+          {FEATURES.map((f) => (
+            <Feature key={f.title} theme={t} title={f.title} body={f.body} />
+          ))}
         </div>
       </section>
 
@@ -262,54 +140,14 @@ export default function HomeView({ theme = CLASSIC_THEME }: { theme?: HomeTheme 
       <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
         <h2 className={`${sectionTitle} text-3xl`}>Veelgestelde vragen</h2>
         <div className="mt-6 divide-y divide-line">
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat is Shiftje?
-            </summary>
-            <p className="mt-2 text-ink/70">Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Voor wie is Shiftje gemaakt?
-            </summary>
-            <p className="mt-2 text-ink/70">Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat kost Shiftje?
-            </summary>
-            <p className="mt-2 text-ink/70">Vanaf {formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot {formatEuro(PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl)} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Kan ik maandelijks opzeggen?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja, met een maandabonnement kun je elke maand opzeggen. Kies je een jaarabonnement (2 maanden korting), dan loopt dat een jaar.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Kan ik Shiftje eerst gratis proberen?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja, je kunt 7 dagen gratis beginnen zonder creditcard.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Werkt Shiftje ook voor een restaurant met keuken én bediening?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat gebeurt er als iemand een dienst niet kan werken?
-            </summary>
-            <p className="mt-2 text-ink/70">Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?
-            </summary>
-            <p className="mt-2 text-ink/70">Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt.</p>
-          </details>
+          {FAQ.map((f) => (
+            <details key={f.q} className="group py-4">
+              <summary className="cursor-pointer list-none font-medium marker:content-none">
+                {f.q}
+              </summary>
+              <p className="mt-2 text-ink/70">{f.a}</p>
+            </details>
+          ))}
         </div>
       </section>
 

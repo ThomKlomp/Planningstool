@@ -16,6 +16,7 @@ const manrope = Manrope({ subsets: ["latin"], weight: ["500", "600", "700", "800
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const THEME_FONTS: Record<string, { display: string; body?: string }> = {
+  shift: { display: bricolage.style.fontFamily, body: dmSans.style.fontFamily },
   terracotta: { display: fraunces.style.fontFamily, body: dmSans.style.fontFamily },
   nacht: { display: sora.style.fontFamily, body: dmSans.style.fontFamily },
   bistro: { display: playfair.style.fontFamily, body: dmSans.style.fontFamily },

@@ -13,7 +13,7 @@ export default function OntwerpenPage() {
     <main className="mx-auto max-w-5xl px-6 py-16">
       <h1 className="font-display text-3xl">Homepage-ontwerpen</h1>
       <p className="mt-3 max-w-xl text-ink/70">
-        Zelfde inhoud en functies, vijf verschillende uitstralingen. Klik een ontwerp open
+        Zelfde inhoud en functies, zes verschillende uitstralingen. Klik een ontwerp open
         om de hele pagina te zien.
       </p>
       <div className="mt-10 grid gap-5 sm:grid-cols-2">

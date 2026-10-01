@@ -152,7 +152,29 @@ const nordic = palette({
   onAccent: "#FFFFFF",
 });
 
+/** "Shift": eigen indeling (zie components/marketing/home-view-shift.tsx). */
+export const SHIFT_THEME: HomeTheme = {
+  ...CLASSIC_THEME,
+  id: "shift",
+  name: "Shift (mijn keuze)",
+  tagline:
+    "Het rooster als stijl: gekleurde dienstblokjes, dikke randen, zwevende chips en een lopende band. Nieuwe indeling, niet alleen nieuwe kleuren.",
+  vars: palette({
+    ink: "#1F1A2E",
+    paper: "#FFF8EC",
+    surface: "#FFFFFF",
+    accent: "#FF5A3C",
+    accentDark: "#E8431F",
+    secondary: "#2F7D5B",
+    line: "#EADFCB",
+    onAccent: "#1F1A2E",
+  }),
+  btnRadius: "9999px",
+  swatches: ["#FFF8EC", "#FF5A3C", "#FFD66B", "#CDBFFF", "#B7E4C7", "#1F1A2E"],
+};
+
 export const THEMES: HomeTheme[] = [
+  SHIFT_THEME,
   {
     id: "terracotta",
     name: "Zonnig terras",

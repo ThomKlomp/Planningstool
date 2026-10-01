@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HomeView from "@/components/marketing/home-view";
+import HomeViewShift from "@/components/marketing/home-view-shift";
 import { THEMES } from "@/lib/home-themes";
 import { THEME_FONTS } from "../fonts";
 
@@ -21,7 +22,11 @@ export default function VariantPage({ params }: { params: { variant: string } })
 
   return (
     <>
-      <HomeView theme={{ ...theme, fontDisplay: fonts?.display, fontBody: fonts?.body }} />
+      {theme.id === "shift" ? (
+        <HomeViewShift fontDisplay={fonts?.display} fontBody={fonts?.body} />
+      ) : (
+        <HomeView theme={{ ...theme, fontDisplay: fonts?.display, fontBody: fonts?.body }} />
+      )}
       <nav
         aria-label="Ontwerpen"
         className="fixed bottom-4 left-4 z-50 flex max-w-[calc(100vw-6rem)] flex-wrap items-center gap-1 rounded-2xl bg-black/85 p-1.5 text-xs text-white shadow-lg backdrop-blur"
