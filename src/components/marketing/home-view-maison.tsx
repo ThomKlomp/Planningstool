@@ -3,6 +3,7 @@ import ContactButton from "@/components/contact-button";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
 import HeroLaptop from "@/components/marketing/hero-laptop";
+import HomeSchema from "@/components/marketing/home-schema";
 import { FAQ, FEATURES } from "@/lib/home-content";
 import { MAISON_THEME, themeStyle } from "@/lib/home-themes";
 import { PRICE_TIERS, MAX_STANDARD_MEMBERS, formatEuro, yearlyExclForTier } from "@/lib/pricing";
@@ -10,23 +11,57 @@ import { PRICE_TIERS, MAX_STANDARD_MEMBERS, formatEuro, yearlyExclForTier } from
 /**
  * "Maison": ingetogen en horeca-elegant, zoals een goed restaurant zich
  * presenteert. Diep groen, crème en messing, een klassieke serif, dunne
- * lijnen en de prijzen als menukaart. Zelfde inhoud en features als de
+ * lijnen en de prijzen op een kassabon. Zelfde inhoud en features als de
  * andere ontwerpen.
  */
+// Tandrand van het bonnetje (driehoekjes in bonkleur), als herhaalde SVG.
+const TEETH_BOTTOM =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 8'><polygon points='0,0 16,0 8,8' fill='%23FFFDF6'/></svg>\")";
+const TEETH_TOP =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 8'><polygon points='0,8 16,8 8,0' fill='%23FFFDF6'/></svg>\")";
+
+function ReceiptRule() {
+  return <div aria-hidden className="my-4 border-t border-dashed border-[#1c1c19]/40" />;
+}
+
+function ReceiptLine({
+  label,
+  value,
+  strong,
+}: {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  strong?: boolean;
+}) {
+  return (
+    <div className={`flex items-baseline gap-2 ${strong ? "font-semibold" : ""}`}>
+      <span>{label}</span>
+      <span aria-hidden className="flex-1 translate-y-[-3px] border-b border-dotted border-[#1c1c19]/40" />
+      <span className="whitespace-nowrap">{value}</span>
+    </div>
+  );
+}
+
 export default function HomeViewMaison({
   fontDisplay,
   fontBody,
+  fontMono,
 }: {
   fontDisplay?: string;
   fontBody?: string;
+  fontMono?: string;
 }) {
   const t = MAISON_THEME;
 
   return (
     <main
       className="min-h-screen bg-paper font-body text-ink"
-      style={themeStyle(t.vars, { fontDisplay, fontBody, btnRadius: t.btnRadius })}
+      style={{
+        ...themeStyle(t.vars, { fontDisplay, fontBody, btnRadius: t.btnRadius }),
+        ...(fontMono ? ({ "--bon-font": fontMono } as React.CSSProperties) : {}),
+      }}
     >
+      <HomeSchema />
       <SiteHeader />
 
       {/* Hero */}
@@ -153,7 +188,7 @@ export default function HomeViewMaison({
         </div>
       </section>
 
-      {/* Prijs: als menukaart */}
+      {/* Prijs: als kassabon */}
       <section id="prijs" className="bg-ink text-paper" style={themeStyle(t.priceVars ?? {})}>
         <div className="mx-auto max-w-6xl px-6 py-24">
           <div className="grid gap-14 md:grid-cols-[1fr_1fr] md:items-start">
@@ -178,66 +213,86 @@ export default function HomeViewMaison({
               </ul>
             </div>
 
-            <div className="border border-amber/50 p-2">
-              <div className="border border-amber/25 px-6 py-8 md:px-9">
-                <p className="text-center font-display text-2xl italic text-amber">Per maand</p>
-                <ul className="mt-6 space-y-5">
+            {/* Prijslijst als kassabon */}
+            <div className="mx-auto w-full max-w-sm md:rotate-[1.2deg]">
+              <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_TOP }} />
+              <div className="bg-[#FFFDF6] px-6 pb-2 pt-4 text-[13px] leading-6 text-[#1c1c19] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)] [font-family:var(--bon-font,ui-monospace,monospace)]">
+                <p className="text-center text-xl font-semibold tracking-[0.35em]">SHIFTJE</p>
+                <p className="text-center text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
+                  Rooster voor kleine horeca
+                </p>
+                <ReceiptRule />
+                <p className="text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
+                  Tarieven per zaak, per maand
+                </p>
+                <ul className="mt-2 space-y-3">
                   {PRICE_TIERS.map((tier) => (
                     <li key={tier.id}>
-                      <div className="flex items-baseline gap-3">
-                        <span className="font-medium">{tier.label}</span>
-                        <span
-                          aria-hidden
-                          className="flex-1 translate-y-[-3px] border-b border-dotted border-paper/40"
-                        />
-                        <span className="font-display text-2xl">{formatEuro(tier.monthlyExcl)}</span>
-                      </div>
-                      <p className="mt-1 text-sm text-paper/60">
-                        Per jaar{" "}
+                      <ReceiptLine label={tier.label} value={formatEuro(tier.monthlyExcl)} strong />
+                      <p className="pl-3 text-[12px] text-[#1c1c19]/65">
+                        per jaar{" "}
                         <span className="line-through">{formatEuro(tier.monthlyExcl * 12)}</span>{" "}
-                        <span className="text-amber">{formatEuro(yearlyExclForTier(tier))}</span>
+                        {formatEuro(yearlyExclForTier(tier))}
                       </p>
                     </li>
                   ))}
                   <li>
-                    <div className="flex items-baseline gap-3">
-                      <span className="font-medium">Meer dan {MAX_STANDARD_MEMBERS} medewerkers</span>
-                      <span
-                        aria-hidden
-                        className="flex-1 translate-y-[-3px] border-b border-dotted border-paper/40"
-                      />
-                      <span className="font-display text-xl italic">Op maat</span>
-                    </div>
+                    <ReceiptLine
+                      label={`Meer dan ${MAX_STANDARD_MEMBERS} medewerkers`}
+                      value="op maat"
+                      strong
+                    />
                   </li>
                 </ul>
-                <p className="mt-8 text-xs leading-relaxed text-paper/60">
+                <ReceiptRule />
+                <ReceiptLine label="Kosten per gebruiker" value={formatEuro(0)} />
+                <ReceiptRule />
+                <ul className="space-y-0.5 text-[#1c1c19]/80">
+                  <li>1x Beschikbaarheid, rooster, teams, uren</li>
+                  <li>1x 7 dagen gratis proberen</li>
+                  <li>1x Jaarlijks betalen = 2 maanden korting</li>
+                  <li>1x Maandelijks opzegbaar*</li>
+                </ul>
+                <ReceiptRule />
+                <p className="text-[11px] leading-5 text-[#1c1c19]/60">
                   Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van
                   12 maanden.
-                </p>
-                <p className="mt-1 text-xs text-paper/60">
+                  <br />
                   *Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.
                 </p>
 
                 <Link
                   href="/onboarding"
-                  className="mt-8 block rounded-btn bg-paper px-6 py-3.5 text-center font-medium text-ink transition-colors hover:bg-amber hover:text-paper"
+                  className="mt-5 block rounded-btn bg-[#1c1c19] px-6 py-3 text-center font-medium text-[#FFFDF6] transition-colors hover:bg-awning"
                 >
                   Begin gratis
                 </Link>
 
-                <div className="mt-6 border-t border-paper/20 pt-6">
-                  <p className="text-sm font-medium">Meer dan {MAX_STANDARD_MEMBERS} medewerkers?</p>
-                  <p className="mt-1 text-sm text-paper/60">
-                    Neem contact met ons op, dan kijken we samen naar de mogelijkheden.
-                  </p>
-                  <ContactButton
-                    message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
-                    className="mt-3 border-b border-paper/50 pb-0.5 text-sm font-medium transition-colors hover:border-paper"
-                  >
-                    Neem contact op
-                  </ContactButton>
-                </div>
+                <ReceiptRule />
+                <p className="font-semibold">Meer dan {MAX_STANDARD_MEMBERS} medewerkers?</p>
+                <p className="text-[12px] text-[#1c1c19]/65">
+                  Neem contact met ons op, dan kijken we samen naar de mogelijkheden.
+                </p>
+                <ContactButton
+                  message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
+                  className="mt-1 border-b border-[#1c1c19]/50 text-[12px] font-semibold transition-colors hover:border-[#1c1c19]"
+                >
+                  Neem contact op
+                </ContactButton>
+
+                <div
+                  aria-hidden
+                  className="mx-auto mt-6 h-10 w-4/5"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(90deg, #1c1c19 0 2px, transparent 2px 4px, #1c1c19 4px 5px, transparent 5px 8px, #1c1c19 8px 11px, transparent 11px 13px)",
+                  }}
+                />
+                <p className="mb-3 mt-2 text-center text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
+                  Bedankt en tot ziens
+                </p>
               </div>
+              <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_BOTTOM }} />
             </div>
           </div>
         </div>

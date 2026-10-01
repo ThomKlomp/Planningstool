@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import HomeView from "@/components/marketing/home-view";
+import HomeViewMaison from "@/components/marketing/home-view-maison";
+import { MAISON_FONTS } from "@/lib/maison-fonts";
 
 export const metadata: Metadata = {
   title: "Roosterprogramma voor kleine horeca",
@@ -9,5 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <HomeView />;
+  return (
+    <HomeViewMaison
+      fontDisplay={MAISON_FONTS.display}
+      fontBody={MAISON_FONTS.body}
+      fontMono={MAISON_FONTS.mono}
+    />
+  );
 }

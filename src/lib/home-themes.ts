@@ -80,8 +80,8 @@ const listFeature = "grid gap-2 py-8 md:grid-cols-[220px_1fr] md:gap-8";
 /** De huidige look: precies zoals de site nu is. */
 export const CLASSIC_THEME: HomeTheme = {
   id: "klassiek",
-  name: "Klassiek (huidig)",
-  tagline: "Warm papier, amber en groen. Zoals de site nu is.",
+  name: "Klassiek (oude homepage)",
+  tagline: "Warm papier, amber en groen. Zoals de site eerst was.",
   vars: {},
   btnRadius: "9999px",
   hero: "split",
@@ -156,9 +156,9 @@ const nordic = palette({
 export const MAISON_THEME: HomeTheme = {
   ...CLASSIC_THEME,
   id: "maison",
-  name: "Maison (mijn keuze)",
+  name: "Maison (huidige homepage)",
   tagline:
-    "Ingetogen en horeca-elegant: diep groen, crème en messing, een klassieke serif, dunne lijnen en de prijzen als menukaart.",
+    "Ingetogen en horeca-elegant: diep groen, crème en messing, een klassieke serif, dunne lijnen en de prijzen op een kassabon.",
   vars: palette({
     ink: "#16251E",
     paper: "#F6F2EA",

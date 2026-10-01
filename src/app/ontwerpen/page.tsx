@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 };
 
 export default function OntwerpenPage() {
-  const all = [{ ...CLASSIC_THEME, href: "/" }, ...THEMES.map((t) => ({ ...t, href: `/ontwerpen/${t.id}` }))];
+  const all = [...THEMES, CLASSIC_THEME].map((t) => ({ ...t, href: `/ontwerpen/${t.id}` }));
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
       <h1 className="font-display text-3xl">Homepage-ontwerpen</h1>
       <p className="mt-3 max-w-xl text-ink/70">
-        Zelfde inhoud en functies, zes verschillende uitstralingen. Klik een ontwerp open
+        Zelfde inhoud en functies, zeven uitstralingen. Maison is de homepage op /. Klik een ontwerp open
         om de hele pagina te zien.
       </p>
       <div className="mt-10 grid gap-5 sm:grid-cols-2">
