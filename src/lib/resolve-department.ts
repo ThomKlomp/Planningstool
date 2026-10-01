@@ -26,3 +26,28 @@ export async function resolveDepartmentId(
   }
   return { departmentId: requestedDepartmentId };
 }
+
+/**
+ * Team voor een nieuw lid dat via een uitnodiging binnenkomt. Heeft de manager
+ * bij het uitnodigen een team gekozen (en bestaat dat team nog), dan krijgt de
+ * medewerker dat team. Anders geldt de gewone regel (zie hierboven): de
+ * medewerker kiest zelf. Alleen medewerkers krijgen een team, managers niet.
+ */
+export async function resolveInviteDepartmentId(
+  invite: { companyId: string; role: string; departmentId: string | null },
+  requestedDepartmentId: string | null | undefined
+): Promise<{ departmentId: string | null; error?: string }> {
+  if (invite.role !== "EMPLOYEE") {
+    return { departmentId: null };
+  }
+  if (invite.departmentId) {
+    const preset = await prisma.department.findFirst({
+      where: { id: invite.departmentId, companyId: invite.companyId },
+      select: { id: true },
+    });
+    if (preset) {
+      return { departmentId: preset.id };
+    }
+  }
+  return resolveDepartmentId(invite.companyId, requestedDepartmentId);
+}

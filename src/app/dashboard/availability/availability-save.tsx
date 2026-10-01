@@ -126,7 +126,7 @@ export function AvailabilitySaveButton({ locked }: { locked: boolean }) {
         onClick={confirmNow}
         disabled={pending > 0}
         className={`rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
-          saved ? "bg-awning text-white" : "bg-ink text-paper hover:bg-awning"
+          saved ? "bg-awning text-white" : "bg-orange text-ink hover:bg-orange-dark"
         }`}
       >
         {pending > 0 ? "Bezig met opslaan..." : saved ? "✓ Opgeslagen" : "Opslaan"}

@@ -52,7 +52,7 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
               href={item.href}
               onClick={() => setOpen(false)}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
+                isActive(item.href) ? "bg-orange font-bold text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
               }`}
             >
               {item.label}
@@ -84,7 +84,7 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
             key={item.href}
             href={item.href}
             className={`block rounded-lg px-3 py-2 text-left text-sm ${
-              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
+              isActive(item.href) ? "bg-orange font-bold text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}

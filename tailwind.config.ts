@@ -20,6 +20,14 @@ const config: Config = {
         },
         sand: "#F3D9B1",
         mist: "#EDF2E7",
+        // Oranje accent voor alles achter de login (dashboard en admin).
+        orange: {
+          DEFAULT: "#F29B38",
+          dark: "#E08A26",
+          soft: "#FFE7CC",
+          soft2: "#FFD7A8",
+          deep: "#A8560C",
+        },
         amber: {
           DEFAULT: "#E8A33D",
           dark: "#9A5F10",

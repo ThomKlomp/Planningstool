@@ -229,6 +229,7 @@ model Invite {
   expiresAt DateTime
   acceptedAt DateTime?
   extraDepartmentIds String[] @default([]) // extra teams die de medewerker bij het accepteren erbij krijgt
+  departmentId String? // hoofdteam dat de manager bij het uitnodigen koos (leeg = medewerker kiest zelf)
 
   @@index([companyId])
 }

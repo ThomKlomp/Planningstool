@@ -285,7 +285,9 @@ export default async function RosterPage({
           />
         </div>
       )}
-      {canManage && pendingApprovals.length === 0 && (
+      {canManage &&
+        pendingApprovals.length === 0 &&
+        shiftsRaw.filter((s) => s.membershipId).length > 2 && (
         <p className="mt-4 text-xs text-ink/30">Iedereen staat gewoon te werken, mooi zo.</p>
       )}
 

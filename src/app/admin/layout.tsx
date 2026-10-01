@@ -36,7 +36,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink">
-      <header className="sticky top-0 z-40 border-b border-line bg-white px-4 py-5 sm:px-8">
+      <header className="sticky top-0 z-40 border-b-4 border-orange bg-white px-4 py-5 sm:px-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-display text-xl">Adminportaal</p>
@@ -63,7 +63,7 @@ export default async function AdminLayout({
           }
         />
       </header>
-      <main className="px-4 py-8 sm:px-8">{children}</main>
+      <main className="app-main px-4 py-8 sm:px-8">{children}</main>
     </div>
   );
 }

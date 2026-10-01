@@ -177,7 +177,7 @@ export default function ShiftTemplatesManager({
         <button
           type="submit"
           disabled={saving || weekdays.length === 0}
-          className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning transition-colors disabled:opacity-50"
+          className="w-full rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark transition-colors disabled:opacity-50"
         >
           {saving ? "Bezig..." : "Standaard shift toevoegen"}
         </button>

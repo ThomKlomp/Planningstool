@@ -29,7 +29,7 @@ export default function JoinLink({ slug }: { slug: string }) {
       />
       <button
         onClick={copy}
-        className="shrink-0 rounded-full bg-ink px-4 py-2 text-xs font-medium text-paper hover:bg-awning transition-colors"
+        className="shrink-0 rounded-full bg-orange px-4 py-2 text-xs font-medium text-ink hover:bg-orange-dark transition-colors"
       >
         {copied ? "Gekopieerd" : "Kopiëren"}
       </button>

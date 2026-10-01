@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
-import { resolveDepartmentId } from "@/lib/resolve-department";
+import { resolveInviteDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -30,14 +30,11 @@ export async function POST(
   const firstName = (body?.firstName ?? "").trim();
   const lastName = (body?.lastName ?? "").trim();
 
-  let departmentId: string | null = null;
-  if (invite.role === "EMPLOYEE") {
-    const resolved = await resolveDepartmentId(invite.companyId, body?.departmentId);
-    if (resolved.error) {
-      return NextResponse.json({ error: resolved.error }, { status: 400 });
-    }
-    departmentId = resolved.departmentId;
+  const resolved = await resolveInviteDepartmentId(invite, body?.departmentId);
+  if (resolved.error) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
+  const departmentId: string | null = resolved.departmentId;
 
   await prisma.$transaction(async (tx) => {
     if (firstName || lastName) {

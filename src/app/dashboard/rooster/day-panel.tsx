@@ -270,7 +270,7 @@ function AddShiftForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-full bg-ink px-3 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+        className="w-full rounded-full bg-orange px-3 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
       >
         {saving ? "Bezig..." : "Shift toevoegen"}
       </button>

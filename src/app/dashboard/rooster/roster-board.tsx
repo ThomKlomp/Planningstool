@@ -191,7 +191,7 @@ export default function RosterBoard({
             <p
               className={
                 todayKey === dayKey
-                  ? "inline-block rounded-full bg-ink px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-paper"
+                  ? "inline-block rounded-full bg-orange px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink"
                   : "text-xs uppercase tracking-wide text-ink/40"
               }
             >
@@ -574,7 +574,7 @@ function ShiftCard({
                 claim(false);
               }}
               disabled={busy}
-              className="flex-1 rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
+              className="flex-1 rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
             >
               {busy ? "Bezig..." : "Overnemen"}
             </button>
@@ -614,7 +614,7 @@ function ShiftCard({
             <button
               onClick={() => claim(true, swapNote)}
               disabled={busy}
-              className="flex-1 rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-paper hover:bg-awning disabled:opacity-50"
+              className="flex-1 rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
             >
               {busy ? "Bezig..." : "Ruilverzoek versturen"}
             </button>

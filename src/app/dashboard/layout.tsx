@@ -51,10 +51,11 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-paper text-ink sm:flex">
       <aside className="sticky top-0 z-40 border-b border-line bg-white sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
         <div>
+          <div className="h-1.5 bg-orange" aria-hidden />
           <div className="relative">
             <div className="px-4 py-4 pr-28 sm:px-4 sm:py-6 sm:pr-4">
               <p className="font-display text-lg sm:truncate">{membership.companyName}</p>
-              <p className="text-xs uppercase tracking-wide text-ink/40">
+              <p className="text-xs font-bold uppercase tracking-wide text-orange-deep">
                 {roleLabel(membership.role)}
               </p>
             </div>
@@ -111,7 +112,7 @@ export default async function DashboardLayout({
 
           return null;
         })()}
-        <main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+        <main className="app-main px-4 py-6 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
   );

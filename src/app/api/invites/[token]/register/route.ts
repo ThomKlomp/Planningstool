@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hasRoomForMember, maxMembersResponse } from "@/lib/billing";
 import { hashPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
-import { resolveDepartmentId } from "@/lib/resolve-department";
+import { resolveInviteDepartmentId } from "@/lib/resolve-department";
 
 export async function POST(
   req: Request,
@@ -33,14 +33,11 @@ export async function POST(
     );
   }
 
-  let departmentId: string | null = null;
-  if (invite.role === "EMPLOYEE") {
-    const resolved = await resolveDepartmentId(invite.companyId, body?.departmentId);
-    if (resolved.error) {
-      return NextResponse.json({ error: resolved.error }, { status: 400 });
-    }
-    departmentId = resolved.departmentId;
+  const resolved = await resolveInviteDepartmentId(invite, body?.departmentId);
+  if (resolved.error) {
+    return NextResponse.json({ error: resolved.error }, { status: 400 });
   }
+  const departmentId: string | null = resolved.departmentId;
 
   const existing = await prisma.user.findUnique({ where: { email: invite.email } });
   if (existing) {

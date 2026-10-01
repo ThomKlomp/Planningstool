@@ -34,7 +34,7 @@ export default async function AdminOverviewPage() {
         </Link>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="stat-grid grid gap-4 sm:grid-cols-4">
         <StatCard label="Zaken" value={companyCount} />
         <StatCard label="Gebruikers" value={userCount} />
         <StatCard label="Uren wachtend op goedkeuring" value={pendingHoursCount} />

@@ -43,7 +43,7 @@ export default async function AdminCompanyDetailPage({
         </p>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+      <div className="stat-grid mt-6 grid gap-4 sm:grid-cols-4">
         <StatCard label="Leden" value={company.memberships.length} />
         <StatCard label="Shifts" value={company._count.shifts} />
         <StatCard label="Uren ter goedkeuring" value={submitted} />

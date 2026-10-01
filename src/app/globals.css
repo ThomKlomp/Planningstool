@@ -255,3 +255,31 @@ body {
   .ui-pop, .ui-toast-a, .ui-toast-b, .ui-cursor, .ui-press, .ui-ping { animation: none; }
   .ui-toast-b, .ui-cursor { display: none; }
 }
+
+/* Oranje accenten achter de login (dashboard en adminportaal): klein streepje
+   onder de paginatitel, een stip voor sectietitels en afwisselend lichtoranje
+   cijferblokken. Alleen opmaak. */
+.app-main h1::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 5px;
+  margin-top: 10px;
+  border-radius: 3px;
+  background: #f29b38;
+}
+.app-main section > h2::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 10px;
+  border-radius: 9999px;
+  background: #f29b38;
+}
+.app-main .stat-grid > div:nth-child(4n + 1) {
+  background-color: #ffe7cc;
+}
+.app-main .stat-grid > div:nth-child(4n + 3) {
+  background-color: #ffd7a8;
+}

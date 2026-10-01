@@ -246,7 +246,7 @@ export default function RecurringShiftsManager({
           <button
             type="submit"
             disabled={saving || !membershipId}
-            className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+            className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
           >
             {saving ? "Bezig..." : `Elke ${dayName(weekday)} toevoegen`}
           </button>

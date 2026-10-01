@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Invite = { id: string; email: string; role: string; token: string };
+type Invite = {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  departmentName?: string | null;
+};
 
 export default function PendingInvitesList({
   invites,
@@ -49,6 +55,9 @@ export default function PendingInvitesList({
               <span className="ml-2 text-xs uppercase tracking-wide text-ink/40">
                 {invite.role}
               </span>
+              {invite.departmentName ? (
+                <span className="ml-2 text-xs text-ink/60">· {invite.departmentName}</span>
+              ) : null}
             </div>
             <button
               onClick={() => cancelInvite(invite.id, invite.token, invite.email)}
