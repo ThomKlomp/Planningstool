@@ -208,7 +208,7 @@ export default function RecurringShiftsManager({
                   setStartTime(t.startTime);
                   setEndTime(t.endTime);
                 }}
-                className="rounded-full bg-paper px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
+                className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
               >
                 {t.name} ({t.startTime}–{t.endTime})
               </button>

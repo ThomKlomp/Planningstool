@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-paper text-ink">
+    <main className="page-sage min-h-screen text-ink">
       <SiteHeader />
       <section className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="font-display text-3xl">Privacy &amp; bezoekstatistieken</h1>

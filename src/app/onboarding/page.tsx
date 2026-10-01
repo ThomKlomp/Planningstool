@@ -19,7 +19,7 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-6">
+    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8">
         <h1 className="font-display text-2xl text-ink">Jouw zaak aanmaken</h1>
         <p className="mt-2 text-sm text-ink/60">

@@ -4,6 +4,8 @@ import ContactButton from "@/components/contact-button";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
 import ScheduleMock from "@/components/schedule-mock";
+import HeroBoard from "@/components/marketing/hero-board";
+import FeatureFlipCards from "@/components/marketing/feature-flip-cards";
 import {
   PRICE_TIERS,
   MAX_STANDARD_MEMBERS,
@@ -113,8 +115,10 @@ const faqSchema = {
 };
 
 export default function HomePage() {
+  const faqs = faqSchema.mainEntity;
+
   return (
-    <main className="min-h-screen bg-paper text-ink">
+    <main className="page-sage min-h-screen text-ink">
       {/* eslint-disable-next-line react/no-danger */}
       <script
         type="application/ld+json"
@@ -124,94 +128,56 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
+
       <SiteHeader />
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl overflow-x-hidden px-6 pb-20 pt-8 md:pt-16">
-        <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <p className="mb-4 text-sm text-awning">
-              Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
-            </p>
-            <h1 className="font-display text-4xl leading-tight md:text-5xl">
-              Rooster software voor kleine horeca
-            </h1>
-            <p className="mt-5 max-w-md font-display text-2xl leading-snug text-ink/90">
-              Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
-            </p>
-            <p className="mt-4 max-w-md text-lg text-ink/70">
-              Medewerkers geven hun beschikbaarheid door, jij zet er in een
-              paar klikken een rooster overheen. Aan het eind van de week
-              keur je de uren goed. Geen groepsapp vol foto's van een
-              geprint rooster.
-            </p>
-            <p className="mt-3 max-w-md text-sm text-ink/50">
-              Of je er nu een planningstool, roostertool, planningsprogramma of
-              beschikbaarheidsprogramma voor gebruikt: dit is 'm.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                href="/onboarding"
-                className="rounded-full bg-amber px-6 py-3 font-medium text-ink hover:bg-amber-dark transition-colors"
-              >
-                Begin gratis, 7 dagen
-              </Link>
-              <Link
-                href="/signin"
-                className="rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors"
-              >
-                Ik ben uitgenodigd
-              </Link>
-            </div>
-            <p className="mt-4 text-xs text-ink/40">
-              Geen creditcard nodig om te beginnen.
-            </p>
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-10 md:pt-14 lg:grid-cols-[1fr_1.2fr]">
+        <div className="flex flex-col gap-5">
+          <p className="self-start rounded-full bg-sand px-4 py-2 text-sm font-bold text-[#4A2A12]">
+            Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
+          </p>
+          <h1 className="font-display text-5xl font-bold leading-[1.04] tracking-tight md:text-6xl">
+            Rooster software voor kleine horeca
+          </h1>
+          <p className="font-display text-xl font-semibold leading-snug text-terra md:text-2xl">
+            Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
+          </p>
+          <p className="max-w-xl text-lg leading-relaxed text-ink/75">
+            Medewerkers geven hun beschikbaarheid door, jij zet er in een
+            paar klikken een rooster overheen. Aan het eind van de week
+            keur je de uren goed. Geen groepsapp vol foto&apos;s van een
+            geprint rooster.
+          </p>
+          <p className="max-w-xl text-sm leading-relaxed text-ink/60">
+            Of je er nu een planningstool, roostertool, planningsprogramma of
+            beschikbaarheidsprogramma voor gebruikt: dit is &apos;m.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/onboarding"
+              className="rounded-full bg-terra px-7 py-3.5 text-base font-bold text-white transition-colors hover:bg-terra-dark"
+            >
+              Begin gratis, 7 dagen
+            </Link>
+            <Link
+              href="/signin"
+              className="rounded-full bg-white px-7 py-3.5 text-base font-bold text-ink transition-colors hover:bg-ink hover:text-paper"
+            >
+              Ik ben uitgenodigd
+            </Link>
           </div>
-
-          <div className="mx-auto w-full max-w-sm [container-type:inline-size]">
-            {/* Laptop: staat dicht en gaat langzaam open (deksel draait om het
-                scharnier), daarna gaat het scherm aan met het rooster erin. */}
-            <div className="hero-lid relative z-10 rounded-t-2xl rounded-b-md border-[6px] border-ink bg-ink p-2 shadow-xl">
-              <div className="hero-screen-on overflow-hidden rounded-lg bg-paper p-1.5">
-                <ScheduleMock />
-              </div>
-            </div>
-            {/* Onderstel: even diep als het deksel hoog is (0,84 x de breedte) en
-                schuin naar achteren gekanteld (rotateX), zodat je het van boven
-                ziet en het echt op een laptop lijkt. perspective() zit in de
-                transform en is gelijk aan die van het deksel, zodat een dicht
-                deksel precies op het toetsenbord past. */}
-            <div className="relative aspect-[100/21] w-full">
-              <div
-                className="absolute inset-x-0 top-0 aspect-[100/84] origin-top bg-[#2d2d29]"
-                style={{ transform: "perspective(833.33cqw) rotateX(77deg)" }}
-              >
-                <div className="absolute inset-x-0 top-0 h-[2%] bg-black/50" />
-                <div
-                  className="absolute inset-x-[5%] top-[5%] h-[55%] rounded-sm"
-                  style={{
-                    backgroundColor: "#3d3d38",
-                    backgroundImage:
-                      "linear-gradient(90deg, #232320 3px, transparent 3px), linear-gradient(0deg, #232320 7px, transparent 7px)",
-                    backgroundSize: "7.1428% 100%, 100% 16.6667%",
-                  }}
-                />
-                <div className="absolute bottom-[8%] left-1/2 h-[26%] w-[36%] -translate-x-1/2 rounded-md border border-white/10 bg-white/[0.03]" />
-              </div>
-            </div>
-            <div className="relative left-1/2 -mt-px h-[8px] w-[110.9%] -translate-x-1/2 rounded-b-lg bg-gradient-to-b from-[#2d2d29] to-ink">
-              <div className="absolute left-1/2 top-0 h-[3px] w-[16%] -translate-x-1/2 rounded-b-md bg-black/50" />
-            </div>
-            <div className="mx-auto mt-3 h-4 w-[96%] rounded-[50%] bg-ink/10 blur-md" />
-          </div>
+          <p className="text-sm text-ink/60">Geen creditcard nodig om te beginnen.</p>
         </div>
+
+        <HeroBoard />
       </section>
 
       {/* De omslag */}
-      <section className="border-y border-line bg-white">
-        <div className="mx-auto max-w-3xl px-6 py-14 text-center">
-          <p className="font-display text-2xl leading-snug md:text-3xl">
-            "Wie kan vrijdag?" in de groepsapp, een geel A4'tje op het
+      <section className="bg-ink text-sage">
+        <div className="mx-auto max-w-4xl px-6 py-16 text-center">
+          <p className="font-display text-2xl font-semibold leading-snug md:text-4xl">
+            &ldquo;Wie kan vrijdag?&rdquo; in de groepsapp, een geel A4&apos;tje op het
             prikbord, en een spreadsheet die alleen jij begrijpt: dat wordt
             één plek waar iedereen naar kijkt.
           </p>
@@ -219,180 +185,130 @@ export default function HomePage() {
       </section>
 
       {/* Functies */}
-      <section id="functies" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-display text-2xl">Alles wat je nodig hebt, op één pagina</h2>
-        <p className="mt-3 max-w-2xl text-ink/70">
-          Of je nu een café, restaurant of bar runt: Shiftje vervangt de spreadsheet voor je rooster en
-          de WhatsApp-groep voor alles daaromheen. Beschikbaarheid, personeelsplanning, ruilen en uren
-          zitten allemaal in dezelfde app, zodat jij en je team maar op één plek hoeven te kijken.
-        </p>
-        <div className="mt-10 divide-y divide-line">
-          <Feature
-            title="Beschikbaarheid"
-            body="Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Handig of je nu vooral in het weekend plant (café, bar) of ook doordeweeks met lunch en diner (restaurant): jij zet weken vooraf open, zodat er nooit een gat valt."
-          />
-          <Feature
-            title="Rooster"
-            body="Beschikbaarheid staat er al naast zodra je gaat inplannen. Sleep niemand meer tussen appjes, het staat gewoon in beeld."
-          />
-          <Feature
-            title="Teams"
-            body="Deel medewerkers in bij bediening, keuken of bar. Handig zodra je met meerdere onderdelen tegelijk plant, zoals keuken en bediening in een restaurant: op het rooster zie je in één oogopslag wie waar hoort."
-          />
-          <Feature
-            title="Ruilen &amp; overnemen"
-            body="Een medewerker kan niet meer? Die biedt de dienst aan, een collega neemt 'm over, en jij geeft (als je dat wil) nog even je akkoord."
-          />
-          <Feature
-            title="Uren"
-            body="Gewerkte uren vullen zich deels vanzelf in op basis van het rooster. Medewerkers bevestigen, jij keurt goed of stuurt terug met een vraag."
-          />
+      <section id="functies" className="mx-auto max-w-6xl px-6 pb-12 pt-24">
+        <div className="max-w-3xl">
+          <h2 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+            Alles wat je nodig hebt, op één pagina
+          </h2>
+          <p className="mt-4 text-lg leading-relaxed text-ink/70">
+            Of je nu een café, restaurant of bar runt: Shiftje vervangt de spreadsheet voor je rooster en
+            de WhatsApp-groep voor alles daaromheen. Beschikbaarheid, personeelsplanning, ruilen en uren
+            zitten allemaal in dezelfde app, zodat jij en je team maar op één plek hoeven te kijken.
+          </p>
+        </div>
+        <div className="mt-10">
+          <FeatureFlipCards />
+        </div>
+      </section>
+
+      {/* Probeer het zelf: de bestaande, klikbare demo */}
+      <section id="demo" className="mx-auto max-w-4xl px-6 pb-20 pt-8">
+        <div className="mb-6 text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Probeer het zelf</h2>
+          <p className="mt-2 text-ink/70">
+            Klik op een dienst, pas de tijden aan of voeg er een toe. Zo werkt het ook in de app.
+          </p>
+        </div>
+        <div className="rounded-3xl bg-white p-3 shadow-[0_30px_50px_-30px_rgba(30,51,38,0.45)] md:p-5">
+          <ScheduleMock />
         </div>
       </section>
 
       {/* Veelgestelde vragen */}
-      <section id="faq" className="mx-auto max-w-3xl px-6 py-20">
-        <h2 className="font-display text-2xl">Veelgestelde vragen</h2>
-        <div className="mt-6 divide-y divide-line">
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat is Shiftje?
-            </summary>
-            <p className="mt-2 text-ink/70">Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Voor wie is Shiftje gemaakt?
-            </summary>
-            <p className="mt-2 text-ink/70">Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat kost Shiftje?
-            </summary>
-            <p className="mt-2 text-ink/70">Vanaf {formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot {formatEuro(PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl)} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Kan ik maandelijks opzeggen?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja, met een maandabonnement kun je elke maand opzeggen. Kies je een jaarabonnement (2 maanden korting), dan loopt dat een jaar.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Kan ik Shiftje eerst gratis proberen?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja, je kunt 7 dagen gratis beginnen zonder creditcard.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Werkt Shiftje ook voor een restaurant met keuken én bediening?
-            </summary>
-            <p className="mt-2 text-ink/70">Ja. Je deelt medewerkers in bij teams zoals bediening en keuken, en plant lunch- en dinerdiensten los van elkaar in.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Wat gebeurt er als iemand een dienst niet kan werken?
-            </summary>
-            <p className="mt-2 text-ink/70">Die biedt de dienst aan het team aan. Een collega neemt 'm over of ruilt, en jij ziet het meteen terug in het rooster.</p>
-          </details>
-          <details className="group py-4">
-            <summary className="cursor-pointer list-none font-medium marker:content-none">
-              Is Shiftje een planningstool, roostertool of beschikbaarheidsprogramma?
-            </summary>
-            <p className="mt-2 text-ink/70">Eigenlijk alle drie tegelijk. Shiftje combineert beschikbaarheid doorgeven, een rooster maken en uren goedkeuren in één programma, zodat je niet drie losse tools nodig hebt.</p>
-          </details>
+      <section id="faq" className="mx-auto max-w-3xl px-6 pb-20 pt-4">
+        <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Veelgestelde vragen</h2>
+        <div className="mt-6 flex flex-col gap-2.5">
+          {faqs.map((f) => (
+            <details key={f.name} className="group rounded-2xl bg-white px-6 py-1.5">
+              <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-4 py-2 font-display text-lg font-bold">
+                {f.name}
+                <span aria-hidden className="text-xl text-terra transition-transform group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="pb-4 leading-relaxed text-ink/70">{f.acceptedAnswer.text}</p>
+            </details>
+          ))}
         </div>
       </section>
 
       {/* Prijs */}
-      <section id="prijs" className="border-t border-line bg-ink text-paper">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-start">
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.15em] text-amber underline decoration-wavy decoration-1 underline-offset-4">
-                Ons menu
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl">
-                Eén prijs per zaak, op basis van de grootte van je team.
-              </h2>
-              <p className="mt-4 max-w-md text-paper/70">
-                Je betaalt een vast bedrag per maand, afhankelijk van hoeveel
-                medewerkers je hebt. Geen kosten per gebruiker, en de prijs
-                past zich vanzelf aan als je team groeit of krimpt.
-              </p>
-              <ul className="mt-6 space-y-2 text-sm text-paper/80">
-                <li>Beschikbaarheid, rooster, teams, uren</li>
-                <li>7 dagen gratis proberen</li>
-                <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
-                <li>Maandelijks opzegbaar*</li>
-              </ul>
-            </div>
-            <div
-              className="rounded-2xl border border-dashed border-paper/30 bg-paper/5 p-6 md:p-8"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(115deg, rgba(250,247,242,0.03) 0px, rgba(250,247,242,0.03) 1px, transparent 1px, transparent 5px)",
-              }}
-            >
-              <table className="w-full text-left text-sm">
-                <thead className="text-xs uppercase tracking-wide text-paper/50">
-                  <tr>
-                    <th className="pb-3 font-medium">Medewerkers</th>
-                    <th className="pb-3 text-right font-medium">Per maand</th>
-                    <th className="pb-3 text-right font-medium">Per jaar (met korting)</th>
+      <section id="prijs" className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="grid items-center gap-10 rounded-[40px] bg-sand p-8 text-[#4A2A12] md:p-14 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <p className="text-sm font-bold uppercase tracking-widest">Ons menu</p>
+            <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+              Eén prijs per zaak, op basis van de grootte van je team.
+            </h2>
+            <p className="text-lg leading-relaxed">
+              Je betaalt een vast bedrag per maand, afhankelijk van hoeveel
+              medewerkers je hebt. Geen kosten per gebruiker, en de prijs
+              past zich vanzelf aan als je team groeit of krimpt.
+            </p>
+            <ul className="list-disc space-y-1 pl-5 text-base">
+              <li>Beschikbaarheid, rooster, teams, uren</li>
+              <li>7 dagen gratis proberen</li>
+              <li>Jaarlijks betalen? Je krijgt 2 maanden korting</li>
+              <li>Maandelijks opzegbaar*</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 text-ink md:p-8">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[360px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-line text-xs font-bold text-ink/55">
+                    <th className="px-3 py-3 font-bold">Medewerkers</th>
+                    <th className="px-3 py-3 font-bold">Per maand</th>
+                    <th className="px-3 py-3 font-bold">Per jaar (met korting)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dashed divide-paper/20">
+                <tbody>
                   {PRICE_TIERS.map((tier) => (
-                    <tr key={tier.id}>
-                      <td className="py-3">{tier.label.replace(" medewerkers", "")}</td>
-                      <td className="py-3 text-right font-display text-lg">
-                        {formatEuro(tier.monthlyExcl)}
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="mr-1.5 text-paper/40 line-through">
+                    <tr key={tier.id} className="border-b border-line/70">
+                      <td className="px-3 py-3.5 font-bold">{tier.label.replace(" medewerkers", "")}</td>
+                      <td className="px-3 py-3.5">{formatEuro(tier.monthlyExcl)}</td>
+                      <td className="px-3 py-3.5">
+                        <span className="mr-2 text-ink/40 line-through">
                           {formatEuro(tier.monthlyExcl * 12)}
                         </span>
-                        <span className="font-medium text-amber">
-                          {formatEuro(yearlyExclForTier(tier))}
-                        </span>
+                        <span className="font-bold">{formatEuro(yearlyExclForTier(tier))}</span>
                       </td>
                     </tr>
                   ))}
                   <tr>
-                    <td className="py-3">Meer dan {MAX_STANDARD_MEMBERS}</td>
-                    <td className="py-3 text-right text-paper/70" colSpan={2}>
+                    <td className="px-3 py-3.5 font-bold">Meer dan {MAX_STANDARD_MEMBERS}</td>
+                    <td colSpan={2} className="px-3 py-3.5">
                       Op maat
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <p className="mt-3 text-xs text-paper/50">Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van 12 maanden.</p>
-              <p className="mt-1 text-xs text-paper/50">*Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.</p>
-
-              <Link
-                href="/onboarding"
-                className="mt-6 block rounded-full bg-amber px-6 py-3 text-center font-medium text-ink hover:bg-amber-dark transition-colors"
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-ink/60">
+              Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van 12 maanden.
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-ink/60">
+              *Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.
+            </p>
+            <Link
+              href="/onboarding"
+              className="mt-5 block w-full rounded-full bg-terra px-5 py-3.5 text-center font-bold text-white transition-colors hover:bg-terra-dark"
+            >
+              Begin gratis
+            </Link>
+            <div className="mt-5 border-t border-line pt-4">
+              <p className="font-bold">Meer dan {MAX_STANDARD_MEMBERS} medewerkers?</p>
+              <p className="mt-1 text-sm text-ink/70">
+                Neem contact met ons op, dan kijken we samen naar de
+                mogelijkheden.
+              </p>
+              <ContactButton
+                message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
+                className="mt-3 rounded-full border-2 border-ink px-5 py-2 text-sm font-bold transition-colors hover:bg-ink hover:text-paper"
               >
-                Begin gratis
-              </Link>
-
-              <div className="mt-6 rounded-xl border border-paper/20 p-4">
-                <p className="text-sm font-medium">
-                  Meer dan {MAX_STANDARD_MEMBERS} medewerkers?
-                </p>
-                <p className="mt-1 text-sm text-paper/60">
-                  Neem contact met ons op, dan kijken we samen naar de
-                  mogelijkheden.
-                </p>
-                <ContactButton
-                  message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
-                  className="mt-3 rounded-full border border-paper/40 px-5 py-2 text-sm font-medium hover:border-paper hover:bg-paper/10 transition-colors"
-                >
-                  Neem contact op
-                </ContactButton>
-              </div>
+                Neem contact op
+              </ContactButton>
             </div>
           </div>
         </div>
@@ -400,14 +316,5 @@ export default function HomePage() {
 
       <SiteFooter />
     </main>
-  );
-}
-
-function Feature({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="grid gap-2 py-8 md:grid-cols-[220px_1fr] md:gap-8">
-      <h2 className="font-display text-2xl">{title}</h2>
-      <p className="max-w-xl text-ink/70">{body}</p>
-    </div>
   );
 }

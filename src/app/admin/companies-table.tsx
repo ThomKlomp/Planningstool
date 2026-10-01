@@ -26,7 +26,7 @@ export default function CompaniesTable({ companies }: { companies: Company[] }) 
         </thead>
         <tbody>
           {companies.map((c) => (
-            <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper/60">
+            <tr key={c.id} className="border-b border-line last:border-0 hover:bg-mist/60">
               <td className="px-4 py-3 font-medium">
                 <Link
                   href={`/admin/companies/${c.id}`}

@@ -7,26 +7,17 @@ html {
 }
 
 body {
-  background-color: #faf7f2;
-  color: #1b1b18;
-  /* Subtiel stippenraster over de hele pagina, zodat de ruimte naast de
-     inhoud op brede schermen niet helemaal leeg aanvoelt. Puur CSS (geen
-     losse afbeelding nodig), heel licht contrast zodat het nooit met de
-     inhoud concurreert. Secties met een eigen ondoorzichtige achtergrond
-     (bg-white, bg-ink) dekken dit gewoon af, dat is prima: het patroon is
-     bedoeld voor de open, papierkleurige stukken (hero, footer, tussen de
-     kaarten), niet als iets dat overal zichtbaar moet zijn. */
-  background-image: radial-gradient(circle, #ddd5c7 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-color: #fbfdf9;
+  color: #1e3326;
 }
 
 ::selection {
-  background-color: #e8a33d;
-  color: #1b1b18;
+  background-color: #f3d9b1;
+  color: #1e3326;
 }
 
 :focus-visible {
-  outline: 2px solid #3f6e5b;
+  outline: 2px solid #b8542f;
   outline-offset: 2px;
 }
 
@@ -47,7 +38,7 @@ body {
 
 /* Subtiele "lift" voor kaartachtige oppervlakken (statistiekkaarten, panelen,
    prijskaarten, enz.) voor een iets moderner gevoel dan de vorige platte
-   rand. Gebruikt dezelfde lijnkleur als de rest van het ontwerp (#DDD5C7,
+   rand. Gebruikt dezelfde lijnkleur als de rest van het ontwerp (#E6EDDC,
    "line" in tailwind.config.ts) in plaats van een generieke grijze
    waas-schaduw, zodat het bij de bestaande, wat illustratieve stijl blijft
    passen (zie ook de prijskaart op de homepage en de roostermock, die deze
@@ -61,7 +52,7 @@ body {
    niet de volgorde van de @tailwind-directives. */
 .rounded-xl.border-line.bg-white:not([class*="shadow-"]),
 .rounded-2xl.border-line.bg-white:not([class*="shadow-"]) {
-  box-shadow: 0 2px 0 0 #ddd5c7;
+  box-shadow: 0 1px 0 0 #e6eddc;
 }
 
 /* Hero: een laptop die dicht staat en langzaam opengaat. Het scherm gaat
@@ -131,4 +122,136 @@ body {
   .hero-shift-land {
     animation: none;
   }
+}
+
+/* Openbare pagina's (home, privacy, voorwaarden, 404, ...): lichtgroene
+   "sage" achtergrond in plaats van de bijna-witte app-achtergrond. */
+.page-sage {
+  background-color: #eef1e4;
+}
+
+/* Inlogpagina's en andere toegangspagina's: bijna wit met heel zachte cirkels. */
+.auth-backdrop {
+  position: relative;
+  overflow: hidden;
+  background-color: #fcfdfa;
+}
+.auth-backdrop::before,
+.auth-backdrop::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.auth-backdrop::before {
+  width: 520px;
+  height: 520px;
+  left: -160px;
+  top: -120px;
+  background: #f4f8ee;
+}
+.auth-backdrop::after {
+  width: 380px;
+  height: 380px;
+  right: -120px;
+  bottom: -60px;
+  background: #edf3e4;
+}
+
+/* Functieblokken op de homepage die omdraaien (alleen CSS: een verborgen
+   checkbox schakelt de draai). */
+.flip {
+  position: relative;
+  perspective: 1400px;
+  height: 520px;
+}
+.flip > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+.flip-inner {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip > input:checked ~ .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 1.75rem;
+  overflow: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+.flip > input:focus-visible ~ .flip-inner .flip-front {
+  outline: 3px solid #b8542f;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .flip {
+    height: 600px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner {
+    transition: none;
+  }
+}
+
+/* Bewegende UI in de hero van de homepage (puur CSS, lus van 10 seconden). */
+@keyframes ui-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  5% { opacity: 1; transform: scale(1.08); }
+  8% { transform: scale(1); }
+  86% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes ui-toast-a {
+  0%, 28% { opacity: 0; transform: translateY(14px); }
+  34%, 56% { opacity: 1; transform: translateY(0); }
+  60%, 100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes ui-toast-b {
+  0%, 60% { opacity: 0; transform: translateY(14px); }
+  66%, 90% { opacity: 1; transform: translateY(0); }
+  96%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes ui-cursor {
+  0%, 32% { opacity: 0; transform: translate(130px, 60px); }
+  38% { opacity: 1; transform: translate(130px, 60px); }
+  50% { opacity: 1; transform: translate(0, 0); }
+  54% { transform: translate(0, 0) scale(0.85); }
+  57% { opacity: 1; transform: translate(0, 0) scale(1); }
+  60%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes ui-press {
+  0%, 51% { transform: scale(1); }
+  54% { transform: scale(0.92); }
+  57%, 100% { transform: scale(1); }
+}
+@keyframes ui-ping {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.ui-pop { animation: ui-pop 10s ease-in-out infinite both; }
+.ui-toast-a { animation: ui-toast-a 10s ease-in-out infinite both; }
+.ui-toast-b { animation: ui-toast-b 10s ease-in-out infinite both; }
+.ui-cursor { animation: ui-cursor 10s ease-in-out infinite both; }
+.ui-press { animation: ui-press 10s ease-in-out infinite both; }
+.ui-ping { animation: ui-ping 1.8s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ui-pop, .ui-toast-a, .ui-toast-b, .ui-cursor, .ui-press, .ui-ping { animation: none; }
+  .ui-toast-b, .ui-cursor { display: none; }
 }

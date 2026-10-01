@@ -462,7 +462,7 @@ function EditRow({
   }
 
   return (
-    <tr className="border-b border-line bg-paper/60 last:border-0">
+    <tr className="border-b border-line bg-mist/60 last:border-0">
       <td className="px-4 py-3 font-mono font-medium align-top">{discountCode.code}</td>
       <td colSpan={5} className="px-4 py-3">
         <div className="grid gap-2 sm:grid-cols-3">

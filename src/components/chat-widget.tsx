@@ -147,7 +147,7 @@ export default function ChatWidget({
                 key={m.id}
                 className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
                   m.sender === "SUPPORT"
-                    ? "bg-paper text-ink"
+                    ? "bg-mist text-ink"
                     : "ml-auto bg-ink text-paper"
                 }`}
               >

@@ -163,7 +163,7 @@ export default function ShiftTemplatesManager({
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   weekdays.includes(w.value)
                     ? "bg-ink text-paper"
-                    : "bg-paper text-ink/50 hover:text-ink"
+                    : "bg-mist text-ink/50 hover:text-ink"
                 }`}
               >
                 {w.label}

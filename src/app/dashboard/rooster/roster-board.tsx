@@ -437,7 +437,7 @@ function ShiftCard({
   return (
     <div
       onClick={canManage ? onEdit : undefined}
-      className={`rounded-lg bg-paper px-2 py-2 text-xs ${
+      className={`rounded-lg bg-mist px-2 py-2 text-xs ${
         canManage && onEdit ? "cursor-pointer hover:bg-ink/5" : ""
       }`}
     >

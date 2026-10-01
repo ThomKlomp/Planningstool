@@ -163,7 +163,7 @@ export default function AvailabilityGrid({
                           onClick={() => save(dateIso, shift.daypart, opt.value, note)}
                           disabled={locked || saving === key}
                           className={`w-full rounded-full px-2 py-1 text-xs font-medium transition-opacity ${
-                            current === opt.value ? opt.classes : "bg-paper text-ink/50"
+                            current === opt.value ? opt.classes : "bg-mist text-ink/50"
                           } ${locked ? "opacity-40" : saving === key ? "opacity-50" : "hover:opacity-80"}`}
                         >
                           {opt.label}

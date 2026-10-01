@@ -18,12 +18,12 @@ export async function GET(req: Request) {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#1B1B18",
-          color: "#FAF7F2",
+          backgroundColor: "#1E3326",
+          color: "#FBFDF9",
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", fontSize: 30, color: "#E8A33D", fontWeight: 600 }}>{eyebrow}</div>
+        <div style={{ display: "flex", fontSize: 30, color: "#F3D9B1", fontWeight: 600 }}>{eyebrow}</div>
         <div
           style={{
             display: "flex",
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         >
           {title}
         </div>
-        <div style={{ display: "flex", marginTop: 40, fontSize: 26, color: "#DDD5C7" }}>
+        <div style={{ display: "flex", marginTop: 40, fontSize: 26, color: "#CBD9B8" }}>
           shiftje.nl · beschikbaarheid, rooster &amp; uren op één plek
         </div>
       </div>

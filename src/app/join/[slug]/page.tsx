@@ -15,7 +15,7 @@ export default async function JoinPage({
 
   if (!company) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+      <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 text-center">
         <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
           <h1 className="font-display text-2xl">Deze link is niet geldig</h1>
           <p className="mt-2 text-ink/60">

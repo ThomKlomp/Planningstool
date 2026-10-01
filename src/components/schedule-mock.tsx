@@ -178,7 +178,7 @@ export default function ScheduleMock() {
                               <button
                                 key={s.id}
                                 onClick={() => openEdit(dayIndex, s)}
-                                className="hero-shift-land block w-full rounded-md bg-paper px-1.5 py-1 text-left transition-colors hover:bg-line/60"
+                                className="hero-shift-land block w-full rounded-md bg-mist px-1.5 py-1 text-left transition-colors hover:bg-line/60"
                                 style={{ animationDelay: `${delayMs}ms` }}
                               >
                                 <p className="truncate text-[9px] font-medium leading-tight">
@@ -231,7 +231,7 @@ export default function ScheduleMock() {
                         key={t.id}
                         type="button"
                         onClick={() => applyTemplate(t)}
-                        className="rounded-full bg-paper px-2 py-0.5 text-[9px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
+                        className="rounded-full bg-mist px-2 py-0.5 text-[9px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
                       >
                         {t.name} ({shortTime(t.startTime)}–{shortTime(t.endTime)})
                       </button>

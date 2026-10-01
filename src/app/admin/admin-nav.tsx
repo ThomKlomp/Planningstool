@@ -57,7 +57,7 @@ export default function AdminNav({
             href={item.href}
             onClick={() => setOpen(false)}
             className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-              isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
+              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}
@@ -72,13 +72,13 @@ export default function AdminNav({
           <Link
             href={backLink.href}
             onClick={() => setOpen(false)}
-            className="block rounded-lg px-3 py-2 text-sm text-ink/50 hover:bg-paper hover:text-ink"
+            className="block rounded-lg px-3 py-2 text-sm text-ink/50 hover:bg-mist hover:text-ink"
           >
             {backLink.label}
           </Link>
         )}
         <div className="mt-1 border-t border-line pt-1">
-          <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-paper hover:text-ink" />
+          <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-mist hover:text-ink" />
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export default function AdminNav({
             key={item.href}
             href={item.href}
             className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 ${
-              isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
+              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}
@@ -112,7 +112,7 @@ export default function AdminNav({
         {backLink && (
           <Link
             href={backLink.href}
-            className="ml-auto shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/50 hover:bg-paper hover:text-ink"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-ink/50 hover:bg-mist hover:text-ink"
           >
             {backLink.label}
           </Link>
