@@ -190,10 +190,10 @@ export default function HomeViewMaison({
         </div>
       </section>
 
-      {/* Prijs: als kassabon */}
+      {/* Prijs: per pakket een kassabon */}
       <section id="prijs" className="bg-ink text-paper" style={themeStyle(t.priceVars ?? {})}>
         <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="grid gap-14 md:grid-cols-[1fr_1fr] md:items-start">
+          <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr] md:items-end">
             <div>
               <p className="mb-4 flex items-center gap-3 text-xs font-medium uppercase tracking-[0.2em] text-amber">
                 <span className="h-px w-8 bg-amber" aria-hidden />
@@ -202,131 +202,113 @@ export default function HomeViewMaison({
               <h2 className="font-display text-4xl font-medium leading-tight tracking-tight md:text-5xl">
                 Eén prijs per zaak, op basis van de grootte van je team.
               </h2>
-              <p className="mt-5 max-w-md leading-relaxed text-paper/70">
+              <p className="mt-5 max-w-lg leading-relaxed text-paper/70">
                 Je betaalt een vast bedrag per maand, afhankelijk van hoeveel medewerkers je hebt.
                 Geen kosten per gebruiker, en de prijs past zich vanzelf aan als je team groeit of
                 krimpt.
               </p>
-              <ul className="mt-8 space-y-2 text-paper/80">
-                <li>Beschikbaarheid, rooster, teams, uren</li>
-                <li>7 dagen gratis proberen</li>
-                <li className="font-semibold text-amber">Jaarlijks betalen? Je krijgt 2 maanden korting</li>
-                <li>Maandelijks opzegbaar*</li>
-              </ul>
             </div>
-
-            {/* Prijslijst als kassabon */}
-            <div className="relative mx-auto w-full max-w-sm md:rotate-[1.2deg]">
-              <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_TOP }} />
-              <div className="bg-[#FFFDF6] px-6 pb-2 pt-4 text-[14px] leading-6 text-[#1c1c19] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)] [font-family:var(--bon-font,ui-monospace,monospace)]">
-                <div
-                  aria-hidden
-                  className="absolute right-3 top-7 -rotate-12 border-2 border-[#B3261E] px-2 py-0.5 text-center text-[11px] font-bold uppercase leading-4 tracking-wider text-[#B3261E]"
-                >
-                  Jaarlijks:
-                  <br />2 maanden korting
-                </div>
-                <p className="text-xl font-semibold tracking-[0.35em]">SHIFTJE</p>
-                <p className="max-w-[9rem] text-[11px] uppercase leading-4 tracking-widest text-[#1c1c19]/60">
-                  Rooster voor kleine horeca
-                </p>
-                <ReceiptRule />
-                <p className="text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
-                  Tarieven per zaak, per maand
-                </p>
-                <ul className="mt-3 space-y-4">
-                  {PRICE_TIERS.map((tier) => {
-                    const yearly = yearlyExclForTier(tier);
-                    const saving = tier.monthlyExcl * 12 - yearly;
-                    return (
-                      <li key={tier.id}>
-                        <ReceiptLine
-                          label={<span className="text-[15px]">{tier.label}</span>}
-                          value={
-                            <>
-                              {formatEuro(tier.monthlyExcl)}
-                              <span className="text-[12px] font-normal"> /mnd</span>
-                            </>
-                          }
-                          strong
-                          big
-                        />
-                        <div className="mt-1.5 flex items-center justify-between gap-2 bg-[#1c1c19] px-2.5 py-1.5 text-[#FFFDF6]">
-                          <span className="text-[12px] uppercase tracking-wider">
-                            Jaarlijks{" "}
-                            <span className="text-[#FFFDF6]/60 line-through">
-                              {formatEuro(tier.monthlyExcl * 12)}
-                            </span>
-                          </span>
-                          <span className="whitespace-nowrap text-base font-bold">
-                            {formatEuro(yearly)}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-right text-[12px] font-semibold text-[#B3261E]">
-                          Je bespaart {formatEuro(saving)}
-                        </p>
-                      </li>
-                    );
-                  })}
-                  <li>
-                    <ReceiptLine
-                      label={<span className="text-[15px]">{`Meer dan ${MAX_STANDARD_MEMBERS} medewerkers`}</span>}
-                      value="op maat"
-                      strong
-                    />
-                  </li>
-                </ul>
-                <ReceiptRule />
-                <ReceiptLine label="Kosten per gebruiker" value={formatEuro(0)} />
-                <ReceiptRule />
-                <ul className="space-y-0.5 text-[#1c1c19]/80">
-                  <li>1x Beschikbaarheid, rooster, teams, uren</li>
-                  <li>1x 7 dagen gratis proberen</li>
-                  <li className="font-semibold text-[#B3261E]">1x Jaarlijks betalen = 2 maanden korting</li>
-                  <li>1x Maandelijks opzegbaar*</li>
-                </ul>
-                <ReceiptRule />
-                <p className="text-[11px] leading-5 text-[#1c1c19]/60">
-                  Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van
-                  12 maanden.
-                  <br />
-                  *Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.
-                </p>
-
-                <Link
-                  href="/onboarding"
-                  className="mt-5 block rounded-btn bg-[#1c1c19] px-6 py-3 text-center font-medium text-[#FFFDF6] transition-colors hover:bg-awning"
-                >
-                  Begin gratis
-                </Link>
-
-                <ReceiptRule />
-                <p className="font-semibold">Meer dan {MAX_STANDARD_MEMBERS} medewerkers?</p>
-                <p className="text-[12px] text-[#1c1c19]/65">
-                  Neem contact met ons op, dan kijken we samen naar de mogelijkheden.
-                </p>
-                <ContactButton
-                  message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
-                  className="mt-1 border-b border-[#1c1c19]/50 text-[12px] font-semibold transition-colors hover:border-[#1c1c19]"
-                >
-                  Neem contact op
-                </ContactButton>
-
-                <div
-                  aria-hidden
-                  className="mx-auto mt-6 h-10 w-4/5"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(90deg, #1c1c19 0 2px, transparent 2px 4px, #1c1c19 4px 5px, transparent 5px 8px, #1c1c19 8px 11px, transparent 11px 13px)",
-                  }}
-                />
-                <p className="mb-3 mt-2 text-center text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
-                  Bedankt en tot ziens
-                </p>
-              </div>
-              <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_BOTTOM }} />
-            </div>
+            <ul className="space-y-2 text-paper/80">
+              <li>Beschikbaarheid, rooster, teams, uren</li>
+              <li>7 dagen gratis proberen</li>
+              <li className="font-semibold text-amber">Jaarlijks betalen? Je krijgt 2 maanden korting</li>
+              <li>Maandelijks opzegbaar*</li>
+            </ul>
           </div>
+
+          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {PRICE_TIERS.map((tier, i) => {
+              const yearly = yearlyExclForTier(tier);
+              const saving = tier.monthlyExcl * 12 - yearly;
+              const tilt = ["lg:-rotate-[1.5deg]", "lg:rotate-[1deg]", "lg:-rotate-[0.8deg]", "lg:rotate-[1.6deg]"][i % 4];
+              return (
+                <div key={tier.id} className={`relative flex flex-col ${tilt}`}>
+                  <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_TOP }} />
+                  <div className="flex flex-1 flex-col bg-[#FFFDF6] px-5 pb-2 pt-4 text-[13px] leading-5 text-[#1c1c19] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)] [font-family:var(--bon-font,ui-monospace,monospace)]">
+                    <div
+                      aria-hidden
+                      className="absolute right-2 top-14 -rotate-12 border-2 border-[#B3261E] px-1.5 py-0.5 text-center text-[10px] font-bold uppercase leading-3 tracking-wider text-[#B3261E]"
+                    >
+                      Jaarlijks:
+                      <br />2 mnd korting
+                    </div>
+                    <p className="text-lg font-semibold tracking-[0.35em]">SHIFTJE</p>
+                    <p className="text-[11px] uppercase tracking-widest text-[#1c1c19]/60">
+                      Pakket {i + 1}
+                    </p>
+                    <ReceiptRule />
+                    <p className="text-[15px] font-semibold">{tier.label}</p>
+                    <p className="mt-2 text-4xl font-bold leading-none">
+                      {formatEuro(tier.monthlyExcl)}
+                    </p>
+                    <p className="mt-1 text-[12px] text-[#1c1c19]/65">per maand, excl. btw</p>
+
+                    <div className="mt-4 flex items-center justify-between gap-2 bg-[#1c1c19] px-2.5 py-2 text-[#FFFDF6]">
+                      <span className="text-[11px] uppercase leading-4 tracking-wider">
+                        Jaarlijks
+                        <br />
+                        <span className="text-[#FFFDF6]/60 line-through">
+                          {formatEuro(tier.monthlyExcl * 12)}
+                        </span>
+                      </span>
+                      <span className="whitespace-nowrap text-xl font-bold">{formatEuro(yearly)}</span>
+                    </div>
+                    <p className="mt-1 text-right text-[12px] font-semibold text-[#B3261E]">
+                      Je bespaart {formatEuro(saving)}
+                    </p>
+
+                    <ReceiptRule />
+                    <ReceiptLine label="Kosten per gebruiker" value={formatEuro(0)} />
+                    <ReceiptRule />
+                    <ul className="space-y-0.5 pb-4 text-[12px] text-[#1c1c19]/80">
+                      <li>1x Beschikbaarheid, rooster, teams, uren</li>
+                      <li>1x 7 dagen gratis proberen</li>
+                      <li>1x Maandelijks opzegbaar*</li>
+                    </ul>
+
+                    <Link
+                      href="/onboarding"
+                      className="mt-auto block rounded-btn bg-[#1c1c19] px-4 py-2.5 text-center font-medium text-[#FFFDF6] transition-colors hover:bg-awning"
+                    >
+                      Begin gratis
+                    </Link>
+                    <div
+                      aria-hidden
+                      className="mx-auto mt-5 h-8 w-4/5"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(90deg, #1c1c19 0 2px, transparent 2px 4px, #1c1c19 4px 5px, transparent 5px 8px, #1c1c19 8px 11px, transparent 11px 13px)",
+                      }}
+                    />
+                    <p className="mb-3 mt-2 text-center text-[10px] uppercase tracking-widest text-[#1c1c19]/60">
+                      Bedankt en tot ziens
+                    </p>
+                  </div>
+                  <div aria-hidden className="h-2 bg-repeat-x" style={{ backgroundImage: TEETH_BOTTOM }} />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-12 flex flex-wrap items-center justify-between gap-5 border border-dashed border-paper/40 px-6 py-5">
+            <div>
+              <p className="font-display text-xl">Meer dan {MAX_STANDARD_MEMBERS} medewerkers? Op maat.</p>
+              <p className="mt-1 text-sm text-paper/70">
+                Neem contact met ons op, dan kijken we samen naar de mogelijkheden.
+              </p>
+            </div>
+            <ContactButton
+              message={`Hoi! Ik heb meer dan ${MAX_STANDARD_MEMBERS} medewerkers en wil graag weten wat de mogelijkheden zijn.`}
+              className="rounded-btn border border-paper/60 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-paper hover:text-ink"
+            >
+              Neem contact op
+            </ContactButton>
+          </div>
+
+          <p className="mt-6 text-xs leading-relaxed text-paper/60">
+            Alle prijzen excl. btw. Kies je een jaarabonnement, dan betaal je 10 in plaats van 12
+            maanden. *Geldt voor het maandabonnement. Een jaarabonnement loopt een jaar.
+          </p>
         </div>
       </section>
 
