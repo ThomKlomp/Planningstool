@@ -396,7 +396,7 @@ const FEATURES: {
 
 export default function FeatureFlipCards() {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {FEATURES.map((f) => (
         <div key={f.title} className="flip">
           <input type="checkbox" aria-label={`Bekijk ${f.label} in de app`} />
