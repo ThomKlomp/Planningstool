@@ -89,7 +89,7 @@ export default function DayPanel({
           </div>
           <button
             onClick={onClose}
-            className="rounded-full px-2 py-1 text-ink/50 hover:bg-paper hover:text-ink"
+            className="rounded-full px-2 py-1 text-ink/50 hover:bg-mist hover:text-ink"
             aria-label="Sluiten"
           >
             ✕
@@ -219,7 +219,7 @@ function AddShiftForm({
               key={t.id}
               type="button"
               onClick={() => applyTemplate(t)}
-              className="rounded-full bg-paper px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
+              className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
             >
               {t.name} ({t.startTime}–{t.endTime})
             </button>

@@ -80,7 +80,7 @@ export default async function BillingPage() {
         )}
         <div className="mt-4 overflow-hidden rounded-xl border border-line">
           <table className="w-full text-left text-sm">
-            <thead className="bg-paper text-xs uppercase text-ink/50">
+            <thead className="bg-mist text-xs uppercase text-ink/50">
               <tr>
                 <th className="px-4 py-2">Medewerkers</th>
                 <th className="px-4 py-2">Per maand (excl. btw)</th>

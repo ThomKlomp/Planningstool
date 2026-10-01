@@ -56,7 +56,7 @@ export default function AcceptInviteForm({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-6">
+    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
         <p className="text-xs uppercase tracking-wide text-awning text-center">
           Uitnodiging

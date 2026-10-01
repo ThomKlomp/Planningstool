@@ -4,7 +4,7 @@ import SiteFooter from "@/components/marketing/site-footer";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-paper text-ink">
+    <main className="page-sage min-h-screen text-ink">
       <SiteHeader />
       <section className="mx-auto flex max-w-2xl flex-col items-center px-6 py-28 text-center">
         <span className="rounded-full bg-amber/20 px-3 py-1 text-xs font-medium text-amber-dark">
@@ -20,7 +20,7 @@ export default function NotFound() {
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/"
-            className="rounded-full bg-amber px-6 py-3 font-medium text-ink hover:bg-amber-dark transition-colors"
+            className="rounded-full bg-terra px-6 py-3 font-bold text-white hover:bg-terra-dark transition-colors"
           >
             Terug naar de zaak
           </Link>

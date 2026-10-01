@@ -30,7 +30,7 @@ function DemoSwitchInner() {
   }, [email, router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 text-center">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
         {error ? (
           <>
@@ -55,7 +55,7 @@ export default function DemoSwitchPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+        <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 text-center">
           <p className="text-sm text-ink/60">Bezig met inloggen...</p>
         </main>
       }

@@ -68,7 +68,7 @@ export default function DemoCompanyReset() {
           <div className="mt-3 overflow-x-auto rounded-lg border border-line">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line bg-paper text-left text-xs uppercase tracking-wide text-ink/40">
+                <tr className="border-b border-line bg-mist text-left text-xs uppercase tracking-wide text-ink/40">
                   <th className="px-3 py-2">Rol</th>
                   <th className="px-3 py-2">E-mail</th>
                   <th className="px-3 py-2">Wachtwoord</th>

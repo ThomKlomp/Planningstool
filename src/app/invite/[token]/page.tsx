@@ -28,7 +28,7 @@ export default async function InvitePage({
 
   if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+      <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 text-center">
         <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
           <h1 className="font-display text-2xl">
             Deze uitnodiging is niet meer geldig
@@ -68,7 +68,7 @@ export default async function InvitePage({
 
   if (session.user.email?.toLowerCase() !== invite.email.toLowerCase()) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-paper px-6 text-center">
+      <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 text-center">
         <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
           <h1 className="font-display text-2xl">Verkeerd account</h1>
           <p className="mt-2 text-ink/60">

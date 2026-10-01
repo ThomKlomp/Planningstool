@@ -12,13 +12,13 @@ export default function PageHero({
 }) {
   return (
     <section className="mx-auto max-w-3xl px-6 pb-4 pt-14 md:pt-20">
-      <p className="mb-3 text-sm font-medium text-awning">{eyebrow}</p>
+      <p className="mb-3 text-sm font-medium text-terra">{eyebrow}</p>
       <h1 className="font-display text-3xl leading-tight md:text-4xl">{title}</h1>
       <p className="mt-5 text-lg text-ink/70">{intro}</p>
       <div className="mt-7 flex flex-wrap gap-4">
         <Link
           href="/onboarding"
-          className="rounded-full bg-amber px-6 py-3 font-medium text-ink hover:bg-amber-dark transition-colors"
+          className="rounded-full bg-terra px-6 py-3 font-bold text-white hover:bg-terra-dark transition-colors"
         >
           Begin gratis, 7 dagen
         </Link>

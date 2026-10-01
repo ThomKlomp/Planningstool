@@ -52,7 +52,7 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
               href={item.href}
               onClick={() => setOpen(false)}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
+                isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
               }`}
             >
               {item.label}
@@ -64,7 +64,7 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
             </Link>
           ))}
           <div className="mt-1 border-t border-line pt-1">
-            <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-paper hover:text-ink" />
+            <SignOutButton className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink/50 hover:bg-mist hover:text-ink" />
           </div>
         </nav>
 
@@ -84,7 +84,7 @@ export default function DashboardNav({ items }: { items: DashboardNavItem[] }) {
             key={item.href}
             href={item.href}
             className={`block rounded-lg px-3 py-2 text-left text-sm ${
-              isActive(item.href) ? "bg-paper font-medium text-ink" : "text-ink/70 hover:bg-paper hover:text-ink"
+              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}

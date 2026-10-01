@@ -23,7 +23,7 @@ export default function GlobalError({
       <div className="mt-8 flex flex-wrap justify-center gap-4">
         <button
           onClick={reset}
-          className="rounded-full bg-amber px-6 py-3 font-medium text-ink hover:bg-amber-dark transition-colors"
+          className="rounded-full bg-terra px-6 py-3 font-bold text-white hover:bg-terra-dark transition-colors"
         >
           Probeer opnieuw
         </button>

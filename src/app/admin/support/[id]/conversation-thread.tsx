@@ -82,7 +82,7 @@ export default function ConversationThread({
             className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
               m.sender === "SUPPORT"
                 ? "ml-auto bg-ink text-paper"
-                : "bg-paper text-ink"
+                : "bg-mist text-ink"
             }`}
           >
             <p className="whitespace-pre-wrap">{m.body}</p>

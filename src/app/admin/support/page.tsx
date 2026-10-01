@@ -33,7 +33,7 @@ export default async function AdminSupportPage() {
             <li key={c.id}>
               <Link
                 href={`/admin/support/${c.id}`}
-                className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-paper/60"
+                className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-mist/60"
               >
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm font-medium">

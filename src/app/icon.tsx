@@ -19,7 +19,7 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FAF7F2",
+          background: "#FBFDF9",
         }}
       >
         <svg
@@ -27,7 +27,7 @@ export default function Icon() {
           height="22"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#1B1B18"
+          stroke="#1E3326"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"

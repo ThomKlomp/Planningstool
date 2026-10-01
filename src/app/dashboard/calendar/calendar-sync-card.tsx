@@ -63,7 +63,7 @@ export default function CalendarSyncCard() {
             <input
               readOnly
               value={url}
-              className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink/70"
+              className="w-full rounded-lg border border-line bg-mist px-3 py-2 text-xs text-ink/70"
             />
             <button
               onClick={copy}

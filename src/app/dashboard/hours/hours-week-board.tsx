@@ -155,7 +155,7 @@ export default function HoursWeekBoard({
                             ? "bg-awning/10"
                             : !canManage && entry.status === "QUERIED"
                             ? "bg-amber/15"
-                            : "bg-paper";
+                            : "bg-mist";
 
                         return (
                           <div
