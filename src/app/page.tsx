@@ -118,7 +118,7 @@ export default function HomePage() {
   const faqs = faqSchema.mainEntity;
 
   return (
-    <main className="page-sage min-h-screen text-ink">
+    <main className="page-sage min-h-screen overflow-x-clip text-ink">
       {/* eslint-disable-next-line react/no-danger */}
       <script
         type="application/ld+json"
@@ -132,8 +132,8 @@ export default function HomePage() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-10 md:pt-14 lg:grid-cols-[1fr_1.2fr]">
-        <div className="flex flex-col gap-5">
+      <section className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-12 px-6 pb-20 pt-10 md:pt-14 lg:grid-cols-[1fr_1.2fr]">
+        <div className="flex min-w-0 flex-col gap-5">
           <p className="self-start rounded-full bg-sand px-4 py-2 text-sm font-bold text-[#4A2A12]">
             Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
           </p>
@@ -234,7 +234,7 @@ export default function HomePage() {
 
       {/* Prijs */}
       <section id="prijs" className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="grid items-center gap-10 rounded-[40px] bg-sand p-8 text-[#4A2A12] md:p-14 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 rounded-[40px] bg-sand p-8 text-[#4A2A12] md:p-14 lg:grid-cols-2">
           <div className="flex flex-col gap-4">
             <p className="text-sm font-bold uppercase tracking-widest">Ons menu</p>
             <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
@@ -253,23 +253,23 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className="rounded-3xl bg-white p-6 text-ink md:p-8">
+          <div className="min-w-0 rounded-3xl bg-white p-6 text-ink md:p-8">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[360px] text-left text-sm">
+              <table className="w-full text-left text-[13px] sm:text-sm">
                 <thead>
                   <tr className="border-b border-line text-xs font-bold text-ink/55">
-                    <th className="px-3 py-3 font-bold">Medewerkers</th>
-                    <th className="px-3 py-3 font-bold">Per maand</th>
-                    <th className="px-3 py-3 font-bold">Per jaar (met korting)</th>
+                    <th className="px-2 py-3 font-bold sm:px-3">Medewerkers</th>
+                    <th className="px-2 py-3 font-bold sm:px-3">Per maand</th>
+                    <th className="px-2 py-3 font-bold sm:px-3">Per jaar (met korting)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {PRICE_TIERS.map((tier) => (
                     <tr key={tier.id} className="border-b border-line/70">
-                      <td className="px-3 py-3.5 font-bold">{tier.label.replace(" medewerkers", "")}</td>
-                      <td className="px-3 py-3.5">{formatEuro(tier.monthlyExcl)}</td>
-                      <td className="px-3 py-3.5">
-                        <span className="mr-2 text-ink/40 line-through">
+                      <td className="px-2 py-3.5 font-bold sm:px-3">{tier.label.replace(" medewerkers", "")}</td>
+                      <td className="px-2 py-3.5 sm:px-3">{formatEuro(tier.monthlyExcl)}</td>
+                      <td className="px-2 py-3.5 sm:px-3">
+                        <span className="block text-ink/40 line-through sm:mr-2 sm:inline">
                           {formatEuro(tier.monthlyExcl * 12)}
                         </span>
                         <span className="font-bold">{formatEuro(yearlyExclForTier(tier))}</span>
@@ -277,8 +277,8 @@ export default function HomePage() {
                     </tr>
                   ))}
                   <tr>
-                    <td className="px-3 py-3.5 font-bold">Meer dan {MAX_STANDARD_MEMBERS}</td>
-                    <td colSpan={2} className="px-3 py-3.5">
+                    <td className="px-2 py-3.5 font-bold sm:px-3">Meer dan {MAX_STANDARD_MEMBERS}</td>
+                    <td colSpan={2} className="px-2 py-3.5 sm:px-3">
                       Op maat
                     </td>
                   </tr>

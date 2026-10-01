@@ -143,16 +143,22 @@ body {
   border-radius: 9999px;
   pointer-events: none;
 }
+.auth-backdrop > * {
+  position: relative;
+  z-index: 1;
+}
 .auth-backdrop::before {
-  width: 520px;
-  height: 520px;
+  z-index: 0;
+  width: min(520px, 90vw);
+  height: min(520px, 90vw);
   left: -160px;
   top: -120px;
   background: #f4f8ee;
 }
 .auth-backdrop::after {
-  width: 380px;
-  height: 380px;
+  z-index: 0;
+  width: min(380px, 70vw);
+  height: min(380px, 70vw);
   right: -120px;
   bottom: -60px;
   background: #edf3e4;
