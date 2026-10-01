@@ -304,7 +304,7 @@ export default function DiscountCodesManager({
         <button
           type="submit"
           disabled={creating}
-          className="mt-4 rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="mt-4 rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {creating ? "Aanmaken..." : "Code aanmaken"}
         </button>
@@ -533,7 +533,7 @@ function EditRow({
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-paper hover:bg-awning disabled:opacity-50"
+            className="rounded-full bg-orange px-3 py-1.5 text-xs font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
           >
             {saving ? "Opslaan..." : "Opslaan"}
           </button>

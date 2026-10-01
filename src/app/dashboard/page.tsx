@@ -96,7 +96,7 @@ export default async function DashboardOverviewPage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="stat-grid mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard label="Teamleden" value={members.length} />
         <StatCard label="Shifts deze week" value={weekShifts.length} />
         <StatCard label="Nog niet toegewezen" value={openShiftCount} />
@@ -158,6 +158,7 @@ export default async function DashboardOverviewPage() {
             email: i.email,
             role: i.role,
             token: i.token,
+            departmentId: i.departmentId,
           }))}
         />
       )}

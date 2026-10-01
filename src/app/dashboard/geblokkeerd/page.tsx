@@ -41,7 +41,7 @@ export default async function BlockedPage() {
       {membership.role === "OWNER" ? (
         <Link
           href="/dashboard/settings/billing"
-          className="mt-6 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper hover:bg-awning"
+          className="mt-6 rounded-full bg-orange px-5 py-2.5 text-sm font-medium text-ink hover:bg-orange-dark"
         >
           Kies een abonnement om door te gaan
         </Link>

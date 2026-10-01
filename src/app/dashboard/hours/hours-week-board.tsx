@@ -118,7 +118,7 @@ export default function HoursWeekBoard({
               <p
                 className={
                   isToday
-                    ? "inline-block rounded-full bg-ink px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-paper"
+                    ? "inline-block rounded-full bg-orange px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink"
                     : "text-xs uppercase tracking-wide text-ink/40"
                 }
               >

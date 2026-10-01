@@ -52,10 +52,24 @@ export async function POST(req: Request) {
     extraDepartmentIds = found.map((d) => d.id);
   }
 
+  // Hoofdteam (optioneel, alleen voor medewerkers): moet een team van deze zaak zijn.
+  let departmentId: string | null = null;
+  if (role === "EMPLOYEE" && typeof body?.departmentId === "string" && body.departmentId) {
+    const dept = await prisma.department.findFirst({
+      where: { id: body.departmentId, companyId: membership.companyId },
+      select: { id: true },
+    });
+    if (!dept) {
+      return NextResponse.json({ error: "Onbekend team" }, { status: 400 });
+    }
+    departmentId = dept.id;
+  }
+
   const invite = await prisma.invite.create({
     data: {
       email,
       role,
+      departmentId,
       extraDepartmentIds,
       companyId: membership.companyId,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14), // 14 dagen geldig

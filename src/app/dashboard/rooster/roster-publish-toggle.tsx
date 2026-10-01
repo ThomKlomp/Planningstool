@@ -66,7 +66,7 @@ export default function RosterPublishToggle({
         <button
           onClick={() => set(true)}
           disabled={saving}
-          className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="rounded-full bg-orange px-3 py-1 text-xs font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {saving ? "Bezig..." : "Rooster publiceren"}
         </button>

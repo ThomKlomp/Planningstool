@@ -189,7 +189,7 @@ export function StatusBadge({ status, small = false }: { status: string; small?:
       : "bg-amber/10 text-amber-dark";
   return (
     <span
-      className={`shrink-0 rounded-full font-medium ${
+      className={`inline-block max-w-full shrink-0 rounded-2xl font-medium leading-snug ${
         small ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs"
       } ${classes}`}
     >

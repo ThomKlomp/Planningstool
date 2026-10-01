@@ -43,7 +43,7 @@ export default async function InvitePage({
 
   // Team is alleen relevant voor een medewerker-uitnodiging, en alleen als
   // er ook daadwerkelijk meerdere teams zijn om uit te kiezen.
-  const departments =
+  const allDepartments =
     invite.role === "EMPLOYEE"
       ? await prisma.department.findMany({
           where: { companyId: invite.companyId },
@@ -51,6 +51,11 @@ export default async function InvitePage({
           select: { id: true, name: true },
         })
       : [];
+  // Heeft de manager al een team gekozen, dan hoeft de medewerker niet meer te kiezen.
+  const departments =
+    invite.departmentId && allDepartments.some((d) => d.id === invite.departmentId)
+      ? []
+      : allDepartments;
 
   const session = await getServerSession(authOptions);
 

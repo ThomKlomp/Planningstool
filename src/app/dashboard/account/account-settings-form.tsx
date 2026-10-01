@@ -64,7 +64,7 @@ function NameForm({ initialName }: { initialName: string }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {saving ? "Opslaan..." : "Opslaan"}
         </button>
@@ -124,7 +124,7 @@ function EmailForm({ initialEmail }: { initialEmail: string }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {saving ? "Opslaan..." : "Opslaan"}
         </button>
@@ -205,7 +205,7 @@ function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {saving ? "Opslaan..." : "Opslaan"}
         </button>

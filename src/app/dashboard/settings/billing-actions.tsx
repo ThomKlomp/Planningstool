@@ -74,7 +74,7 @@ export default function BillingActions({
       <button
         onClick={subscribe}
         disabled={loading}
-        className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+        className="w-full rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
       >
         {loading ? "Bezig..." : "Kiezen"}
       </button>

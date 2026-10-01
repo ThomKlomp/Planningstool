@@ -91,7 +91,7 @@ export default function ExportHours() {
         <button
           onClick={handleExport}
           disabled={checking || !validRange}
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+          className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
         >
           {checking ? "Controleren..." : "Downloaden (Excel)"}
         </button>
@@ -136,7 +136,7 @@ export default function ExportHours() {
           <div className="mt-3 flex gap-2">
             <button
               onClick={downloadAnyway}
-              className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-paper hover:bg-awning"
+              className="rounded-full bg-orange px-3 py-1.5 text-xs font-medium text-ink hover:bg-orange-dark"
             >
               Toch downloaden
             </button>

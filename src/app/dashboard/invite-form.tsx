@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ContactButton from "@/components/contact-button";
 
-type Invite = { id: string; email: string; role: string; token: string };
+type Invite = { id: string; email: string; role: string; token: string; departmentId?: string | null };
 type TierWarning = {
   yearly: boolean;
   fromLabel: string;
@@ -33,6 +33,8 @@ export default function InviteForm({
   // Extra teams: een uitzondering, dus ingeklapt achter een klein linkje.
   const [showExtras, setShowExtras] = useState(false);
   const [extraIds, setExtraIds] = useState<string[]>([]);
+  // Hoofdteam van de nieuwe medewerker (leeg = de medewerker kiest zelf).
+  const [departmentId, setDepartmentId] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +46,12 @@ export default function InviteForm({
     const res = await fetch("/api/invites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, role, extraDepartmentIds: extraIds }),
+      body: JSON.stringify({
+        email,
+        role,
+        extraDepartmentIds: extraIds,
+        departmentId: role === "EMPLOYEE" && departmentId ? departmentId : undefined,
+      }),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -65,6 +72,7 @@ export default function InviteForm({
       onInvited?.(data.invite);
     }
     setEmail("");
+    setDepartmentId("");
     setExtraIds([]);
     setShowExtras(false);
     setLoading(false);
@@ -75,7 +83,7 @@ export default function InviteForm({
     <div>
     <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-3">
       <div>
-        <label className="block text-xs text-ink/60">E-mailadres</label>
+        <label className="block text-xs text-ink/60">E-mailadres van de medewerker</label>
         <input
           type="email"
           required
@@ -96,16 +104,34 @@ export default function InviteForm({
           <option value="MANAGER">Manager</option>
         </select>
       </div>
+      {role === "EMPLOYEE" && departments.length > 1 && (
+        <div>
+          <label className="block text-xs text-ink/60">Team</label>
+          <select
+            value={departmentId}
+            onChange={(e) => setDepartmentId(e.target.value)}
+            className="mt-1 rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+          >
+            <option value="">Medewerker kiest zelf</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <button
         type="submit"
         disabled={loading}
-        className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning transition-colors disabled:opacity-50"
+        className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark transition-colors disabled:opacity-50"
       >
-        {loading ? "Versturen..." : "Uitnodigen"}
+        {loading ? "Versturen..." : "Uitnodiging versturen"}
       </button>
 
-      {/* Extra teams: klein en ingeklapt, dit is een uitzondering. De medewerker
-          kiest zelf het hoofdteam; deze teams komen er automatisch bij. */}
+      {/* Extra teams: klein en ingeklapt, dit is een uitzondering. Het hoofdteam
+          kies je hierboven (of de medewerker kiest zelf); deze teams komen er
+          automatisch bij. */}
       {departments.length > 1 && (
         <div className="w-full">
           <button
@@ -173,7 +199,7 @@ export default function InviteForm({
       <p className="mt-2 w-full">
         <ContactButton
           message="Hoi! Ik zit op het maximum van 40 medewerkers en wil graag weten wat de mogelijkheden zijn."
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning"
+          className="rounded-full bg-orange px-4 py-2 text-sm font-medium text-ink hover:bg-orange-dark"
         >
           Neem contact op
         </ContactButton>

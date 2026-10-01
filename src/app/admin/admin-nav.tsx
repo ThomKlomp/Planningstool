@@ -57,7 +57,7 @@ export default function AdminNav({
             href={item.href}
             onClick={() => setOpen(false)}
             className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
+              isActive(item.href) ? "bg-orange font-bold text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}
@@ -98,7 +98,7 @@ export default function AdminNav({
             key={item.href}
             href={item.href}
             className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 ${
-              isActive(item.href) ? "bg-mist font-medium text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
+              isActive(item.href) ? "bg-orange font-bold text-ink" : "text-ink/70 hover:bg-mist hover:text-ink"
             }`}
           >
             {item.label}
