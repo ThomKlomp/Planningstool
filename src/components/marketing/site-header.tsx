@@ -13,7 +13,7 @@ export default function SiteHeader() {
           </Link>
           <Link
             href="/onboarding"
-            className="rounded-full bg-ink px-4 py-2 text-paper hover:bg-awning transition-colors"
+            className="rounded-btn bg-ink px-4 py-2 text-paper hover:bg-awning transition-colors"
           >
             Start met je zaak
           </Link>

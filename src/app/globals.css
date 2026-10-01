@@ -2,13 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Standaardkleuren (RGB-drietallen, zie tailwind.config.ts). De
+   homepage-ontwerpen overschrijven deze per pagina. */
+:root {
+  --c-ink: 27 27 24;
+  --c-paper: 250 247 242;
+  --c-surface: 255 255 255;
+  --c-amber: 232 163 61;
+  --c-amber-dark: 201 130 31;
+  --c-awning: 63 110 91;
+  --c-line: 221 213 199;
+  --c-onaccent: 27 27 24;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #faf7f2;
-  color: #1b1b18;
+  background-color: rgb(var(--c-paper));
+  color: rgb(var(--c-ink));
   /* Subtiel stippenraster over de hele pagina, zodat de ruimte naast de
      inhoud op brede schermen niet helemaal leeg aanvoelt. Puur CSS (geen
      losse afbeelding nodig), heel licht contrast zodat het nooit met de
@@ -16,17 +29,17 @@ body {
      (bg-white, bg-ink) dekken dit gewoon af, dat is prima: het patroon is
      bedoeld voor de open, papierkleurige stukken (hero, footer, tussen de
      kaarten), niet als iets dat overal zichtbaar moet zijn. */
-  background-image: radial-gradient(circle, #ddd5c7 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgb(var(--c-line)) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
 ::selection {
-  background-color: #e8a33d;
-  color: #1b1b18;
+  background-color: rgb(var(--c-amber));
+  color: rgb(var(--c-onaccent));
 }
 
 :focus-visible {
-  outline: 2px solid #3f6e5b;
+  outline: 2px solid rgb(var(--c-awning));
   outline-offset: 2px;
 }
 
@@ -61,7 +74,7 @@ body {
    niet de volgorde van de @tailwind-directives. */
 .rounded-xl.border-line.bg-white:not([class*="shadow-"]),
 .rounded-2xl.border-line.bg-white:not([class*="shadow-"]) {
-  box-shadow: 0 2px 0 0 #ddd5c7;
+  box-shadow: 0 2px 0 0 rgb(var(--c-line));
 }
 
 /* Hero: een laptop die dicht staat en langzaam opengaat. Het scherm gaat
