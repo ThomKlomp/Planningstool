@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import HomeView from "@/components/marketing/home-view";
-import HomeViewShift from "@/components/marketing/home-view-shift";
+import HomeViewMaison from "@/components/marketing/home-view-maison";
 import { THEMES } from "@/lib/home-themes";
 import { THEME_FONTS } from "../fonts";
 
@@ -22,8 +22,8 @@ export default function VariantPage({ params }: { params: { variant: string } })
 
   return (
     <>
-      {theme.id === "shift" ? (
-        <HomeViewShift fontDisplay={fonts?.display} fontBody={fonts?.body} />
+      {theme.id === "maison" ? (
+        <HomeViewMaison fontDisplay={fonts?.display} fontBody={fonts?.body} />
       ) : (
         <HomeView theme={{ ...theme, fontDisplay: fonts?.display, fontBody: fonts?.body }} />
       )}

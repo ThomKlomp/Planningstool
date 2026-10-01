@@ -152,29 +152,40 @@ const nordic = palette({
   onAccent: "#FFFFFF",
 });
 
-/** "Shift": eigen indeling (zie components/marketing/home-view-shift.tsx). */
-export const SHIFT_THEME: HomeTheme = {
+/** "Maison": eigen indeling (zie components/marketing/home-view-maison.tsx). */
+export const MAISON_THEME: HomeTheme = {
   ...CLASSIC_THEME,
-  id: "shift",
-  name: "Shift (mijn keuze)",
+  id: "maison",
+  name: "Maison (mijn keuze)",
   tagline:
-    "Het rooster als stijl: gekleurde dienstblokjes, dikke randen, zwevende chips en een lopende band. Nieuwe indeling, niet alleen nieuwe kleuren.",
+    "Ingetogen en horeca-elegant: diep groen, crème en messing, een klassieke serif, dunne lijnen en de prijzen als menukaart.",
   vars: palette({
-    ink: "#1F1A2E",
-    paper: "#FFF8EC",
-    surface: "#FFFFFF",
-    accent: "#FF5A3C",
-    accentDark: "#E8431F",
-    secondary: "#2F7D5B",
-    line: "#EADFCB",
-    onAccent: "#1F1A2E",
+    ink: "#16251E",
+    paper: "#F6F2EA",
+    surface: "#FBF9F4",
+    accent: "#A67A2E",
+    accentDark: "#8A6322",
+    secondary: "#2D5A48",
+    line: "#DDD4C1",
+    onAccent: "#FFFFFF",
   }),
-  btnRadius: "9999px",
-  swatches: ["#FFF8EC", "#FF5A3C", "#FFD66B", "#CDBFFF", "#B7E4C7", "#1F1A2E"],
+  deviceVars: palette({
+    ink: "#1B1B18",
+    paper: "#FAF7F2",
+    surface: "#FFFFFF",
+    accent: "#A67A2E",
+    accentDark: "#8A6322",
+    secondary: "#2D5A48",
+    line: "#DDD5C7",
+    onAccent: "#FFFFFF",
+  }),
+  priceVars: { "--c-paper": RGB("#F6F2EA"), "--c-amber": RGB("#D6B068") },
+  btnRadius: "4px",
+  swatches: ["#F6F2EA", "#16251E", "#A67A2E", "#2D5A48"],
 };
 
 export const THEMES: HomeTheme[] = [
-  SHIFT_THEME,
+  MAISON_THEME,
   {
     id: "terracotta",
     name: "Zonnig terras",
