@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export default function SiteHeader() {
+export default async function SiteHeader() {
+  // Ingelogd? Dan gaan "Inloggen" en "Start met je zaak" direct naar je eigen
+  // omgeving, in plaats van opnieuw het inlog- of aanmaakscherm te tonen.
+  const session = await getServerSession(authOptions).catch(() => null);
+  const loggedIn = Boolean(session?.user);
+
   return (
     <header className="sticky top-0 z-50 border-b border-line/60 bg-sage/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -32,15 +39,26 @@ export default function SiteHeader() {
           <Link href="/#prijs" className="hidden hover:text-terra md:inline">
             Prijzen
           </Link>
-          <Link href="/signin" className="px-2 py-2 hover:text-terra">
-            Inloggen
-          </Link>
-          <Link
-            href="/onboarding"
-            className="whitespace-nowrap rounded-full bg-ink px-3 py-2.5 text-xs font-bold text-paper transition-colors hover:bg-terra sm:px-4 sm:text-sm"
-          >
-            Start met je zaak
-          </Link>
+          {loggedIn ? (
+            <Link
+              href="/dashboard"
+              className="whitespace-nowrap rounded-full bg-ink px-3 py-2.5 text-xs font-bold text-paper transition-colors hover:bg-terra sm:px-4 sm:text-sm"
+            >
+              Naar je zaak
+            </Link>
+          ) : (
+            <>
+              <Link href="/signin" className="px-2 py-2 hover:text-terra">
+                Inloggen
+              </Link>
+              <Link
+                href="/onboarding"
+                className="whitespace-nowrap rounded-full bg-ink px-3 py-2.5 text-xs font-bold text-paper transition-colors hover:bg-terra sm:px-4 sm:text-sm"
+              >
+                Start met je zaak
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
