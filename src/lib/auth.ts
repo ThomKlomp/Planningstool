@@ -53,6 +53,9 @@ export const authOptions: NextAuthOptions = {
   // gebruiken we JWT-sessies.
   session: {
     strategy: "jwt",
+    // Ingelogd blijven: de sessie blijft 30 dagen geldig, ook als je de browser
+    // sluit en later weer terugkomt. Bij elk bezoek wordt de periode verlengd.
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/signin",
