@@ -3,16 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing";
-
-function slugify(input: string) {
-  return input
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // é -> e, ë -> e, zodat accenten niet als streepje eindigen
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import { slugify } from "@/lib/slug";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
