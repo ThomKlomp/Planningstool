@@ -17,6 +17,7 @@ export type Entry = {
   departmentName: string | null;
   departmentColor: string | null;
   departmentOrder: number | null;
+  notScheduled?: boolean; // alleen voor managers: ingediend op een dag waarop deze medewerker niet op het rooster staat
 };
 
 export function EditableEntryPanel({

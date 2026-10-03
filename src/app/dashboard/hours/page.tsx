@@ -63,6 +63,21 @@ export default async function HoursPage({
         (a, b) => a.date.getTime() - b.date.getTime() || a.startTime.localeCompare(b.startTime)
       );
 
+  // Waarschuwing voor managers: uren ingediend op een dag waarop de medewerker
+  // geen dienst had (per dag, niet per shift). Conceptregels vallen af: die
+  // komen juist uit een dienst voort. Afgekeurde uren hoeven geen aandacht meer.
+  const scheduledDays = new Set<string>();
+  if (canManage) {
+    const memberIds = Array.from(new Set(entries.map((e) => e.membershipId)));
+    const shifts = await prisma.shift.findMany({
+      where: { companyId: membership.companyId, membershipId: { in: memberIds }, date: weekRange },
+      select: { membershipId: true, date: true },
+    });
+    for (const sh of shifts) {
+      scheduledDays.add(`${sh.membershipId}|${sh.date.toISOString().slice(0, 10)}`);
+    }
+  }
+
   // Gesloten dagen van deze week (voor het bord).
   const closedWeekdays = company?.closedWeekdays ?? [];
   const specificClosed = closedDays.map((c) => c.date.toDateString());
@@ -191,6 +206,10 @@ export default async function HoursPage({
               departmentName: dept?.name ?? null,
               departmentColor: dept?.color ?? null,
               departmentOrder: dept?.order ?? null,
+              notScheduled:
+                canManage &&
+                (e.status === "SUBMITTED" || e.status === "QUERIED" || e.status === "APPROVED") &&
+                !scheduledDays.has(`${e.membershipId}|${e.date.toISOString().slice(0, 10)}`),
             };
           })}
         />
