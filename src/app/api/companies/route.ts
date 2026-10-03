@@ -6,6 +6,8 @@ import { TRIAL_DAYS } from "@/lib/billing";
 
 function slugify(input: string) {
   return input
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // é -> e, ë -> e, zodat accenten niet als streepje eindigen
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
