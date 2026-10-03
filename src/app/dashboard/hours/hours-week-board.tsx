@@ -166,6 +166,22 @@ export default function HoursWeekBoard({
                             }`}
                           >
                             {canManage && <p className="truncate font-medium">{entry.memberName}</p>}
+                            {canManage && entry.notScheduled && (
+                              <p
+                                className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-amber-dark"
+                                title="Deze medewerker stond deze dag niet op het rooster"
+                              >
+                                <svg
+                                  viewBox="0 0 20 20"
+                                  className="h-3.5 w-3.5 shrink-0"
+                                  fill="currentColor"
+                                  aria-hidden
+                                >
+                                  <path d="M10 2.5 1.5 17h17L10 2.5Zm-.9 5.5h1.8v4.5H9.1V8Zm0 5.8h1.8v1.8H9.1v-1.8Z" />
+                                </svg>
+                                Niet ingeroosterd
+                              </p>
+                            )}
                             <p className={canManage ? "text-ink/60" : "font-medium"}>
                               {entry.startTime}–{entry.endTime || "?"}
                               {entry.endTime && (
