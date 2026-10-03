@@ -145,9 +145,10 @@ export async function notifyUserOfReply(opts: { conversationId: string; message:
 
     const name = conversation.user?.name ?? conversation.guestName ?? "";
     const base = process.env.NEXTAUTH_URL ?? "";
-    // Ingelogde klanten komen in hun dashboard (daar zit het chatbolletje ook),
-    // bezoekers op de homepage; de chat onthoudt het gesprek in de browser.
-    const link = conversation.user ? `${base}/dashboard` : base || "https://shiftje.nl";
+    // Ingelogde klanten komen in hun dashboard, bezoekers op de homepage; met
+    // ?chat=open gaat het chatvenster direct open. De chat onthoudt het
+    // gesprek van een bezoeker in de browser waar die de vraag stelde.
+    const link = `${conversation.user ? `${base}/dashboard` : base || "https://shiftje.nl"}?chat=open`;
 
     await sendEmail({
       to,
@@ -157,10 +158,10 @@ export async function notifyUserOfReply(opts: { conversationId: string; message:
         `
           <p>${name ? `Hoi ${escapeHtml(name)}, ` : "Hoi, "}we hebben gereageerd op je vraag in de chat:</p>
           <p style="margin-top: 12px; padding: 12px 14px; background: #F4EFE6; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(opts.message)}</p>
-          <p style="margin-top: 16px;">Wil je iets terugzeggen? Open het chatbolletje rechtsonder op Shiftje en reageer daar, dan zie je ook het hele gesprek.</p>
+          <p style="margin-top: 16px;">Wil je iets terugzeggen? Klik op de knop hieronder: de chat gaat dan direct open en je ziet het hele gesprek.</p>
           <p style="margin-top: 20px;">
             <a href="${link}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
-              Naar Shiftje
+              Naar de support-chat
             </a>
           </p>
         `

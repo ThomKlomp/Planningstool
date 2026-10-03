@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
-import { customDaypartLabel } from "@/lib/availability-custom";
+import { slotLabel, type SlotLabelInfo } from "@/lib/availability-slots";
 
 type Availability = {
   membershipId: string;
@@ -44,6 +44,7 @@ export default function DayPanel({
   availabilities,
   shiftTemplates,
   departments,
+  slots,
   onClose,
   onDone,
 }: {
@@ -52,6 +53,7 @@ export default function DayPanel({
   availabilities: Availability[];
   shiftTemplates: ShiftTemplate[];
   departments: MemberTeam[];
+  slots: SlotLabelInfo[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -60,8 +62,8 @@ export default function DayPanel({
 
   function templateLabel(daypart: string) {
     if (!daypart) return null;
-    const custom = customDaypartLabel(daypart);
-    if (custom) return `losse tijd ${custom}`;
+    const extra = slotLabel(daypart, slots);
+    if (extra) return extra;
     const template = shiftTemplates.find((t) => t.id === daypart);
     return template ? `${template.name} (${template.startTime}–${template.endTime})` : null;
   }

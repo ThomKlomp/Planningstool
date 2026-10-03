@@ -75,6 +75,7 @@ model Company {
   weeks       WeekStatus[]
   shiftTemplates ShiftTemplate[]
   closedDays  ClosedDay[]
+  availabilitySlots AvailabilitySlot[]
   rosterWeeks RosterWeek[]
   recurringShifts RecurringShift[]
   rosterEvents RosterEvent[]
@@ -160,6 +161,23 @@ model ShiftTemplate {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
+}
+
+// Extra tijdvak waarop medewerkers hun beschikbaarheid kunnen invullen, door
+// een manager aangemaakt (bv. "Feestje van Bas, 20:00-02:00"). Naast de vaste
+// shift-tijden. De antwoorden staan als Availability met daypart "slot:<id>".
+model AvailabilitySlot {
+  id        String   @id @default(cuid())
+  companyId String
+  date      DateTime @db.Date
+  startTime String
+  endTime   String
+  title     String?
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, date])
 }
 
 enum Role {

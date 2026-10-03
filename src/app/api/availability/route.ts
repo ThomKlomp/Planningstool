@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isWeekOpenByDefault } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
-import { isCustomDaypart, parseCustomDaypart } from "@/lib/availability-custom";
+import { slotIdOf } from "@/lib/availability-slots";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -106,15 +106,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: locked }, { status: 403 });
   }
 
-  // Een losse tijd moet een geldig tijdvak zijn; andere waarden zijn het id van
-  // een shift-sjabloon (of leeg voor hele dag) en blijven zoals ze waren.
-  if (typeof daypart === "string" && daypart.startsWith("custom:") && !isCustomDaypart(daypart)) {
-    return NextResponse.json({ error: "Ongeldig tijdvak" }, { status: 400 });
-  }
-  if (isCustomDaypart(daypart)) {
-    const range = parseCustomDaypart(daypart)!;
-    if (range.startTime === range.endTime) {
-      return NextResponse.json({ error: "Begin- en eindtijd zijn gelijk" }, { status: 400 });
+  // Een extra tijdvak van de manager moet bij deze zaak en deze dag horen;
+  // andere waarden zijn het id van een shift-sjabloon (of leeg voor hele dag).
+  const slotId = typeof daypart === "string" ? slotIdOf(daypart) : null;
+  if (slotId) {
+    const slot = await prisma.availabilitySlot.findUnique({ where: { id: slotId } });
+    if (
+      !slot ||
+      slot.companyId !== membership.companyId ||
+      slot.date.toDateString() !== new Date(date).toDateString()
+    ) {
+      return NextResponse.json({ error: "Dit tijdvak bestaat niet (meer)" }, { status: 400 });
     }
   }
 
@@ -137,33 +139,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ availability });
-}
-
-// Verwijdert een losse tijd. Alleen losse tijden zijn te verwijderen: de vaste
-// shift-tijden blijven altijd staan en krijg je door een andere status te kiezen.
-export async function DELETE(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  }
-  const membership = session.user.memberships[0];
-  if (!membership) {
-    return NextResponse.json({ error: "Geen bedrijf" }, { status: 400 });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const { date, daypart } = body ?? {};
-  if (!date || typeof daypart !== "string" || !isCustomDaypart(daypart)) {
-    return NextResponse.json({ error: "Alleen losse tijden kun je verwijderen" }, { status: 400 });
-  }
-
-  const locked = await lockedReason(membership, date);
-  if (locked) {
-    return NextResponse.json({ error: locked }, { status: 403 });
-  }
-
-  await prisma.availability.deleteMany({
-    where: { membershipId: membership.membershipId, date: new Date(date), daypart },
-  });
-  return NextResponse.json({ ok: true });
 }

@@ -111,10 +111,17 @@ export async function PATCH(
           data: { membershipId: newMembershipId },
         });
       } else if (!newMembershipId) {
-        await prisma.timeEntry.update({
-          where: { id: timeEntry.id },
-          data: { shiftId: null },
-        });
+        // Dienst is niet meer van deze medewerker: een nog niet ingediende
+        // conceptregel verdwijnt mee, een al ingediende regel blijft staan
+        // (los van de dienst) omdat daar al uren op zijn doorgegeven.
+        if (timeEntry.status === "DRAFT") {
+          await prisma.timeEntry.delete({ where: { id: timeEntry.id } });
+        } else {
+          await prisma.timeEntry.update({
+            where: { id: timeEntry.id },
+            data: { shiftId: null },
+          });
+        }
       }
     } else if (newMembershipId) {
       await prisma.timeEntry.create({

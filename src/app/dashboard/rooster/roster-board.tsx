@@ -88,6 +88,7 @@ export default function RosterBoard({
   viewerMembershipId,
   viewerTeamIds = [],
   departments = [],
+  slots = [],
   swapRequests = [],
   events = [],
   weekStartIso,
@@ -104,6 +105,7 @@ export default function RosterBoard({
   viewerMembershipId?: string;
   viewerTeamIds?: string[]; // teams van de kijker: bepaalt welke open diensten die mag oppakken
   departments?: { id: string; name: string }[]; // alle teams van de zaak, voor open diensten
+  slots?: { id: string; title: string | null; startTime: string; endTime: string }[]; // extra tijdvakken, voor de labels in het dagpaneel
   swapRequests?: SwapRequest[];
   events?: RosterEventData[];
   weekStartIso: string;
@@ -291,6 +293,7 @@ export default function RosterBoard({
           )}
           shiftTemplates={shiftTemplates}
           departments={departments}
+          slots={slots}
           onClose={() => setOpenDay(null)}
           onDone={() => {
             setOpenDay(null);

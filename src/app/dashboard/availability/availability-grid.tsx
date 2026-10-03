@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTodayKey } from "@/lib/use-today-key";
 import { useAvailabilitySave } from "./availability-save";
-import { customDaypart, customDaypartLabel, isValidTimeRange } from "@/lib/availability-custom";
+import { slotDaypart, isValidTimeRange } from "@/lib/availability-slots";
 
 type Status = "AVAILABLE" | "UNAVAILABLE" | "UNSURE";
 
@@ -15,6 +15,8 @@ type ShiftTemplate = {
   endTime: string;
   weekdays: number[];
 };
+
+type Slot = { id: string; date: string; startTime: string; endTime: string; title: string | null };
 
 type OwnEntry = { date: string; daypart: string; status: Status; note?: string | null };
 
@@ -28,6 +30,8 @@ export default function AvailabilityGrid({
   week,
   ownEntries,
   shiftTemplates,
+  slots = [],
+  canManage = false,
   closedDates = [],
   closedReasons = {},
   locked = false,
@@ -35,6 +39,8 @@ export default function AvailabilityGrid({
   week: string[];
   ownEntries: OwnEntry[];
   shiftTemplates: ShiftTemplate[];
+  slots?: Slot[]; // extra tijdvakken van de manager (bv. een feestje)
+  canManage?: boolean;
   closedDates?: string[];
   closedReasons?: Record<string, string>;
   locked?: boolean;
@@ -57,41 +63,49 @@ export default function AvailabilityGrid({
     return map;
   });
   const [saving, setSaving] = useState<string | null>(null);
-  // Formulier voor een losse tijd: per keer maar voor één dag open.
+  // Formulier (alleen managers) voor een extra tijdvak: per keer voor één dag open.
   const [addingFor, setAddingFor] = useState<string | null>(null);
-  const [newStart, setNewStart] = useState("17:00");
-  const [newEnd, setNewEnd] = useState("21:00");
-  const [newStatus, setNewStatus] = useState<Status>("AVAILABLE");
+  const [newTitle, setNewTitle] = useState("");
+  const [newStart, setNewStart] = useState("20:00");
+  const [newEnd, setNewEnd] = useState("23:00");
   const [addError, setAddError] = useState<string | null>(null);
+  const [addBusy, setAddBusy] = useState(false);
 
-  async function addCustom(dateIso: string) {
+  async function addSlot(dateIso: string) {
     if (!isValidTimeRange(newStart, newEnd)) {
       setAddError("Kies een begin- en eindtijd die niet gelijk zijn.");
       return;
     }
-    const daypart = customDaypart(newStart, newEnd);
-    const key = `${new Date(dateIso).toDateString()}::${daypart}`;
-    if (entries[key]) {
-      setAddError("Deze tijd heb je al toegevoegd.");
+    setAddBusy(true);
+    setAddError(null);
+    const res = await fetch("/api/availability-slots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: dateIso, startTime: newStart, endTime: newEnd, title: newTitle }),
+    });
+    setAddBusy(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAddError(data.error ?? "Toevoegen mislukt.");
       return;
     }
-    setAddError(null);
     setAddingFor(null);
-    await save(dateIso, daypart, newStatus, "");
+    setNewTitle("");
+    router.refresh();
   }
 
-  async function removeCustom(dateIso: string, daypart: string) {
-    const key = `${new Date(dateIso).toDateString()}::${daypart}`;
-    const previous = entries[key];
-    setEntries((prev) => ({ ...prev, [key]: undefined }));
-    const ok = await track(
-      fetch("/api/availability", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: dateIso, daypart }),
-      }).then((res) => res.ok)
-    );
-    if (!ok) setEntries((prev) => ({ ...prev, [key]: previous }));
+  async function removeSlot(slot: Slot) {
+    if (
+      !confirm(
+        "Dit tijdvak verwijderen? De beschikbaarheid die medewerkers hiervoor hebben ingevuld gaat dan ook weg."
+      )
+    )
+      return;
+    const res = await fetch(`/api/availability-slots/${slot.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("Verwijderen mislukt, probeer het opnieuw.");
+      return;
+    }
     router.refresh();
   }
 
@@ -117,14 +131,10 @@ export default function AvailabilityGrid({
     router.refresh();
   }
 
-  // Losse tijden van een dag (die een status hebben), op begintijd gesorteerd.
-  function customKeysFor(date: Date): string[] {
-    const prefix = `${date.toDateString()}::custom:`;
-    return Object.keys(entries)
-      .filter((k) => k.startsWith(prefix) && entries[k])
-      .map((k) => k.slice(k.indexOf("::") + 2))
-      .sort();
-  }
+  const slotsFor = (date: Date) =>
+    slots
+      .filter((sl) => new Date(sl.date).toDateString() === date.toDateString())
+      .sort((x, y) => x.startTime.localeCompare(y.startTime));
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-7">
@@ -232,24 +242,25 @@ export default function AvailabilityGrid({
                 );
               })}
 
-              {customKeysFor(date).map((daypart) => {
+              {slotsFor(date).map((slot) => {
+                const daypart = slotDaypart(slot.id);
                 const key = `${date.toDateString()}::${daypart}`;
                 const current = entries[key];
                 const note = notes[key] ?? "";
                 return (
-                  <div key={daypart} className="border-t border-line pt-2">
+                  <div key={slot.id} className="border-t border-line pt-2">
                     <p className="mb-1 flex items-center justify-between text-[11px] font-medium text-ink/60">
                       <span>
-                        Losse tijd
+                        {slot.title || "Extra tijdvak"}
                         <span className="block text-[10px] font-normal text-ink/40">
-                          {customDaypartLabel(daypart)}
+                          {slot.startTime}–{slot.endTime}
                         </span>
                       </span>
-                      {!locked && (
+                      {canManage && (
                         <button
-                          onClick={() => removeCustom(dateIso, daypart)}
+                          onClick={() => removeSlot(slot)}
                           className="rounded-full px-1.5 text-ink/40 hover:bg-mist hover:text-ink"
-                          aria-label="Losse tijd verwijderen"
+                          aria-label="Tijdvak verwijderen"
                           title="Verwijderen"
                         >
                           ✕
@@ -284,9 +295,17 @@ export default function AvailabilityGrid({
               })}
             </div>
 
-            {!locked &&
+            {canManage &&
               (addingFor === dateIso ? (
                 <div className="mt-3 space-y-1.5 rounded-lg bg-mist p-2 text-left">
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Bv. Feestje van Bas"
+                    maxLength={80}
+                    className="w-full rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                  />
                   <div className="flex gap-1">
                     <input
                       type="time"
@@ -303,24 +322,14 @@ export default function AvailabilityGrid({
                       className="w-1/2 min-w-0 rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
                     />
                   </div>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as Status)}
-                    className="w-full rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
-                  >
-                    {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
                   {addError && <p className="text-[11px] text-red-600">{addError}</p>}
                   <div className="flex gap-1">
                     <button
-                      onClick={() => addCustom(dateIso)}
+                      onClick={() => addSlot(dateIso)}
+                      disabled={addBusy}
                       className="flex-1 rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark"
                     >
-                      Toevoegen
+                      {addBusy ? "Bezig..." : "Toevoegen"}
                     </button>
                     <button
                       onClick={() => {
@@ -341,7 +350,7 @@ export default function AvailabilityGrid({
                   }}
                   className="mt-3 w-full rounded-full border border-dashed border-line px-2 py-1 text-[11px] font-medium text-ink/60 hover:border-ink hover:text-ink"
                 >
-                  + Losse tijd
+                  + Extra tijdvak
                 </button>
               ))}
           </div>

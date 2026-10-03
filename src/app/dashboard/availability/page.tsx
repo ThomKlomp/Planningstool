@@ -6,7 +6,7 @@ import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
-import { customDaypartLabel } from "@/lib/availability-custom";
+import { slotLabel } from "@/lib/availability-slots";
 
 export default async function AvailabilityPage({
   searchParams,
@@ -19,7 +19,7 @@ export default async function AvailabilityPage({
   const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();
 
-  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates, company, closedDays] =
+  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates, company, closedDays, slots] =
     await Promise.all([
       prisma.availability.findMany({
         where: {
@@ -60,6 +60,10 @@ export default async function AvailabilityPage({
           companyId: membership.companyId,
           date: { gte: week[0], lte: week[6] },
         },
+      }),
+      prisma.availabilitySlot.findMany({
+        where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
+        orderBy: { startTime: "asc" },
       }),
     ]);
 
@@ -141,6 +145,14 @@ export default async function AvailabilityPage({
             endTime: t.endTime,
             weekdays: t.weekdays,
           }))}
+          slots={slots.map((sl) => ({
+            id: sl.id,
+            date: sl.date.toISOString(),
+            startTime: sl.startTime,
+            endTime: sl.endTime,
+            title: sl.title,
+          }))}
+          canManage={canManage}
           ownEntries={ownEntries.map((e) => ({
             date: e.date.toISOString(),
             daypart: e.daypart,
@@ -194,7 +206,7 @@ export default async function AvailabilityPage({
                                 <StatusDot
                                   key={e.id}
                                   status={e.status}
-                                  note={[customDaypartLabel(e.daypart), e.note]
+                                  note={[slotLabel(e.daypart, slots), e.note]
                                     .filter(Boolean)
                                     .join(" · ")}
                                 />
