@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notifyShiftChanges, describeShift, shiftDateLabel, type ShiftChange } from "@/lib/roster-change";
+import {
+  notifyShiftChanges,
+  notifyOpenShift,
+  describeShift,
+  shiftDateLabel,
+  type ShiftChange,
+} from "@/lib/roster-change";
 import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function PATCH(
@@ -105,10 +111,17 @@ export async function PATCH(
           data: { membershipId: newMembershipId },
         });
       } else if (!newMembershipId) {
-        await prisma.timeEntry.update({
-          where: { id: timeEntry.id },
-          data: { shiftId: null },
-        });
+        // Dienst is niet meer van deze medewerker: een nog niet ingediende
+        // conceptregel verdwijnt mee, een al ingediende regel blijft staan
+        // (los van de dienst) omdat daar al uren op zijn doorgegeven.
+        if (timeEntry.status === "DRAFT") {
+          await prisma.timeEntry.delete({ where: { id: timeEntry.id } });
+        } else {
+          await prisma.timeEntry.update({
+            where: { id: timeEntry.id },
+            data: { shiftId: null },
+          });
+        }
       }
     } else if (newMembershipId) {
       await prisma.timeEntry.create({
@@ -162,6 +175,17 @@ export async function PATCH(
       actorMembershipId: membership.membershipId,
       shiftDate: updated.date,
       changes,
+    });
+  }
+
+  // Een toegewezen dienst die weer open komt te staan: het team mag 'm oppakken.
+  if (newMembershipId === null && shift.membershipId) {
+    await notifyOpenShift({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      companySlug: membership.companySlug,
+      actorMembershipId: membership.membershipId,
+      shift: updated,
     });
   }
 

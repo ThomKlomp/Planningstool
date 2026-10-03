@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyUserOfReply } from "@/lib/support-notify";
 
 export async function POST(
   req: Request,
@@ -28,6 +29,8 @@ export async function POST(
   await prisma.supportMessage.create({
     data: { conversationId: conversation.id, sender: "SUPPORT", body: message },
   });
+
+  await notifyUserOfReply({ conversationId: conversation.id, message });
 
   const updated = await prisma.supportConversation.findUnique({
     where: { id: conversation.id },

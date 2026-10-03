@@ -24,7 +24,7 @@ export default async function RosterPage({
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek(searchParams?.week);
 
-  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals, rosterWeek, rosterEvents] =
+  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals, rosterWeek, rosterEvents, departments, slots] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
@@ -97,6 +97,15 @@ export default async function RosterPage({
           ],
         },
         orderBy: [{ startTime: "asc" }, { createdAt: "asc" }],
+      }),
+      prisma.department.findMany({
+        where: { companyId: membership.companyId },
+        orderBy: [{ order: "asc" }, { name: "asc" }],
+        select: { id: true, name: true },
+      }),
+      prisma.availabilitySlot.findMany({
+        where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
+        select: { id: true, title: true, startTime: true, endTime: true },
       }),
     ]);
 
@@ -306,6 +315,9 @@ export default async function RosterPage({
           <RosterBoard
             canManage={canManage}
             viewerMembershipId={membership.membershipId}
+            viewerTeamIds={ownTeamIds}
+            departments={departments}
+            slots={slots}
             swapRequests={swapRequestsThisWeek.map((r) => ({
               id: r.id,
               shiftId: r.shiftId,

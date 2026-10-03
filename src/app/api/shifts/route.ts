@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
-import { notifyShiftChanges, describeShift } from "@/lib/roster-change";
+import { notifyShiftChanges, notifyOpenShift, describeShift } from "@/lib/roster-change";
 import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function GET(req: Request) {
@@ -109,6 +109,17 @@ export async function POST(req: Request) {
           body: `Je staat ingepland op ${describeShift(shift)}.`,
         },
       ],
+    });
+  }
+
+  // Open dienst: laat het team weten dat iemand 'm kan oppakken.
+  if (!membershipId) {
+    await notifyOpenShift({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      companySlug: membership.companySlug,
+      actorMembershipId: membership.membershipId,
+      shift,
     });
   }
 

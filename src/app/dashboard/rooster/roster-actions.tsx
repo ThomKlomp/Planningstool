@@ -42,7 +42,7 @@ function buildGrid(members: Member[], shifts: Shift[], weekStart: string) {
   if (shifts.some((s) => !s.membershipId)) {
     const key = "Geen team";
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push({ membershipId: null, name: "Nog niet toegewezen" });
+    groups.get(key)!.push({ membershipId: null, name: "Open dienst" });
   }
 
   const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => {

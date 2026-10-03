@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTodayKey } from "@/lib/use-today-key";
 import { useAvailabilitySave } from "./availability-save";
+import { slotDaypart, isValidTimeRange } from "@/lib/availability-slots";
 
 type Status = "AVAILABLE" | "UNAVAILABLE" | "UNSURE";
 
@@ -14,6 +15,8 @@ type ShiftTemplate = {
   endTime: string;
   weekdays: number[];
 };
+
+type Slot = { id: string; date: string; startTime: string; endTime: string; title: string | null };
 
 type OwnEntry = { date: string; daypart: string; status: Status; note?: string | null };
 
@@ -27,6 +30,8 @@ export default function AvailabilityGrid({
   week,
   ownEntries,
   shiftTemplates,
+  slots = [],
+  canManage = false,
   closedDates = [],
   closedReasons = {},
   locked = false,
@@ -34,6 +39,8 @@ export default function AvailabilityGrid({
   week: string[];
   ownEntries: OwnEntry[];
   shiftTemplates: ShiftTemplate[];
+  slots?: Slot[]; // extra tijdvakken van de manager (bv. een feestje)
+  canManage?: boolean;
   closedDates?: string[];
   closedReasons?: Record<string, string>;
   locked?: boolean;
@@ -56,6 +63,51 @@ export default function AvailabilityGrid({
     return map;
   });
   const [saving, setSaving] = useState<string | null>(null);
+  // Formulier (alleen managers) voor een extra tijdvak: per keer voor één dag open.
+  const [addingFor, setAddingFor] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [newStart, setNewStart] = useState("20:00");
+  const [newEnd, setNewEnd] = useState("23:00");
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addBusy, setAddBusy] = useState(false);
+
+  async function addSlot(dateIso: string) {
+    if (!isValidTimeRange(newStart, newEnd)) {
+      setAddError("Kies een begin- en eindtijd die niet gelijk zijn.");
+      return;
+    }
+    setAddBusy(true);
+    setAddError(null);
+    const res = await fetch("/api/availability-slots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: dateIso, startTime: newStart, endTime: newEnd, title: newTitle }),
+    });
+    setAddBusy(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAddError(data.error ?? "Toevoegen mislukt.");
+      return;
+    }
+    setAddingFor(null);
+    setNewTitle("");
+    router.refresh();
+  }
+
+  async function removeSlot(slot: Slot) {
+    if (
+      !confirm(
+        "Dit tijdvak verwijderen? De beschikbaarheid die medewerkers hiervoor hebben ingevuld gaat dan ook weg."
+      )
+    )
+      return;
+    const res = await fetch(`/api/availability-slots/${slot.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("Verwijderen mislukt, probeer het opnieuw.");
+      return;
+    }
+    router.refresh();
+  }
 
   async function save(dateIso: string, daypart: string, status: Status, note: string) {
     const key = `${new Date(dateIso).toDateString()}::${daypart}`;
@@ -78,6 +130,11 @@ export default function AvailabilityGrid({
     setSaving(null);
     router.refresh();
   }
+
+  const slotsFor = (date: Date) =>
+    slots
+      .filter((sl) => new Date(sl.date).toDateString() === date.toDateString())
+      .sort((x, y) => x.startTime.localeCompare(y.startTime));
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-7">
@@ -184,7 +241,118 @@ export default function AvailabilityGrid({
                   </div>
                 );
               })}
+
+              {slotsFor(date).map((slot) => {
+                const daypart = slotDaypart(slot.id);
+                const key = `${date.toDateString()}::${daypart}`;
+                const current = entries[key];
+                const note = notes[key] ?? "";
+                return (
+                  <div key={slot.id} className="border-t border-line pt-2">
+                    <p className="mb-1 flex items-center justify-between text-[11px] font-medium text-ink/60">
+                      <span>
+                        {slot.title || "Extra tijdvak"}
+                        <span className="block text-[10px] font-normal text-ink/40">
+                          {slot.startTime}–{slot.endTime}
+                        </span>
+                      </span>
+                      {canManage && (
+                        <button
+                          onClick={() => removeSlot(slot)}
+                          className="rounded-full px-1.5 text-ink/40 hover:bg-mist hover:text-ink"
+                          aria-label="Tijdvak verwijderen"
+                          title="Verwijderen"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </p>
+                    <div className="space-y-1">
+                      {STATUS_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => save(dateIso, daypart, opt.value, note)}
+                          disabled={locked || saving === key}
+                          className={`w-full rounded-full px-2 py-1 text-xs font-medium transition-opacity ${
+                            current === opt.value ? opt.classes : "bg-mist text-ink/50"
+                          } ${locked ? "opacity-40" : saving === key ? "opacity-50" : "hover:opacity-80"}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={note}
+                      disabled={locked}
+                      onChange={(e) => setNotes((prev) => ({ ...prev, [key]: e.target.value }))}
+                      onBlur={() => current && save(dateIso, daypart, current, note)}
+                      placeholder="Opmerking"
+                      className="mt-2 w-full rounded-lg border border-line px-2 py-1 text-center text-[11px] text-ink placeholder:text-ink/30 focus:border-awning focus:outline-none disabled:opacity-40"
+                    />
+                  </div>
+                );
+              })}
             </div>
+
+            {canManage &&
+              (addingFor === dateIso ? (
+                <div className="mt-3 space-y-1.5 rounded-lg bg-mist p-2 text-left">
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Bv. Feestje van Bas"
+                    maxLength={80}
+                    className="w-full rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                  />
+                  <div className="flex gap-1">
+                    <input
+                      type="time"
+                      value={newStart}
+                      onChange={(e) => setNewStart(e.target.value)}
+                      aria-label="Van"
+                      className="w-1/2 min-w-0 rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                    />
+                    <input
+                      type="time"
+                      value={newEnd}
+                      onChange={(e) => setNewEnd(e.target.value)}
+                      aria-label="Tot"
+                      className="w-1/2 min-w-0 rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                    />
+                  </div>
+                  {addError && <p className="text-[11px] text-red-600">{addError}</p>}
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => addSlot(dateIso)}
+                      disabled={addBusy}
+                      className="flex-1 rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark"
+                    >
+                      {addBusy ? "Bezig..." : "Toevoegen"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAddingFor(null);
+                        setAddError(null);
+                      }}
+                      className="rounded-full border border-line bg-white px-2 py-1 text-[11px] font-medium hover:border-ink"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAddingFor(dateIso);
+                    setAddError(null);
+                  }}
+                  className="mt-3 w-full rounded-full border border-dashed border-line px-2 py-1 text-[11px] font-medium text-ink/60 hover:border-ink hover:text-ink"
+                >
+                  + Extra tijdvak
+                </button>
+              ))}
           </div>
         );
       })}

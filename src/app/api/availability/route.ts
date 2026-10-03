@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isWeekOpenByDefault } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
+import { slotIdOf } from "@/lib/availability-slots";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -37,6 +38,52 @@ export async function GET(req: Request) {
   return NextResponse.json({ availabilities });
 }
 
+/**
+ * Mag deze medewerker voor deze datum nog beschikbaarheid aanpassen? Managers
+ * altijd; medewerkers niet op een gesloten dag of in een gesloten week.
+ * Geeft een foutmelding terug, of null als het mag.
+ */
+async function lockedReason(
+  membership: { role: string; companyId: string },
+  date: string
+): Promise<string | null> {
+  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
+  if (canManage) return null;
+
+  const weekStart = new Date(date);
+  const day = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() + (day === 0 ? -6 : 1 - day));
+  weekStart.setHours(0, 0, 0, 0);
+
+  const [weekStatus, company, closedDay] = await Promise.all([
+    prisma.weekStatus.findUnique({
+      where: {
+        companyId_weekStart: { companyId: membership.companyId, weekStart },
+      },
+    }),
+    prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: { autoOpenWeeks: true, closedWeekdays: true },
+    }),
+    prisma.closedDay.findUnique({
+      where: {
+        companyId_date: { companyId: membership.companyId, date: new Date(date) },
+      },
+    }),
+  ]);
+
+  if (closedDay || isDateClosed(new Date(date), company?.closedWeekdays ?? [], [])) {
+    return "De zaak is dicht op deze dag";
+  }
+
+  const isOpen =
+    weekStatus?.isOpen ?? isWeekOpenByDefault(weekStart, company?.autoOpenWeeks ?? 2);
+  if (!isOpen) {
+    return "Deze week is gesloten voor het doorgeven van beschikbaarheid";
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -54,44 +101,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "date en status zijn verplicht" }, { status: 400 });
   }
 
-  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
-  if (!canManage) {
-    const weekStart = new Date(date);
-    const day = weekStart.getDay();
-    weekStart.setDate(weekStart.getDate() + (day === 0 ? -6 : 1 - day));
-    weekStart.setHours(0, 0, 0, 0);
+  const locked = await lockedReason(membership, date);
+  if (locked) {
+    return NextResponse.json({ error: locked }, { status: 403 });
+  }
 
-    const [weekStatus, company, closedDay] = await Promise.all([
-      prisma.weekStatus.findUnique({
-        where: {
-          companyId_weekStart: { companyId: membership.companyId, weekStart },
-        },
-      }),
-      prisma.company.findUnique({
-        where: { id: membership.companyId },
-        select: { autoOpenWeeks: true, closedWeekdays: true },
-      }),
-      prisma.closedDay.findUnique({
-        where: {
-          companyId_date: { companyId: membership.companyId, date: new Date(date) },
-        },
-      }),
-    ]);
-
-    if (closedDay || isDateClosed(new Date(date), company?.closedWeekdays ?? [], [])) {
-      return NextResponse.json(
-        { error: "De zaak is dicht op deze dag" },
-        { status: 403 }
-      );
-    }
-
-    const isOpen =
-      weekStatus?.isOpen ?? isWeekOpenByDefault(weekStart, company?.autoOpenWeeks ?? 2);
-    if (!isOpen) {
-      return NextResponse.json(
-        { error: "Deze week is gesloten voor het doorgeven van beschikbaarheid" },
-        { status: 403 }
-      );
+  // Een extra tijdvak van de manager moet bij deze zaak en deze dag horen;
+  // andere waarden zijn het id van een shift-sjabloon (of leeg voor hele dag).
+  const slotId = typeof daypart === "string" ? slotIdOf(daypart) : null;
+  if (slotId) {
+    const slot = await prisma.availabilitySlot.findUnique({ where: { id: slotId } });
+    if (
+      !slot ||
+      slot.companyId !== membership.companyId ||
+      slot.date.toDateString() !== new Date(date).toDateString()
+    ) {
+      return NextResponse.json({ error: "Dit tijdvak bestaat niet (meer)" }, { status: 400 });
     }
   }
 

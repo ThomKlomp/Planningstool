@@ -99,7 +99,7 @@ export default async function DashboardOverviewPage() {
       <div className="stat-grid mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard label="Teamleden" value={members.length} />
         <StatCard label="Shifts deze week" value={weekShifts.length} />
-        <StatCard label="Nog niet toegewezen" value={openShiftCount} />
+        <StatCard label="Open diensten" value={openShiftCount} />
         <StatCard label="Zonder shift deze week" value={membersWithoutShiftCount} />
         {canManage && <StatCard label="Uren ter goedkeuring" value={pendingHours} />}
         {canManage && pendingSwapCount > 0 && (

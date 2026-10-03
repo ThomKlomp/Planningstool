@@ -124,3 +124,50 @@ export async function countChatsAwaitingReply(): Promise<number> {
   });
   return open.filter((c) => c.messages[0]?.sender === "USER").length;
 }
+
+/**
+ * Mailt de klant dat support heeft gereageerd op zijn/haar vraag in de chat.
+ * Het antwoord staat in de mail zelf, zodat de klant niet eerst hoeft in te
+ * loggen om het te lezen; reageren kan via het chatbolletje op de site.
+ * Faalt nooit: een mislukte e-mail mag het versturen van het antwoord niet
+ * blokkeren.
+ */
+export async function notifyUserOfReply(opts: { conversationId: string; message: string }) {
+  try {
+    const conversation = await prisma.supportConversation.findUnique({
+      where: { id: opts.conversationId },
+      include: { user: { select: { name: true, email: true } } },
+    });
+    if (!conversation) return;
+
+    const to = conversation.user?.email ?? conversation.guestEmail;
+    if (!to) return; // bezoeker die geen e-mailadres heeft achtergelaten
+
+    const name = conversation.user?.name ?? conversation.guestName ?? "";
+    const base = process.env.NEXTAUTH_URL ?? "";
+    // Ingelogde klanten komen in hun dashboard, bezoekers op de homepage; met
+    // ?chat=open gaat het chatvenster direct open. De chat onthoudt het
+    // gesprek van een bezoeker in de browser waar die de vraag stelde.
+    const link = `${conversation.user ? `${base}/dashboard` : base || "https://shiftje.nl"}?chat=open`;
+
+    await sendEmail({
+      to,
+      subject: "Shiftje support heeft gereageerd op je vraag",
+      html: emailLayout(
+        "Je hebt antwoord van Shiftje support",
+        `
+          <p>${name ? `Hoi ${escapeHtml(name)}, ` : "Hoi, "}we hebben gereageerd op je vraag in de chat:</p>
+          <p style="margin-top: 12px; padding: 12px 14px; background: #F4EFE6; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(opts.message)}</p>
+          <p style="margin-top: 16px;">Wil je iets terugzeggen? Klik op de knop hieronder: de chat gaat dan direct open en je ziet het hele gesprek.</p>
+          <p style="margin-top: 20px;">
+            <a href="${link}" style="display: inline-block; background: #1B1B18; color: #FAF7F2; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 500;">
+              Naar de support-chat
+            </a>
+          </p>
+        `
+      ),
+    });
+  } catch (err) {
+    console.error("[support] antwoord-mail versturen mislukt", err);
+  }
+}

@@ -61,6 +61,11 @@ export default function ChatWidget({
     return () => window.removeEventListener("shiftje:open-chat", handleOpen);
   }, []);
 
+  // Link uit de support-mail (…?chat=open): chat direct openen.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("chat") === "open") setOpen(true);
+  }, []);
+
   // Poll voor nieuwe berichten (bv. een antwoord) terwijl het venster open is.
   useEffect(() => {
     if (!open || !conversation) return;
