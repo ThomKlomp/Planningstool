@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import CompaniesTable from "../companies-table";
-import FixSlugsButton from "./fix-slugs-button";
 
 export default async function AdminCompaniesPage({
   searchParams,
@@ -27,7 +26,6 @@ export default async function AdminCompaniesPage({
   return (
     <div>
       <h1 className="font-display text-3xl">Zaken</h1>
-      <FixSlugsButton />
       <form action="/admin/companies" className="mt-4">
         <input
           type="text"
