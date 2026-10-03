@@ -86,6 +86,8 @@ export default function RosterBoard({
   closedReasons = {},
   isWeekOpen = true,
   viewerMembershipId,
+  viewerTeamIds = [],
+  departments = [],
   swapRequests = [],
   events = [],
   weekStartIso,
@@ -100,6 +102,8 @@ export default function RosterBoard({
   closedReasons?: Record<string, string>;
   isWeekOpen?: boolean;
   viewerMembershipId?: string;
+  viewerTeamIds?: string[]; // teams van de kijker: bepaalt welke open diensten die mag oppakken
+  departments?: { id: string; name: string }[]; // alle teams van de zaak, voor open diensten
   swapRequests?: SwapRequest[];
   events?: RosterEventData[];
   weekStartIso: string;
@@ -237,6 +241,7 @@ export default function RosterBoard({
                         shift={shift}
                         canManage={canManage}
                         viewerMembershipId={viewerMembershipId}
+                        viewerTeamIds={viewerTeamIds}
                         swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
                         onChanged={() => router.refresh()}
                         onEdit={() => setEditingShift(shift)}
@@ -285,6 +290,7 @@ export default function RosterBoard({
             (a) => new Date(a.date).toDateString() === new Date(openDay).toDateString()
           )}
           shiftTemplates={shiftTemplates}
+          departments={departments}
           onClose={() => setOpenDay(null)}
           onDone={() => {
             setOpenDay(null);
@@ -297,6 +303,7 @@ export default function RosterBoard({
         <ShiftEditPanel
           shift={editingShift}
           members={members}
+          departments={departments}
           onClose={() => setEditingShift(null)}
           onDone={() => {
             setEditingShift(null);
@@ -360,6 +367,7 @@ function ShiftCard({
   shift,
   canManage,
   viewerMembershipId,
+  viewerTeamIds,
   swapRequest: rawSwapRequest,
   onChanged,
   onEdit,
@@ -367,6 +375,7 @@ function ShiftCard({
   shift: Shift;
   canManage: boolean;
   viewerMembershipId?: string;
+  viewerTeamIds: string[];
   swapRequest?: SwapRequest;
   onChanged: () => void;
   onEdit?: () => void;
@@ -396,6 +405,28 @@ function ShiftCard({
   // dus ook een manager/eigenaar (die zag voorheen zelfs het label niet).
   const canClaimOpenOffer =
     swapRequest?.status === "OPEN" && viewerMembershipId && swapRequest.offeredById !== viewerMembershipId;
+
+  // Open dienst: nog geen medewerker. Managers mogen altijd oppakken, anderen alleen
+  // een dienst voor hun eigen team (of een dienst zonder team), en niet in het verleden.
+  const isOpenShift = !shift.membershipId;
+  const canPickUp =
+    isOpenShift &&
+    Boolean(viewerMembershipId) &&
+    new Date(shift.date) >= new Date(new Date().toDateString()) &&
+    (canManage || !shift.departmentId || viewerTeamIds.includes(shift.departmentId));
+
+  async function pickUp(e: React.MouseEvent) {
+    e.stopPropagation();
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/shifts/${shift.id}/claim`, { method: "POST" });
+    setBusy(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Er ging iets mis, probeer het opnieuw.");
+    }
+    onChanged();
+  }
 
   async function offer(e: React.MouseEvent) {
     e.stopPropagation();
@@ -444,7 +475,7 @@ function ShiftCard({
       <div className="flex items-start justify-between gap-1">
         <div>
           <p className="flex flex-wrap items-center gap-1 font-medium">
-            <span>{shift.memberName ?? "Nog niet toegewezen"}</span>
+            <span>{shift.memberName ?? "Open dienst"}</span>
             {shift.role ? <span className="font-normal text-ink/60">· {shift.role}</span> : null}
           </p>
           <p className="text-ink/60">
@@ -452,6 +483,23 @@ function ShiftCard({
           </p>
         </div>
       </div>
+
+      {isOpenShift && (
+        <div className="mt-1.5 space-y-1">
+          <p className="rounded-full bg-amber/20 px-2 py-1 text-center text-[11px] font-medium text-amber-dark">
+            Open{shift.departmentName ? ` voor ${shift.departmentName}` : ""}
+          </p>
+          {canPickUp && (
+            <button
+              onClick={pickUp}
+              disabled={busy}
+              className="w-full rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
+            >
+              {busy ? "Bezig..." : "Oppakken"}
+            </button>
+          )}
+        </div>
+      )}
 
       {isOwnShift && !swapRequest && (
         <button

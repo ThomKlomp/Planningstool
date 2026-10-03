@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTodayKey } from "@/lib/use-today-key";
 import { useAvailabilitySave } from "./availability-save";
+import { customDaypart, customDaypartLabel, isValidTimeRange } from "@/lib/availability-custom";
 
 type Status = "AVAILABLE" | "UNAVAILABLE" | "UNSURE";
 
@@ -56,6 +57,43 @@ export default function AvailabilityGrid({
     return map;
   });
   const [saving, setSaving] = useState<string | null>(null);
+  // Formulier voor een losse tijd: per keer maar voor één dag open.
+  const [addingFor, setAddingFor] = useState<string | null>(null);
+  const [newStart, setNewStart] = useState("17:00");
+  const [newEnd, setNewEnd] = useState("21:00");
+  const [newStatus, setNewStatus] = useState<Status>("AVAILABLE");
+  const [addError, setAddError] = useState<string | null>(null);
+
+  async function addCustom(dateIso: string) {
+    if (!isValidTimeRange(newStart, newEnd)) {
+      setAddError("Kies een begin- en eindtijd die niet gelijk zijn.");
+      return;
+    }
+    const daypart = customDaypart(newStart, newEnd);
+    const key = `${new Date(dateIso).toDateString()}::${daypart}`;
+    if (entries[key]) {
+      setAddError("Deze tijd heb je al toegevoegd.");
+      return;
+    }
+    setAddError(null);
+    setAddingFor(null);
+    await save(dateIso, daypart, newStatus, "");
+  }
+
+  async function removeCustom(dateIso: string, daypart: string) {
+    const key = `${new Date(dateIso).toDateString()}::${daypart}`;
+    const previous = entries[key];
+    setEntries((prev) => ({ ...prev, [key]: undefined }));
+    const ok = await track(
+      fetch("/api/availability", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateIso, daypart }),
+      }).then((res) => res.ok)
+    );
+    if (!ok) setEntries((prev) => ({ ...prev, [key]: previous }));
+    router.refresh();
+  }
 
   async function save(dateIso: string, daypart: string, status: Status, note: string) {
     const key = `${new Date(dateIso).toDateString()}::${daypart}`;
@@ -77,6 +115,15 @@ export default function AvailabilityGrid({
 
     setSaving(null);
     router.refresh();
+  }
+
+  // Losse tijden van een dag (die een status hebben), op begintijd gesorteerd.
+  function customKeysFor(date: Date): string[] {
+    const prefix = `${date.toDateString()}::custom:`;
+    return Object.keys(entries)
+      .filter((k) => k.startsWith(prefix) && entries[k])
+      .map((k) => k.slice(k.indexOf("::") + 2))
+      .sort();
   }
 
   return (
@@ -184,7 +231,119 @@ export default function AvailabilityGrid({
                   </div>
                 );
               })}
+
+              {customKeysFor(date).map((daypart) => {
+                const key = `${date.toDateString()}::${daypart}`;
+                const current = entries[key];
+                const note = notes[key] ?? "";
+                return (
+                  <div key={daypart} className="border-t border-line pt-2">
+                    <p className="mb-1 flex items-center justify-between text-[11px] font-medium text-ink/60">
+                      <span>
+                        Losse tijd
+                        <span className="block text-[10px] font-normal text-ink/40">
+                          {customDaypartLabel(daypart)}
+                        </span>
+                      </span>
+                      {!locked && (
+                        <button
+                          onClick={() => removeCustom(dateIso, daypart)}
+                          className="rounded-full px-1.5 text-ink/40 hover:bg-mist hover:text-ink"
+                          aria-label="Losse tijd verwijderen"
+                          title="Verwijderen"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </p>
+                    <div className="space-y-1">
+                      {STATUS_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => save(dateIso, daypart, opt.value, note)}
+                          disabled={locked || saving === key}
+                          className={`w-full rounded-full px-2 py-1 text-xs font-medium transition-opacity ${
+                            current === opt.value ? opt.classes : "bg-mist text-ink/50"
+                          } ${locked ? "opacity-40" : saving === key ? "opacity-50" : "hover:opacity-80"}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={note}
+                      disabled={locked}
+                      onChange={(e) => setNotes((prev) => ({ ...prev, [key]: e.target.value }))}
+                      onBlur={() => current && save(dateIso, daypart, current, note)}
+                      placeholder="Opmerking"
+                      className="mt-2 w-full rounded-lg border border-line px-2 py-1 text-center text-[11px] text-ink placeholder:text-ink/30 focus:border-awning focus:outline-none disabled:opacity-40"
+                    />
+                  </div>
+                );
+              })}
             </div>
+
+            {!locked &&
+              (addingFor === dateIso ? (
+                <div className="mt-3 space-y-1.5 rounded-lg bg-mist p-2 text-left">
+                  <div className="flex gap-1">
+                    <input
+                      type="time"
+                      value={newStart}
+                      onChange={(e) => setNewStart(e.target.value)}
+                      aria-label="Van"
+                      className="w-1/2 min-w-0 rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                    />
+                    <input
+                      type="time"
+                      value={newEnd}
+                      onChange={(e) => setNewEnd(e.target.value)}
+                      aria-label="Tot"
+                      className="w-1/2 min-w-0 rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                    />
+                  </div>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as Status)}
+                    className="w-full rounded-lg border border-line bg-white px-1.5 py-1 text-[11px]"
+                  >
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  {addError && <p className="text-[11px] text-red-600">{addError}</p>}
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => addCustom(dateIso)}
+                      className="flex-1 rounded-full bg-orange px-2 py-1 text-[11px] font-medium text-ink hover:bg-orange-dark"
+                    >
+                      Toevoegen
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAddingFor(null);
+                        setAddError(null);
+                      }}
+                      className="rounded-full border border-line bg-white px-2 py-1 text-[11px] font-medium hover:border-ink"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAddingFor(dateIso);
+                    setAddError(null);
+                  }}
+                  className="mt-3 w-full rounded-full border border-dashed border-line px-2 py-1 text-[11px] font-medium text-ink/60 hover:border-ink hover:text-ink"
+                >
+                  + Losse tijd
+                </button>
+              ))}
           </div>
         );
       })}

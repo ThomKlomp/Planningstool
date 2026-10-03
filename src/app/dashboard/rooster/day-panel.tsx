@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import ShiftTeamSelect, { type MemberTeam } from "./shift-team-select";
+import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
+import { customDaypartLabel } from "@/lib/availability-custom";
 
 type Availability = {
   membershipId: string;
@@ -42,6 +43,7 @@ export default function DayPanel({
   members,
   availabilities,
   shiftTemplates,
+  departments,
   onClose,
   onDone,
 }: {
@@ -49,6 +51,7 @@ export default function DayPanel({
   members: Member[];
   availabilities: Availability[];
   shiftTemplates: ShiftTemplate[];
+  departments: MemberTeam[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -57,6 +60,8 @@ export default function DayPanel({
 
   function templateLabel(daypart: string) {
     if (!daypart) return null;
+    const custom = customDaypartLabel(daypart);
+    if (custom) return `losse tijd ${custom}`;
     const template = shiftTemplates.find((t) => t.id === daypart);
     return template ? `${template.name} (${template.startTime}–${template.endTime})` : null;
   }
@@ -146,6 +151,7 @@ export default function DayPanel({
               dateIso={dateIso}
               members={members}
               dayTemplates={dayTemplates}
+              departments={departments}
               onDone={onDone}
             />
           </div>
@@ -171,11 +177,13 @@ function AddShiftForm({
   dateIso,
   members,
   dayTemplates,
+  departments,
   onDone,
 }: {
   dateIso: string;
   members: Member[];
   dayTemplates: ShiftTemplate[];
+  departments: MemberTeam[];
   onDone: () => void;
 }) {
   const [startTime, setStartTime] = useState(dayTemplates[0]?.startTime ?? "17:00");
@@ -248,7 +256,7 @@ function AddShiftForm({
         }}
         className="w-full rounded-lg border border-line px-2 py-1.5 text-sm"
       >
-        <option value="">Nog niet toewijzen</option>
+        <option value="">Open dienst (iemand pakt 'm op)</option>
         {groupByDepartment(members).map((group) => (
           <optgroup key={group.label} label={group.label}>
             {group.members.map((m) => (
@@ -259,7 +267,15 @@ function AddShiftForm({
           </optgroup>
         ))}
       </select>
-      <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
+      {membershipId ? (
+        <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
+      ) : (
+        <OpenShiftTeamSelect
+          departments={departments}
+          value={departmentId}
+          onChange={setDepartmentId}
+        />
+      )}
       <input
         type="text"
         value={role}
@@ -272,7 +288,7 @@ function AddShiftForm({
         disabled={saving}
         className="w-full rounded-full bg-orange px-3 py-2 text-sm font-medium text-ink hover:bg-orange-dark disabled:opacity-50"
       >
-        {saving ? "Bezig..." : "Shift toevoegen"}
+        {saving ? "Bezig..." : membershipId ? "Shift toevoegen" : "Open dienst toevoegen"}
       </button>
     </form>
   );

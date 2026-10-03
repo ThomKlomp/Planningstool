@@ -6,6 +6,7 @@ import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
+import { customDaypartLabel } from "@/lib/availability-custom";
 
 export default async function AvailabilityPage({
   searchParams,
@@ -190,7 +191,13 @@ export default async function AvailabilityPage({
                           ) : (
                             <div className="flex flex-wrap justify-center gap-1">
                               {dayEntries.map((e) => (
-                                <StatusDot key={e.id} status={e.status} note={e.note} />
+                                <StatusDot
+                                  key={e.id}
+                                  status={e.status}
+                                  note={[customDaypartLabel(e.daypart), e.note]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                />
                               ))}
                             </div>
                           )}

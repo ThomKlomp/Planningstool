@@ -35,3 +35,39 @@ export default function ShiftTeamSelect({
     </div>
   );
 }
+
+/**
+ * Team-keuze bij een open dienst (nog geen medewerker). Alleen leden van dat
+ * team zien 'm dan als open dienst die ze kunnen oppakken; leeg = alle teams.
+ */
+export function OpenShiftTeamSelect({
+  departments,
+  value,
+  onChange,
+}: {
+  departments: MemberTeam[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  if (departments.length === 0) return null;
+  return (
+    <div>
+      <label className="block text-xs text-ink/60">Open dienst voor welk team?</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-sm focus:border-awning focus:outline-none"
+      >
+        <option value="">Alle teams</option>
+        {departments.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      <p className="mt-1 text-[11px] text-ink/50">
+        Leden van dit team krijgen een melding en kunnen de dienst zelf oppakken.
+      </p>
+    </div>
+  );
+}

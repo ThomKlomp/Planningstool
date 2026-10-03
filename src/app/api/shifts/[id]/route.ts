@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notifyShiftChanges, describeShift, shiftDateLabel, type ShiftChange } from "@/lib/roster-change";
+import {
+  notifyShiftChanges,
+  notifyOpenShift,
+  describeShift,
+  shiftDateLabel,
+  type ShiftChange,
+} from "@/lib/roster-change";
 import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function PATCH(
@@ -162,6 +168,17 @@ export async function PATCH(
       actorMembershipId: membership.membershipId,
       shiftDate: updated.date,
       changes,
+    });
+  }
+
+  // Een toegewezen dienst die weer open komt te staan: het team mag 'm oppakken.
+  if (newMembershipId === null && shift.membershipId) {
+    await notifyOpenShift({
+      companyId: membership.companyId,
+      companyName: membership.companyName,
+      companySlug: membership.companySlug,
+      actorMembershipId: membership.membershipId,
+      shift: updated,
     });
   }
 

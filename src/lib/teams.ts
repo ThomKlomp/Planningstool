@@ -20,14 +20,25 @@ export function teamIdsOf(m: {
 /**
  * Bepaalt welke departmentId er op een dienst opgeslagen moet worden.
  * Leeg = hoofdteam van de medewerker. Alleen een team van die medewerker
- * (hoofd- of extra team) is toegestaan.
+ * (hoofd- of extra team) is toegestaan. Een open dienst (geen medewerker)
+ * mag voor elk team van de zaak zijn.
  */
 export async function resolveShiftDepartment(
   companyId: string,
   membershipId: string | null | undefined,
   requested: string | null | undefined
 ): Promise<{ ok: true; departmentId: string | null } | { ok: false; error: string }> {
-  if (!requested || !membershipId) return { ok: true, departmentId: null };
+  if (!requested) return { ok: true, departmentId: null };
+
+  // Open dienst (nog geen medewerker): het team is dan juist het enige dat
+  // bepaalt wie de dienst kan zien en oppakken, dus elk team van de zaak mag.
+  if (!membershipId) {
+    const department = await prisma.department.findUnique({ where: { id: requested } });
+    if (!department || department.companyId !== companyId) {
+      return { ok: false, error: "Ongeldig team" };
+    }
+    return { ok: true, departmentId: requested };
+  }
 
   const member = await prisma.membership.findUnique({
     where: { id: membershipId },

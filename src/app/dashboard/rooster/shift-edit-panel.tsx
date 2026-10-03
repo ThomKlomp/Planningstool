@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ShiftTeamSelect, { type MemberTeam } from "./shift-team-select";
+import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
 
 type Member = {
   membershipId: string;
@@ -13,6 +13,7 @@ type Member = {
 export default function ShiftEditPanel({
   shift,
   members,
+  departments,
   onClose,
   onDone,
 }: {
@@ -26,6 +27,7 @@ export default function ShiftEditPanel({
     departmentId?: string | null;
   };
   members: Member[];
+  departments: MemberTeam[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -143,7 +145,7 @@ export default function ShiftEditPanel({
               }}
               className="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-sm focus:border-awning focus:outline-none"
             >
-              <option value="">Nog niet toegewezen</option>
+              <option value="">Open dienst (iemand pakt 'm op)</option>
               {members.map((m) => (
                 <option key={m.membershipId} value={m.membershipId}>
                   {m.name}
@@ -153,7 +155,15 @@ export default function ShiftEditPanel({
             </select>
           </div>
 
-          <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
+          {membershipId ? (
+            <ShiftTeamSelect teams={selectedTeams} value={departmentId} onChange={setDepartmentId} />
+          ) : (
+            <OpenShiftTeamSelect
+              departments={departments}
+              value={departmentId}
+              onChange={setDepartmentId}
+            />
+          )}
 
           <div>
             <label className="block text-xs text-ink/60">Functie/rol (optioneel)</label>
