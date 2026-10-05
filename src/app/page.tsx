@@ -70,8 +70,9 @@ const softwareApplicationSchema = {
     "Notificaties",
     "Rooster synchroniseren met je agenda",
     "Weersverwachting bij het rooster",
-    "Rapportages",
-    "Export naar Word, Excel en CSV",
+    "Rooster mailen naar je team",
+    "Rooster downloaden als PDF en CSV",
+    "Uren exporteren",
     "Verschillende gebruikersrechten",
     "Chatondersteuning",
   ],
@@ -170,6 +171,46 @@ const faqSchema = {
   ],
 };
 
+// Aanvullende functies onder de kaarten. Alleen wat het product echt doet.
+const MORE_FEATURES = [
+  {
+    title: "Open diensten",
+    body: "Staat er een dienst open, dan zie je dat meteen in het rooster. Medewerkers kunnen hem zelf pakken, of jij wijst hem toe.",
+  },
+  {
+    title: "Terugkerende diensten en sjablonen",
+    body: "Staat iemand elke vrijdag op dezelfde dienst? Stel het één keer in, het rooster vult zich vooruit. Je vaste diensttijden bewaar je als sjabloon.",
+  },
+  {
+    title: "Weer bij het rooster",
+    body: "Naast het rooster zie je de weersverwachting voor jouw plaats, met een korte terrashint per dag. Geen voorspelling van drukte, wel een steuntje bij het inplannen.",
+  },
+  {
+    title: "Rooster in je agenda",
+    body: "Via een agenda-koppeling zien medewerkers hun diensten in de agenda die ze al gebruiken.",
+  },
+  {
+    title: "Rooster delen",
+    body: "Publiceer het rooster en mail het naar je team. Of download het als PDF of CSV.",
+  },
+  {
+    title: "Uren exporteren",
+    body: "Een export van de goedgekeurde uren per periode, voor in je eigen administratie.",
+  },
+  {
+    title: "Verschillende rechten",
+    body: "Eigenaar en manager plannen en keuren goed. Medewerkers geven beschikbaarheid door en vullen hun eigen uren in.",
+  },
+  {
+    title: "Meldingen",
+    body: "Je krijgt een melding in de app en per e-mail, bijvoorbeeld bij opengestelde diensten of een verzoek dat op goedkeuring wacht.",
+  },
+  {
+    title: "Chat",
+    body: "Een vraag? Stuur ons een bericht in de chat.",
+  },
+];
+
 export default function HomePage() {
   const faqs = faqSchema.mainEntity;
 
@@ -199,13 +240,18 @@ export default function HomePage() {
           <h1 className="font-display text-[1.75rem] font-bold leading-[1.04] min-[360px]:text-[1.9rem] tracking-tight sm:text-5xl md:text-6xl lg:text-[2.5rem] xl:text-[2.9rem]">
             De eenvoudige personeelsplanning voor lokale horeca
           </h1>
+          {/* Eerste, citeerbare omschrijving: wat, voor wie, wat het kost. */}
+          <p className="max-w-xl text-lg leading-relaxed text-ink/85">
+            Shiftje is de planningstool voor lokale horeca: cafés, restaurants en bars tot{" "}
+            {MAX_STANDARD_MEMBERS} medewerkers. Je team geeft beschikbaarheid door, jij maakt het
+            rooster en ruilen en uren zitten in dezelfde app, voor één vaste prijs per zaak vanaf{" "}
+            {formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw.
+          </p>
           <p className="font-display text-xl font-semibold leading-snug text-terra md:text-2xl">
             Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
           </p>
           <p className="max-w-xl text-lg leading-relaxed text-ink/75">
-            Medewerkers geven hun beschikbaarheid door, jij zet er in een
-            paar klikken een rooster overheen. Aan het eind van de week
-            keur je de uren goed. Geen groepsapp vol foto&apos;s van een
+            Aan het eind van de week keur je de uren goed. Geen groepsapp vol foto&apos;s van een
             geprint rooster.
           </p>
           <p className="max-w-xl text-sm leading-relaxed text-ink/60">
@@ -257,6 +303,20 @@ export default function HomePage() {
         </div>
         <div className="mt-10">
           <FeatureFlipCards />
+        </div>
+
+        <div className="mt-16">
+          <h3 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+            En nog meer, zonder gedoe
+          </h3>
+          <ul className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {MORE_FEATURES.map((f) => (
+              <li key={f.title} className="rounded-2xl bg-white p-6">
+                <h4 className="font-display text-lg font-bold">{f.title}</h4>
+                <p className="mt-2 leading-relaxed text-ink/70">{f.body}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
