@@ -98,7 +98,7 @@ export default function WeatherSidebar({
         const url =
           `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}` +
           `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max` +
-          `&timezone=auto&past_days=7&forecast_days=16`;
+          `&timezone=auto&past_days=92&forecast_days=16`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Weer ophalen mislukt.");
         const j = await res.json();
@@ -173,7 +173,12 @@ export default function WeatherSidebar({
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {loading && !days && <p className="text-sm text-ink/60">Weer laden...</p>}
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {days && (
+          {days && days.length === 0 && (
+            <p className="text-sm text-ink/60">
+              Voor deze week is geen voorspelling beschikbaar. De voorspelling reikt maximaal 16 dagen vooruit.
+            </p>
+          )}
+          {days && days.length > 0 && (
             <ul className="space-y-2">
               {days.map((d) => {
                 const w = describe(d.code);
@@ -209,7 +214,7 @@ export default function WeatherSidebar({
             </ul>
           )}
         </div>
-        <p className="border-t border-line px-4 py-2 text-xs text-ink/40">
+        <p className="border-t border-line py-2 pl-4 pr-20 text-xs text-ink/40">
           Bron: Open-Meteo. Verwachtingen verder dan een paar dagen vooruit zijn minder betrouwbaar.
         </p>
       </aside>
