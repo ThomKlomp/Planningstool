@@ -209,7 +209,7 @@ export default function WeatherSidebar({
             </ul>
           )}
         </div>
-        <p className="border-t border-line px-4 py-2 text-xs text-ink/40">
+        <p className="border-t border-line py-2 pl-4 pr-20 text-xs text-ink/40">
           Bron: Open-Meteo. Verwachtingen verder dan een paar dagen vooruit zijn minder betrouwbaar.
         </p>
       </aside>
