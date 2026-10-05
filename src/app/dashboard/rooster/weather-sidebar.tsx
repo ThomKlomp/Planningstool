@@ -14,7 +14,6 @@ type Day = {
 
 type Place = { name: string; lat: number; lon: number };
 
-const STORAGE_KEY = "rooster-weer-plaats";
 const DAYS = ["zo", "ma", "di", "wo", "do", "vr", "za"];
 
 function describe(code: number): { icon: string; label: string } {
@@ -40,46 +39,44 @@ function terrasHint(d: Day): { text: string; tone: string } {
   return { text: "Wisselend", tone: "bg-ink/5 text-ink/60" };
 }
 
-// Haalt de plaats uit het bedrijfsadres ("Straat 1, Amsterdam" -> "Amsterdam").
-function cityFromAddress(address: string | null): string {
-  if (!address) return "";
-  const parts = address.split(",").map((p) => p.trim()).filter(Boolean);
-  const last = parts[parts.length - 1] ?? "";
-  return last.replace(/^\d{4}\s?[A-Za-z]{2}\s+/, "");
-}
-
-async function geocode(query: string): Promise<Place | null> {
+// PDOK Locatieserver (Kadaster) kent Nederlandse adressen en postcodes.
+async function geocodeAddress(query: string): Promise<Place | null> {
   const res = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=nl&format=json`
+    `https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?rows=1&fl=weergavenaam,centroide_ll&q=${encodeURIComponent(query)}`
   );
   if (!res.ok) return null;
-  const data = await res.json();
-  const r = data.results?.[0];
+  const doc = (await res.json()).response?.docs?.[0];
+  const m = /POINT\(([-\d.]+) ([-\d.]+)\)/.exec(doc?.centroide_ll ?? "");
+  return m ? { name: doc.weergavenaam, lat: Number(m[2]), lon: Number(m[1]) } : null;
+}
+
+// Fallback voor adressen buiten Nederland: zoek op de laatste deel van het adres.
+async function geocodeCity(address: string): Promise<Place | null> {
+  const city = address.split(",").pop()?.trim().replace(/^\d{4}\s?[A-Za-z]{2}\s+/, "") ?? "";
+  if (!city) return null;
+  const res = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=nl&format=json`
+  );
+  if (!res.ok) return null;
+  const r = (await res.json()).results?.[0];
   return r ? { name: r.name, lat: r.latitude, lon: r.longitude } : null;
 }
 
 export default function WeatherSidebar({
   weekDates,
-  defaultCity,
+  address,
+  postalCode,
 }: {
   weekDates: string[];
-  defaultCity: string | null;
+  address: string | null;
+  postalCode: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const query = [address, postalCode].filter(Boolean).join(", ");
   const [place, setPlace] = useState<Place | null>(null);
   const [days, setDays] = useState<Day[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Startplaats: eerder gekozen plaats, anders de plaats uit het bedrijfsadres.
-  useEffect(() => {
-    let stored = "";
-    try {
-      stored = localStorage.getItem(STORAGE_KEY) ?? "";
-    } catch {}
-    setQuery(stored || cityFromAddress(defaultCity));
-  }, [defaultCity]);
 
   const weekKey = weekDates.join(",");
 
@@ -87,7 +84,7 @@ export default function WeatherSidebar({
     if (!open) return;
     const q = query.trim();
     if (!q) {
-      setError("Vul een plaats in om het weer te zien.");
+      setError("Vul het adres van je zaak in bij Instellingen om het weer te zien.");
       setDays(null);
       return;
     }
@@ -96,8 +93,8 @@ export default function WeatherSidebar({
       setLoading(true);
       setError(null);
       try {
-        const p = place && place.name.toLowerCase() === q.toLowerCase() ? place : await geocode(q);
-        if (!p) throw new Error("Plaats niet gevonden.");
+        const p = place ?? (await geocodeAddress(q)) ?? (await geocodeCity(q));
+        if (!p) throw new Error("Adres niet gevonden. Controleer het adres bij Instellingen.");
         const url =
           `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}` +
           `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max` +
@@ -117,9 +114,6 @@ export default function WeatherSidebar({
         if (cancelled) return;
         setPlace(p);
         setDays(weekDates.map((d) => all.find((x) => x.date === d) ?? null).filter(Boolean) as Day[]);
-        try {
-          localStorage.setItem(STORAGE_KEY, q);
-        } catch {}
       } catch (e) {
         if (!cancelled) {
           setDays(null);
@@ -135,6 +129,9 @@ export default function WeatherSidebar({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, query, weekKey]);
+
+  // Bij een gewijzigd adres opnieuw opzoeken.
+  useEffect(() => setPlace(null), [query]);
 
   return (
     <>
@@ -168,16 +165,9 @@ export default function WeatherSidebar({
           </button>
         </div>
 
-        <div className="border-b border-line px-4 py-3">
-          <label className="block text-xs text-ink/60">Plaats</label>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Bijv. Amsterdam"
-            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-awning focus:outline-none"
-          />
-          {place && !error && <p className="mt-1 text-xs text-ink/40">Weer voor {place.name}</p>}
+        <div className="border-b border-line px-4 py-3 text-xs text-ink/60">
+          {place ? `Weer voor ${place.name}` : "Locatie volgens factuuradres"}
+          <span className="text-ink/40"> (aan te passen bij Instellingen)</span>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
