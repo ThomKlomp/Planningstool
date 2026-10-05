@@ -13,29 +13,76 @@ import {
   yearlyExclForTier,
 } from "@/lib/pricing";
 
+const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
+
 export const metadata: Metadata = {
   title: "Roosterprogramma voor lokale horeca",
   description:
     "Shiftje is rooster software voor lokale horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak tot 40 medewerkers, geen kosten per gebruiker. Begin gratis, 7 dagen.",
   alternates: { canonical: "/" },
+  // Staat hier en niet in de layout: canonical en og:url zouden anders door
+  // alle andere pagina's worden geërfd en naar de homepage wijzen. Een
+  // openGraph in een pagina vervangt die van de layout als geheel, dus de
+  // overige velden staan hier opnieuw.
+  openGraph: {
+    type: "website",
+    locale: "nl_NL",
+    siteName: "Shiftje",
+    url: "/",
+    title: "Shiftje: roosterprogramma voor lokale horeca",
+    description:
+      "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: rooster software voor lokale horeca" }],
+  },
 };
 
 const softwareApplicationSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "Shiftje",
+  url: SITE_URL,
   applicationCategory: "BusinessApplication",
   applicationSubCategory: "Personeelsplanning / roostersoftware",
-  operatingSystem: "Web, iOS, Android",
+  // Shiftje is een webapp; er zijn geen native iOS- of Android-apps.
+  operatingSystem: "Web",
+  inLanguage: "nl-NL",
   description:
-    "Rooster software voor lokale horeca: beschikbaarheid, personeelsplanning, dienstruil en urenregistratie op één plek.",
-  offers: {
-    "@type": "AggregateOffer",
+    "Roostersoftware voor lokale horeca (cafés, restaurants en bars tot 40 medewerkers): beschikbaarheid, personeelsplanning, diensten ruilen en urenregistratie op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen.",
+  // Alleen functies die echt in het product zitten.
+  featureList: [
+    "Beschikbaarheid doorgeven",
+    "Personeelsplanning en rooster maken",
+    "Teams",
+    "Open diensten",
+    "Diensten ruilen en overnemen",
+    "Terugkerende diensten",
+    "Dienstsjablonen",
+    "Urenregistratie en uren goedkeuren",
+    "Notificaties",
+    "Rooster synchroniseren met je agenda",
+    "Weersverwachting bij het rooster",
+    "Rapportages",
+    "Export naar Word, Excel en CSV",
+    "Verschillende gebruikersrechten",
+    "Chatondersteuning",
+  ],
+  provider: { "@id": `${SITE_URL}/#organization` },
+  // Eén aanbod per staffel: vaste prijs per zaak per maand, excl. btw.
+  offers: PRICE_TIERS.map((tier) => ({
+    "@type": "Offer",
+    name: `Shiftje ${tier.label}`,
+    price: tier.monthlyExcl.toFixed(2),
     priceCurrency: "EUR",
-    lowPrice: PRICE_TIERS[0].monthlyExcl.toFixed(2),
-    highPrice: PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl.toFixed(2),
-    offerCount: PRICE_TIERS.length,
-  },
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: tier.monthlyExcl.toFixed(2),
+      priceCurrency: "EUR",
+      valueAddedTaxIncluded: false,
+      billingDuration: "P1M",
+      unitText: "per zaak per maand",
+    },
+    url: `${SITE_URL}/#prijs`,
+  })),
   // Geen aggregateRating: we voegen die pas toe zodra er échte, verifieerbare
   // reviews zijn. Verzonnen sterren in structured data schendt Google's
   // richtlijnen en kan tot een handmatige actie leiden.

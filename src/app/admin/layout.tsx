@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
@@ -5,6 +6,11 @@ import { requireAcceptedTerms } from "@/lib/auth-guards";
 import SignOutButton from "@/components/sign-out-button";
 import { countChatsAwaitingReply } from "@/lib/support-notify";
 import AdminNav, { type AdminNavItem } from "./admin-nav";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,
