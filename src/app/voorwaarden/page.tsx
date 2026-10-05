@@ -23,7 +23,7 @@ export default function VoorwaardenPage() {
 
         <h2 className="mt-8 font-display text-xl">1. Wie we zijn</h2>
         <p className="mt-3 text-ink/70">
-          Shiftje is een planningstool voor kleine horecazaken: beschikbaarheid, rooster en uren op
+          Shiftje is een planningstool voor lokale horecazaken: beschikbaarheid, rooster en uren op
           één plek. Door een account aan te maken ga je akkoord met deze voorwaarden en met ons{" "}
           <a href="/privacy" className="text-awning hover:underline">privacybeleid</a>.
         </p>

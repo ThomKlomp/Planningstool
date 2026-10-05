@@ -14,9 +14,9 @@ import {
 } from "@/lib/pricing";
 
 export const metadata: Metadata = {
-  title: "Roosterprogramma voor kleine horeca",
+  title: "Roosterprogramma voor lokale horeca",
   description:
-    "Shiftje is rooster software voor kleine horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak tot 40 medewerkers, geen kosten per gebruiker. Begin gratis, 7 dagen.",
+    "Shiftje is rooster software voor lokale horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak tot 40 medewerkers, geen kosten per gebruiker. Begin gratis, 7 dagen.",
   alternates: { canonical: "/" },
 };
 
@@ -28,7 +28,7 @@ const softwareApplicationSchema = {
   applicationSubCategory: "Personeelsplanning / roostersoftware",
   operatingSystem: "Web, iOS, Android",
   description:
-    "Rooster software voor kleine horeca: beschikbaarheid, personeelsplanning, dienstruil en urenregistratie op één plek.",
+    "Rooster software voor lokale horeca: beschikbaarheid, personeelsplanning, dienstruil en urenregistratie op één plek.",
   offers: {
     "@type": "AggregateOffer",
     priceCurrency: "EUR",
@@ -50,7 +50,7 @@ const faqSchema = {
       name: "Wat is Shiftje?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor kleine horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
+        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor lokale horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
       },
     },
     {
@@ -58,7 +58,7 @@ const faqSchema = {
       name: "Voor wie is Shiftje gemaakt?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Voor kleine horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
+        text: "Voor lokale horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
       },
     },
     {
@@ -138,7 +138,7 @@ export default function HomePage() {
             Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
           </p>
           <h1 className="font-display text-5xl font-bold leading-[1.04] tracking-tight md:text-6xl">
-            Rooster software voor kleine horeca
+            Rooster software voor lokale horeca
           </h1>
           <p className="font-display text-xl font-semibold leading-snug text-terra md:text-2xl">
             Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
