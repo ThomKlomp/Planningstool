@@ -16,9 +16,11 @@ import {
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 
 export const metadata: Metadata = {
-  title: "Roosterprogramma voor lokale horeca",
+  // De titeltemplate van de layout geldt niet voor de pagina op hetzelfde
+  // niveau (de homepage), dus " | Shiftje" staat hier zelf (samen 60 tekens).
+  title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
   description:
-    "Shiftje is rooster software voor lokale horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak tot 40 medewerkers, geen kosten per gebruiker. Begin gratis, 7 dagen.",
+    "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
   alternates: { canonical: "/" },
   // Staat hier en niet in de layout: canonical en og:url zouden anders door
   // alle andere pagina's worden geërfd en naar de homepage wijzen. Een
@@ -29,10 +31,17 @@ export const metadata: Metadata = {
     locale: "nl_NL",
     siteName: "Shiftje",
     url: "/",
-    title: "Shiftje: roosterprogramma voor lokale horeca",
+    title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
     description:
-      "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: rooster software voor lokale horeca" }],
+      "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: personeelsplanning voor lokale horeca" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
+    description:
+      "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
+    images: ["/api/og"],
   },
 };
 
@@ -47,7 +56,7 @@ const softwareApplicationSchema = {
   operatingSystem: "Web",
   inLanguage: "nl-NL",
   description:
-    "Roostersoftware voor lokale horeca (cafés, restaurants en bars tot 40 medewerkers): beschikbaarheid, personeelsplanning, diensten ruilen en urenregistratie op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen.",
+    "Planningstool voor lokale horeca (cafés, restaurants en bars tot 40 medewerkers): beschikbaarheid, personeelsplanning, diensten ruilen en urenregistratie op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen.",
   // Alleen functies die echt in het product zitten.
   featureList: [
     "Beschikbaarheid doorgeven",
@@ -70,16 +79,16 @@ const softwareApplicationSchema = {
   // Eén aanbod per staffel: vaste prijs per zaak per maand, excl. btw.
   offers: PRICE_TIERS.map((tier) => ({
     "@type": "Offer",
-    name: `Shiftje ${tier.label}`,
+    name: `Shiftje ${tier.label}, per zaak per maand`,
     price: tier.monthlyExcl.toFixed(2),
     priceCurrency: "EUR",
+    // Google accepteert hier PriceSpecification (UnitPriceSpecification gaf een
+    // waarschuwing). "Per maand, per zaak" staat daarom in de naam.
     priceSpecification: {
-      "@type": "UnitPriceSpecification",
+      "@type": "PriceSpecification",
       price: tier.monthlyExcl.toFixed(2),
       priceCurrency: "EUR",
       valueAddedTaxIncluded: false,
-      billingDuration: "P1M",
-      unitText: "per zaak per maand",
     },
     url: `${SITE_URL}/#prijs`,
   })),
@@ -185,7 +194,7 @@ export default function HomePage() {
             Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
           </p>
           <h1 className="font-display text-5xl font-bold leading-[1.04] tracking-tight md:text-6xl">
-            Rooster software voor lokale horeca
+            De eenvoudige personeelsplanning voor lokale horeca
           </h1>
           <p className="font-display text-xl font-semibold leading-snug text-terra md:text-2xl">
             Wie kan er donderdagavond staan? Dat weet je nu in één oogopslag.
