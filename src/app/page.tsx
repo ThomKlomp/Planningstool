@@ -193,10 +193,10 @@ export default function HomePage() {
           <p className="self-start rounded-full bg-sand px-4 py-2 text-sm font-bold text-[#4A2A12]">
             Voor cafés, restaurants &amp; bars tot {MAX_STANDARD_MEMBERS} medewerkers
           </p>
-          {/* "personeelsplanning" is één lang woord: de tekstgrootte is per
-              breedte afgestemd zodat het in de kolom past en niet onder het
-              rooster schuift. */}
-          <h1 className="break-words font-display text-[1.9rem] font-bold leading-[1.04] tracking-tight [hyphens:auto] sm:text-5xl md:text-6xl lg:text-[2.5rem] xl:text-[2.9rem]">
+          {/* "personeelsplanning" is één lang woord en mag niet worden afgebroken
+              (geen hyphens/break-words): de tekstgrootte is per breedte
+              afgestemd zodat het hele woord in de kolom past. */}
+          <h1 className="font-display text-[1.75rem] font-bold leading-[1.04] min-[360px]:text-[1.9rem] tracking-tight sm:text-5xl md:text-6xl lg:text-[2.5rem] xl:text-[2.9rem]">
             De eenvoudige personeelsplanning voor lokale horeca
           </h1>
           <p className="font-display text-xl font-semibold leading-snug text-terra md:text-2xl">
