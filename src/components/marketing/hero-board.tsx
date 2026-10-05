@@ -117,7 +117,7 @@ export default function HeroBoard() {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="grid min-w-[500px] grid-cols-5 gap-2">
+        <div className="grid min-w-[460px] grid-cols-5 gap-2">
           <DayCol label="Di 7" avail={5}>
             <TeamGroup team="Bediening">
               <Shift name="Julia Bakker" time="12:00–18:00" k={1} />
