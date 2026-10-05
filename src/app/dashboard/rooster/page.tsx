@@ -11,6 +11,7 @@ import { isPastWeek } from "@/lib/roster-publish";
 import { teamIdsOf } from "@/lib/teams";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
+import WeatherSidebar from "./weather-sidebar";
 
 type View = "company" | "team" | "personal";
 
@@ -56,6 +57,8 @@ export default async function RosterPage({
           autoOpenWeeks: true,
           closedWeekdays: true,
           showCompanyRosterToEmployees: true,
+          address: true,
+          postalCode: true,
         },
       }),
       prisma.closedDay.findMany({
@@ -252,7 +255,10 @@ export default async function RosterPage({
       )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <WeekNav basePath="/dashboard/rooster" weekStart={week[0]} />
+        <div className="flex flex-wrap items-center gap-2">
+          <WeekNav basePath="/dashboard/rooster" weekStart={week[0]} />
+          <WeatherSidebar weekDates={week.map(toDateParam)} address={company?.address ?? null} postalCode={company?.postalCode ?? null} />
+        </div>
         {canManage && (
           <RosterActions
             isPublished={rosterPublished}
