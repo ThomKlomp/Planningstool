@@ -32,7 +32,7 @@ const organizationSchema = {
   name: "Shiftje",
   legalName: "Shiftje",
   url: SITE_URL,
-  description: "Shiftje, roostersoftware voor lokale horeca",
+  description: "Shiftje, planningstool voor lokale horeca",
   identifier: {
     "@type": "PropertyValue",
     propertyID: "KvK",
