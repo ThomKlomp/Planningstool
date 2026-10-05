@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     "beschikbaarheidsprogramma horeca",
     "beschikbaarheid en rooster maken horeca",
     "dienstroosterapp",
-    "rooster app lokale horeca",
+    "rooster app kleine horeca",
     "werkrooster horeca",
     "werkrooster maken",
     "personeel inplannen horeca",
