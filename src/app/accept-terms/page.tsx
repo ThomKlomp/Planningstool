@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import AcceptTermsForm from "./accept-terms-form";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AcceptTermsPage({
   searchParams,

@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { requireAcceptedTerms } from "@/lib/auth-guards";
 import OnboardingForm from "./onboarding-form";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);

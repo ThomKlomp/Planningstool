@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import RegisterForm from "./register-form";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function RegisterPage() {
   return (

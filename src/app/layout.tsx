@@ -22,6 +22,34 @@ const figtree = Figtree({
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 
+// Organisatie en website: overal dezelfde omschrijving (entity-consistentie).
+// Alleen bevestigde gegevens: geen e-mail, logo of sociale profielen tot die
+// bestaan.
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: "Shiftje",
+  legalName: "Shiftje",
+  url: SITE_URL,
+  description: "Shiftje, roostersoftware voor lokale horeca",
+  identifier: {
+    "@type": "PropertyValue",
+    propertyID: "KvK",
+    value: "95993509",
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  name: "Shiftje",
+  url: SITE_URL,
+  inLanguage: "nl-NL",
+  publisher: { "@id": `${SITE_URL}/#organization` },
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -30,42 +58,12 @@ export const metadata: Metadata = {
   },
   description:
     "Rooster software voor lokale horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. Begin gratis.",
-  keywords: [
-    "rooster software horeca",
-    "rooster maken horeca",
-    "roostertool horeca",
-    "rooster programma horeca",
-    "personeelsplanning horeca",
-    "personeelsplanning software horeca",
-    "planningstool horeca",
-    "planningsprogramma horeca",
-    "planner horeca",
-    "beschikbaarheidsprogramma horeca",
-    "beschikbaarheid en rooster maken horeca",
-    "dienstroosterapp",
-    "rooster app kleine horeca",
-    "werkrooster horeca",
-    "werkrooster maken",
-    "personeel inplannen horeca",
-    "medewerkers inplannen app",
-    "diensten ruilen app",
-    "urenregistratie horeca",
-    "rooster maken zonder excel",
-    "rooster app zonder whatsapp",
-    "rooster app zonder kosten per medewerker",
-    "gratis rooster app",
-    "personeelsplanning café",
-    "planning restaurant",
-    "rooster app bar",
-  ],
   authors: [{ name: "Shiftje" }],
-  alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     locale: "nl_NL",
     siteName: "Shiftje",
-    url: SITE_URL,
     title: "Shiftje: roosterprogramma voor lokale horeca",
     description:
       "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
@@ -89,6 +87,14 @@ export default async function RootLayout({
   return (
     <html lang="nl" className={`${fraunces.variable} ${figtree.variable}`}>
       <body className="font-body">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         <Suspense fallback={null}>
           <PageViewTracker />
         </Suspense>

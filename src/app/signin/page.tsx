@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import SignInForm from "./signin-form";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 // Server-check vóórdat de inlogpagina rendert. Zonder deze check kun je met
 // een nog geldige sessie (bv. oud tabblad, bladwijzer) op /signin

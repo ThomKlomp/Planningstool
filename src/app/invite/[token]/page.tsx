@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireAcceptedTerms } from "@/lib/auth-guards";
 import InviteLanding from "./invite-landing";
 import AcceptInviteForm from "./accept-invite-form";
+
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 function roleLabel(role: string) {
   switch (role) {
