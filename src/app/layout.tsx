@@ -25,11 +25,11 @@ const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Shiftje: roosterprogramma voor kleine horeca",
+    default: "Shiftje: roosterprogramma voor lokale horeca",
     template: "%s | Shiftje",
   },
   description:
-    "Rooster software voor kleine horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. Begin gratis.",
+    "Rooster software voor lokale horeca: beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. Begin gratis.",
   keywords: [
     "rooster software horeca",
     "rooster maken horeca",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     "beschikbaarheidsprogramma horeca",
     "beschikbaarheid en rooster maken horeca",
     "dienstroosterapp",
-    "rooster app kleine horeca",
+    "rooster app lokale horeca",
     "werkrooster horeca",
     "werkrooster maken",
     "personeel inplannen horeca",
@@ -66,15 +66,15 @@ export const metadata: Metadata = {
     locale: "nl_NL",
     siteName: "Shiftje",
     url: SITE_URL,
-    title: "Shiftje: roosterprogramma voor kleine horeca",
+    title: "Shiftje: roosterprogramma voor lokale horeca",
     description:
       "Beschikbaarheid, personeelsplanning en uren op één plek. Eén vaste prijs per zaak, geen kosten per medewerker.",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: rooster software voor kleine horeca" }],
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: rooster software voor lokale horeca" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shiftje: roosterprogramma voor kleine horeca",
-    description: "Beschikbaarheid, personeelsplanning en uren op één plek voor kleine horecazaken.",
+    title: "Shiftje: roosterprogramma voor lokale horeca",
+    description: "Beschikbaarheid, personeelsplanning en uren op één plek voor lokale horecazaken.",
     images: ["/api/og"],
   },
 };

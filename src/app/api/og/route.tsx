@@ -5,7 +5,7 @@ export const runtime = "edge";
 // Eén herbruikbare OG-afbeelding voor alle marketingpagina's: /api/og?title=...&eyebrow=...
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const title = searchParams.get("title") || "Roosterprogramma voor kleine horeca";
+  const title = searchParams.get("title") || "Roosterprogramma voor lokale horeca";
   const eyebrow = searchParams.get("eyebrow") || "Shiftje";
 
   return new ImageResponse(
