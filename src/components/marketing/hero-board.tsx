@@ -106,7 +106,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 font-display text-base font-bold">
           <span className="font-body text-[13px] font-medium text-ink/55">← Vorige week</span>
-          6 – 12 okt
+          5 – 11 okt
           <span className="font-body text-[13px] font-medium text-ink/55">Volgende week →</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -125,15 +125,15 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
 
       <div className="overflow-x-auto">
         <div className="grid min-w-[460px] grid-cols-5 gap-2">
-          <DayCol label="Di 7" avail={5}>
+          <DayCol label="Di 6" avail={5}>
             <TeamGroup team="Bediening">
               <Shift name="Julia Bakker" time={DAY} k={1} />
             </TeamGroup>
             <TeamGroup team={v.teamB}>
-              <Shift name="Mark Jansen" time={EVE} role={v.chef} k={2} />
+              <Shift name="Elif Yildiz" time={EVE} role={v.chef} k={2} />
             </TeamGroup>
           </DayCol>
-          <DayCol label="Wo 8" today avail={4}>
+          <DayCol label="Wo 7" today avail={4}>
             <TeamGroup team="Bediening">
               <div className="relative h-[62px]">
                 <div className="ui-toast-a absolute inset-0">
@@ -149,7 +149,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
               <Shift name="Ahmed El Idrissi" time={DAY} k={5} />
             </TeamGroup>
           </DayCol>
-          <DayCol label="Do 9" avail={5}>
+          <DayCol label="Do 8" avail={5}>
             <TeamGroup team="Bediening">
               <Shift name="Julia Bakker" time={EVE} k={6} />
             </TeamGroup>
@@ -157,16 +157,16 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
               <Shift name="Ahmed El Idrissi" time={DAY} role={v.afwas} k={7} />
             </TeamGroup>
           </DayCol>
-          <DayCol label="Vr 10" avail={3}>
+          <DayCol label="Vr 9" avail={3}>
             <TeamGroup team="Bediening">
               <Shift name="Tom Visser" time={LATE} k={8} />
               <Shift name="Nog niet toegewezen" time={LATE} state="open" k={9} />
             </TeamGroup>
             <TeamGroup team={v.teamB}>
-              <Shift name="Mark Jansen" time={LATE} k={10} />
+              <Shift name="Elif Yildiz" time={LATE} k={10} />
             </TeamGroup>
           </DayCol>
-          <DayCol label="Za 11" avail={5}>
+          <DayCol label="Za 10" avail={5}>
             <TeamGroup team="Bediening">
               <Shift name="Nina de Boer" time={DAY} k={11} />
               <Shift name="Julia Bakker" time={LATE} k={12} />
@@ -181,7 +181,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
       <div className="relative mt-3.5 h-14">
         <div className="ui-toast-a absolute inset-0 flex items-center gap-2.5 rounded-2xl bg-sand px-3 text-xs text-[#4A2A12]">
           <span className="flex-1">
-            <b>Ruilverzoek:</b> Tom wil wo 8 okt, {SWAP} overgeven, Julia neemt het over
+            <b>Ruilverzoek:</b> Tom wil wo 7 okt, {SWAP} overgeven, Julia neemt het over
           </span>
           <span className="ui-press inline-block rounded-[10px] bg-terra px-3 py-2 text-xs font-bold text-white">
             Goedkeuren

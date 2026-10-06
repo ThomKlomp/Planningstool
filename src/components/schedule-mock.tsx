@@ -38,7 +38,7 @@ function makeInitialDays(venue: Venue): Day[] {
   const [lateStart, lateEnd] = v.late;
   return [
     {
-      label: "Wo 16",
+      label: "Wo 7",
       shifts: [
         { id: "1", personId: "julia", startTime: "12:00", endTime: "18:00", role: "" },
         { id: "2", personId: "tom", startTime: eveStart, endTime: eveEnd, role: "" },
@@ -46,14 +46,14 @@ function makeInitialDays(venue: Venue): Day[] {
       ],
     },
     {
-      label: "Do 17",
+      label: "Do 8",
       shifts: [
         { id: "4", personId: "nina", startTime: "12:00", endTime: "18:00", role: "" },
         { id: "5", personId: "lotte", startTime: eveStart, endTime: eveEnd, role: v.kok },
       ],
     },
     {
-      label: "Vr 18",
+      label: "Vr 9",
       shifts: [{ id: "6", personId: "mark", startTime: lateStart, endTime: lateEnd, role: "" }],
     },
   ];
@@ -159,7 +159,7 @@ export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
     <div>
       <div className="relative rounded-2xl border border-line bg-white p-4 shadow-[0_2px_0_0_#DDD5C7] md:p-5">
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs uppercase tracking-wide text-ink/40">Week 38</p>
+          <p className="text-xs uppercase tracking-wide text-ink/40">Week 41</p>
           <span className="rounded-full bg-awning/10 px-2 py-0.5 text-[11px] font-medium text-awning">
             Open
           </span>

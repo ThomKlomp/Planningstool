@@ -146,10 +146,10 @@ function AvailabilityUi({ v }: { v: VenueData }) {
         <span className="text-[11px] font-bold text-awning">✓ Opgeslagen</span>
       </div>
       <div className="rounded-xl bg-mist px-2.5 py-2 text-xs">
-        <b className="font-display">Ma 6</b> <span className="text-ink/55">Gesloten · Vaste sluitingsdag</span>
+        <b className="font-display">Ma 5</b> <span className="text-ink/55">Gesloten · Vaste sluitingsdag</span>
       </div>
-      {day("Di 7", 0, 1)}
-      {day("Wo 8", 0, 2)}
+      {day("Di 6", 0, 1)}
+      {day("Wo 7", 0, 2)}
       <div className="flex flex-wrap gap-x-2.5 text-[10.5px] text-ink/55">
         <span>✓ Beschikbaar</span>
         <span>? Weet ik nog niet</span>
@@ -166,9 +166,9 @@ function RosterUi({ v }: { v: VenueData }) {
         <Pill tone="sand">Concept, nog niet zichtbaar</Pill>
         <MiniBtn>Rooster publiceren</MiniBtn>
       </div>
-      <div className="font-display text-[13px] font-bold">Week 41 · 6 – 12 okt</div>
+      <div className="font-display text-[13px] font-bold">Week 41 · 5 – 11 okt</div>
       <div className="grid grid-cols-3 gap-[7px]">
-        <Day label="Wo 8" avail={4}>
+        <Day label="Wo 7" avail={4}>
           <Group team="Bediening">
             <Shift name="Tom Visser" time="12:00–18:00" state="offer" note="Aangeboden" />
             <Shift name="Nina de Boer" time={range(v.eve)} />
@@ -177,21 +177,21 @@ function RosterUi({ v }: { v: VenueData }) {
             <Shift name="Ahmed El Idrissi" time="12:00–18:00" />
           </Group>
         </Day>
-        <Day label="Do 9" avail={5}>
+        <Day label="Do 8" avail={5}>
           <Group team="Bediening">
             <Shift name="Julia Bakker" time={range(v.eve)} state="taken" note="Overgenomen van Tom Visser" />
           </Group>
           <Group team={v.teamB}>
-            <Shift name="Mark Jansen" time="12:00–18:00" />
+            <Shift name="Elif Yildiz" time="12:00–18:00" />
           </Group>
         </Day>
-        <Day label="Vr 10" avail={3}>
+        <Day label="Vr 9" avail={3}>
           <Group team="Bediening">
             <Shift name="Tom Visser" time={range(v.late)} />
             <Shift name="Nog niet toegewezen" time={range(v.late)} state="open" />
           </Group>
           <Group team={v.teamB}>
-            <Shift name="Mark Jansen" time={range(v.late)} />
+            <Shift name="Elif Yildiz" time={range(v.late)} />
           </Group>
         </Day>
       </div>
@@ -223,7 +223,7 @@ function TeamsUi({ v }: { v: VenueData }) {
       {row(v.teamB, ORNG)}
       <div className="border-t border-line pt-2 text-[11px] font-bold text-ink/55">Medewerkers indelen</div>
       {mem("Julia Bakker", "Bediening", BLUE)}
-      {mem("Mark Jansen", v.teamB, ORNG)}
+      {mem("Elif Yildiz", v.teamB, ORNG)}
       {mem("Nina de Boer", "Bediening", BLUE)}
       <div className="flex flex-wrap items-center gap-1.5">
         <MiniBtn variant="ghost">+ Extra team</MiniBtn>
@@ -251,7 +251,7 @@ function SwapUi({ v }: { v: VenueData }) {
         1,
         <>
           <div className="rounded-lg border-l-4 bg-mist px-2 py-1.5" style={{ borderColor: BLUE }}>
-            <b>Za 11 · {shortRange(v.late)}</b>
+            <b>Za 10 · {shortRange(v.late)}</b>
             <div className="text-[11px] text-ink/55">Nina de Boer · Bediening</div>
           </div>
           <div>
@@ -303,9 +303,9 @@ function HoursUi({ v }: { v: VenueData }) {
         <b className="font-display text-sm">Mijn uren</b>
         <span className="text-[10.5px] text-ink/55">Goedgekeurd 42,5 · In behandeling 11</span>
       </div>
-      {entry("Di 7", range(v.eve), <Pill>Goedgekeurd</Pill>)}
+      {entry("Di 6", range(v.eve), <Pill>Goedgekeurd</Pill>)}
       {entry(
-        "Wo 8",
+        "Wo 7",
         "12:00–18:00 · pauze 30",
         <Pill tone="mist">Concept, nog te bevestigen</Pill>,
         <div className="flex gap-1.5">
@@ -314,7 +314,7 @@ function HoursUi({ v }: { v: VenueData }) {
         </div>
       )}
       {entry(
-        "Do 9",
+        "Do 8",
         "12:00–18:00",
         <Pill tone="sand">Vraag gesteld</Pill>,
         <>
