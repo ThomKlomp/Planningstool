@@ -9,6 +9,7 @@ const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 // zodra ze bestaan.
 const routes = [
   { path: "/", lastModified: "2026-10-05", priority: 1, changeFrequency: "weekly" as const },
+  { path: "/over-ons", lastModified: "2026-10-06", priority: 0.6, changeFrequency: "yearly" as const },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

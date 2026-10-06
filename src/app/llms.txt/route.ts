@@ -15,6 +15,7 @@ export function GET() {
 - [Homepage](${SITE_URL}/): wat Shiftje is, functies en prijzen
 - [Prijzen](${SITE_URL}/#prijs): per maand excl. btw: ${prices}
 - [Veelgestelde vragen](${SITE_URL}/#faq)
+- [Over ons](${SITE_URL}/over-ons): gemaakt door Thom en Daniel, twee ondernemers met horeca-ervaring
 
 ## Functies
 Beschikbaarheid doorgeven, rooster maken, teams, open diensten, diensten ruilen en overnemen, terugkerende diensten, dienstsjablonen, uren registreren en goedkeuren, notificaties, rooster in je agenda, weersverwachting bij het rooster, rooster mailen en downloaden (PDF, CSV), uren exporteren, verschillende gebruikersrechten, chatondersteuning.

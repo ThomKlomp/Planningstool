@@ -38,6 +38,10 @@ const organizationSchema = {
     propertyID: "KvK",
     value: "95993509",
   },
+  founder: [
+    { "@type": "Person", name: "Thom" },
+    { "@type": "Person", name: "Daniel" },
+  ],
 };
 
 const websiteSchema = {
