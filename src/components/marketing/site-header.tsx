@@ -39,6 +39,9 @@ export default async function SiteHeader() {
           <Link href="/#prijs" className="hidden hover:text-terra md:inline">
             Prijzen
           </Link>
+          <Link href="/over-ons" className="hidden hover:text-terra md:inline">
+            Over ons
+          </Link>
           {loggedIn ? (
             <Link
               href="/dashboard"
