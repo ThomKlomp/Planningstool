@@ -14,9 +14,6 @@ export default function SiteFooter() {
           <Link href="/#prijs" className="hover:text-ink">
             Prijzen
           </Link>
-          <Link href="/rooster-maken-cafe" className="hover:text-ink">
-            Voor cafés en bars
-          </Link>
           <Link href="/over-ons" className="hover:text-ink">
             Over ons
           </Link>

@@ -394,7 +394,7 @@ const FEATURES: {
   },
 ];
 
-export default function FeatureFlipCards() {
+export default function FeatureFlipCards({ bodies }: { bodies?: Record<string, string> }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {FEATURES.map((f) => (
@@ -411,7 +411,7 @@ export default function FeatureFlipCards() {
                 </svg>
               </div>
               <h3 className="font-display text-2xl font-bold">{f.title}</h3>
-              <p className="flex-1 text-base leading-relaxed text-ink/70">{f.body}</p>
+              <p className="flex-1 text-base leading-relaxed text-ink/70">{bodies?.[f.title] ?? f.body}</p>
               <div
                 className="inline-flex items-center gap-2 self-start rounded-full px-4 py-2.5 text-sm font-bold"
                 style={{ backgroundColor: f.tile }}
