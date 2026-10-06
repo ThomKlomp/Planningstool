@@ -56,5 +56,24 @@ export default function PageViewTracker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  // Klikken op elementen met data-track="..." (bv. "Begin gratis") tellen we
+  // anoniem mee, op dezelfde manier als een paginabezoek: geen cookie, geen
+  // opslag op het apparaat. Alleen vooraf toegestane namen worden bewaard.
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      const el = (e.target as Element | null)?.closest?.("[data-track]");
+      const event = el?.getAttribute("data-track");
+      if (!event || !pathname || hasDeclined()) return;
+      fetch("/api/track-visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: pathname, event }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [pathname]);
+
   return null;
 }

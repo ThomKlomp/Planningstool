@@ -640,11 +640,13 @@ model PageView {
   role       Role?
   isPlatformAdmin Boolean @default(false) // ingelogd als platform-admin (jijzelf/collega's); hoeft geen eigen zaak te hebben, dus apart van "anoniem" en van "hoort bij een zaak"
   country    String? // ISO-landcode (bv. "NL"), bepaald uit het IP-adres op het moment zelf; het IP-adres wordt nooit opgeslagen
+  event      String? // leeg = gewoon paginabezoek; anders een anonieme klik, bv. "cta-hero" (Begin gratis in de hero)
   createdAt  DateTime @default(now())
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([path])
+  @@index([event])
   @@index([companyId])
 }

@@ -31,6 +31,7 @@ export default function PrivacyPage() {
           <li>Uit welk land je verzoek kwam (bijvoorbeeld "Nederland")</li>
           <li>Of je op dat moment al bent ingelogd bij een zaak, en zo ja: bij welke</li>
           <li>Tijdstip van bezoek</li>
+          <li>Of je op de knop "Begin gratis" of "Start met je zaak" hebt geklikt (alleen dat de klik plaatsvond en waar op de pagina, niets over jou)</li>
         </ul>
         <p className="mt-3 text-ink/70">
           Om het land te bepalen kijken we op het moment zelf naar je IP-adres, maar dat adres zelf

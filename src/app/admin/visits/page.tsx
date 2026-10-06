@@ -6,29 +6,66 @@ function since(days: number) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
+// Alleen gewone paginabezoeken (geen klik-events) in de bezoekcijfers.
 async function countInPeriod(days: number) {
-  return prisma.pageView.count({ where: { createdAt: { gte: since(days) } } });
+  return prisma.pageView.count({ where: { createdAt: { gte: since(days) }, event: null } });
 }
+
+// Herkomsten die we als "via AI-tools" groeperen (referrer-hostname of utm_source).
+const AI_SOURCES = [
+  "chatgpt.com",
+  "chat.openai.com",
+  "perplexity.ai",
+  "www.perplexity.ai",
+  "claude.ai",
+  "gemini.google.com",
+  "copilot.microsoft.com",
+];
+
+const CTA_LABELS: Record<string, string> = {
+  "cta-hero": "Bovenaan de homepage",
+  "cta-prijs": "Bij de prijzen",
+  "cta-header": "In de menubalk",
+};
 
 export default async function VisitsPage() {
   const periodDays = 30;
   const from = since(periodDays);
 
-  const [total24h, total7d, total30d, views, distinctCompanies] = await Promise.all([
+  const publicVisitor = { isPlatformAdmin: false, createdAt: { gte: from } };
+
+  const [total24h, total7d, total30d, views, distinctCompanies, homeVisits, onboardingVisits, ctaClicks, newCompanies, aiVisits] = await Promise.all([
     countInPeriod(1),
     countInPeriod(7),
     countInPeriod(periodDays),
     prisma.pageView.findMany({
-      where: { createdAt: { gte: from } },
+      where: { createdAt: { gte: from }, event: null },
       orderBy: { createdAt: "desc" },
       take: 500,
     }),
     prisma.pageView.findMany({
-      where: { createdAt: { gte: from }, companyId: { not: null } },
+      where: { createdAt: { gte: from }, companyId: { not: null }, event: null },
       select: { companyId: true },
       distinct: ["companyId"],
     }),
+    prisma.pageView.count({ where: { ...publicVisitor, event: null, path: "/" } }),
+    prisma.pageView.count({ where: { ...publicVisitor, event: null, path: "/onboarding" } }),
+    prisma.pageView.groupBy({
+      by: ["event"],
+      where: { ...publicVisitor, event: { startsWith: "cta-" } },
+      _count: { _all: true },
+    }),
+    // Nieuwe zaken staan al in de database, dus dit hoeft niet apart gemeten te worden.
+    prisma.company.count({ where: { createdAt: { gte: from } } }),
+    prisma.pageView.count({
+      where: {
+        ...publicVisitor,
+        event: null,
+        OR: [{ referrer: { in: AI_SOURCES } }, { utmSource: { in: AI_SOURCES } }],
+      },
+    }),
   ]);
+  const totalClicks = ctaClicks.reduce((sum, c) => sum + c._count._all, 0);
 
   const withCompany = views.filter((v) => v.companyId);
   const platformAdminOnly = views.filter((v) => !v.companyId && v.isPlatformAdmin);
@@ -54,6 +91,39 @@ export default async function VisitsPage() {
         <Stat label="Laatste 7 dagen" value={total7d} />
         <Stat label="Laatste 30 dagen" value={total30d} />
         <Stat label="Zaken die langskwamen (30 dgn)" value={distinctCompanies.length} />
+      </div>
+
+      <div className="mt-8 rounded-xl border border-line bg-white p-5">
+        <p className="text-sm font-medium">Aanmelden (30 dgn)</p>
+        <p className="mt-1 text-xs text-ink/50">
+          Aantallen per stap, zonder cookie: dit zijn geen gevolgde bezoekers, dus de verhoudingen zijn een
+          indicatie en geen exact conversiepercentage. Platform-admins tellen niet mee. Alleen bezoekers met
+          JavaScript worden geteld.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-4">
+          <Stat label="Bezoeken homepage" value={homeVisits} />
+          <Stat label="Klikken op Begin gratis" value={totalClicks} />
+          <Stat label="Bezoeken onboarding" value={onboardingVisits} />
+          <Stat label="Nieuwe zaken aangemaakt" value={newCompanies} />
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-medium text-ink/60">Klikken per plek</p>
+            <CountList
+              items={ctaClicks
+                .map((c): [string, number] => [CTA_LABELS[c.event ?? ""] ?? c.event ?? "?", c._count._all])
+                .sort((a, b) => b[1] - a[1])}
+            />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-ink/60">Bezoeken via AI-tools</p>
+            <p className="mt-2 font-display text-2xl">{aiVisits}</p>
+            <p className="mt-1 text-xs text-ink/50">
+              ChatGPT, Perplexity, Claude, Gemini, Copilot. Niet elke AI-tool stuurt een herkomst mee, dit
+              is dus een ondergrens.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">

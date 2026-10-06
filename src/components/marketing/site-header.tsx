@@ -53,6 +53,7 @@ export default async function SiteHeader() {
               </Link>
               <Link
                 href="/onboarding"
+                data-track="cta-header"
                 className="whitespace-nowrap rounded-full bg-ink px-3 py-2.5 text-xs font-bold text-paper transition-colors hover:bg-terra sm:px-4 sm:text-sm"
               >
                 Start met je zaak
