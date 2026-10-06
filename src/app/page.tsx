@@ -261,6 +261,7 @@ export default function HomePage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/onboarding"
+              data-track="cta-hero"
               className="rounded-full bg-terra px-7 py-3.5 text-base font-bold text-white transition-colors hover:bg-terra-dark"
             >
               Begin gratis, 7 dagen
@@ -412,6 +413,7 @@ export default function HomePage() {
             </p>
             <Link
               href="/onboarding"
+              data-track="cta-prijs"
               className="mt-5 block w-full rounded-full bg-terra px-5 py-3.5 text-center font-bold text-white transition-colors hover:bg-terra-dark"
             >
               Begin gratis

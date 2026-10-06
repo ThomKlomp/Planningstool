@@ -21,6 +21,9 @@ function countryFromRequest(req: Request): string | null {
   }
 }
 
+// Toegestane klik-events (alleen deze worden opgeslagen).
+const ALLOWED_EVENTS = new Set(["cta-hero", "cta-prijs", "cta-header"]);
+
 /**
  * Legt één paginabezoek vast: welk pad, waar de bezoeker vandaan kwam
  * (referrer-hostname of UTM-parameters) en, als de bezoeker is ingelogd, bij
@@ -45,6 +48,13 @@ export async function POST(req: Request) {
       }
     }
 
+    // Een klik-event (bv. "Begin gratis") of een gewoon paginabezoek.
+    let event: string | null = null;
+    if (typeof body?.event === "string") {
+      if (!ALLOWED_EVENTS.has(body.event)) return NextResponse.json({ ok: false }, { status: 400 });
+      event = body.event;
+    }
+
     const session = await getServerSession(authOptions).catch(() => null);
     const membership = session?.user?.memberships?.[0];
 
@@ -60,6 +70,7 @@ export async function POST(req: Request) {
         role: membership?.role,
         isPlatformAdmin: Boolean(session?.user?.isPlatformAdmin),
         country: countryFromRequest(req),
+        event,
       },
     });
 
