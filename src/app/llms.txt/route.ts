@@ -15,6 +15,7 @@ export function GET() {
 - [Homepage](${SITE_URL}/): wat Shiftje is, functies en prijzen
 - [Prijzen](${SITE_URL}/#prijs): per maand excl. btw: ${prices}
 - [Veelgestelde vragen](${SITE_URL}/#faq)
+- [Rooster maken voor je café, kroeg of bar](${SITE_URL}/rooster-maken-cafe): hoe Shiftje werkt voor cafés, kroegen, eetcafés en bars
 - [Over ons](${SITE_URL}/over-ons): gemaakt door Thom en Daniel, twee ondernemers met horeca-ervaring
 
 ## Functies
