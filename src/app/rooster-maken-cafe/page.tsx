@@ -54,7 +54,7 @@ const FAQS: LandingFaq[] = [
   {
     name: "Werkt Shiftje ook voor een eetcafé of een restaurant met bar?",
     answer:
-      "Ja. Je deelt medewerkers in bij teams zoals bar, bediening en keuken, en plant ze samen in één rooster. Elk team heeft een eigen kleur.",
+      "Ja. Je deelt medewerkers in bij teams zoals bar, zaal en keuken, en plant ze samen in één rooster. Elk team heeft een eigen kleur.",
   },
   {
     name: "Kan ik diensten tot na middernacht plannen?",
@@ -102,7 +102,7 @@ const MORE_FEATURES = [
   },
   {
     title: "Bar en keuken samen",
-    body: "Een eetcafé, een grand café, een restaurant met bar: je plant bar, bediening en keuken samen in één rooster, elk team in een eigen kleur.",
+    body: "Een eetcafé, een grand café, een restaurant met bar: je plant bar, zaal en keuken samen in één rooster, elk team in een eigen kleur.",
   },
   {
     title: "Rooster in je agenda",
@@ -193,7 +193,7 @@ export default function RoosterMakenCafePage() {
           Beschikbaarheid:
             "Medewerkers geven per dag of per shift aan of ze kunnen, net zo simpel als een datumprikker. Handig voor de weekendavonden en als je team wisselt met studenten en bijbaners: jij zet weken vooraf open, zodat er nooit een gat valt.",
           Teams:
-            "Deel medewerkers in bij bar, bediening of keuken. Handig voor een eetcafé of een restaurant met bar: op het rooster zie je in één oogopslag wie waar hoort.",
+            "Deel medewerkers in bij bar, zaal of keuken. Handig voor een eetcafé of een restaurant met bar: op het rooster zie je in één oogopslag wie waar hoort.",
         },
         moreFeatures: MORE_FEATURES,
         faqs: FAQS,

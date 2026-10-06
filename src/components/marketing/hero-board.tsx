@@ -47,9 +47,9 @@ function Shift({
   );
 }
 
-function TeamGroup({ team, children }: { team: string; children: React.ReactNode }) {
-  const dot = team === "Bediening" ? BLUE : ORNG;
-  const text = team === "Bediening" ? "#3A6EA5" : "#9A5F10";
+function TeamGroup({ team, first = false, children }: { team: string; first?: boolean; children: React.ReactNode }) {
+  const dot = first ? BLUE : ORNG;
+  const text = first ? "#3A6EA5" : "#9A5F10";
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: text }}>
@@ -126,7 +126,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
       <div className="overflow-x-auto">
         <div className="grid min-w-[460px] grid-cols-5 gap-2">
           <DayCol label="Di 6" avail={5}>
-            <TeamGroup team="Bediening">
+            <TeamGroup team={v.teamA} first>
               <Shift name="Julia Bakker" time={DAY} k={1} />
             </TeamGroup>
             <TeamGroup team={v.teamB}>
@@ -134,7 +134,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
             </TeamGroup>
           </DayCol>
           <DayCol label="Wo 7" today avail={4}>
-            <TeamGroup team="Bediening">
+            <TeamGroup team={v.teamA} first>
               <div className="relative h-[62px]">
                 <div className="ui-toast-a absolute inset-0">
                   <Shift name="Tom Visser" time={SWAP} state="offer" note="Aangeboden" />
@@ -150,7 +150,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
             </TeamGroup>
           </DayCol>
           <DayCol label="Do 8" avail={5}>
-            <TeamGroup team="Bediening">
+            <TeamGroup team={v.teamA} first>
               <Shift name="Julia Bakker" time={EVE} k={6} />
             </TeamGroup>
             <TeamGroup team={v.teamB}>
@@ -158,7 +158,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
             </TeamGroup>
           </DayCol>
           <DayCol label="Vr 9" avail={3}>
-            <TeamGroup team="Bediening">
+            <TeamGroup team={v.teamA} first>
               <Shift name="Tom Visser" time={LATE} k={8} />
               <Shift name="Nog niet toegewezen" time={LATE} state="open" k={9} />
             </TeamGroup>
@@ -167,7 +167,7 @@ export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
             </TeamGroup>
           </DayCol>
           <DayCol label="Za 10" avail={5}>
-            <TeamGroup team="Bediening">
+            <TeamGroup team={v.teamA} first>
               <Shift name="Nina de Boer" time={DAY} k={11} />
               <Shift name="Julia Bakker" time={LATE} k={12} />
             </TeamGroup>

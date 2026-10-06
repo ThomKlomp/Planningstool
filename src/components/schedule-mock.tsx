@@ -10,12 +10,12 @@ type Team = string;
 
 type Person = { id: string; name: string; team: Team };
 
-function makePeople(teamB: string): Person[] {
+function makePeople(teamA: string, teamB: string): Person[] {
   return [
-    { id: "julia", name: "Julia Bakker", team: "Bediening" },
-    { id: "tom", name: "Tom Visser", team: "Bediening" },
-    { id: "nina", name: "Nina de Boer", team: "Bediening" },
-    { id: "mark", name: "Mark Jansen", team: "Bediening" },
+    { id: "julia", name: "Julia Bakker", team: teamA },
+    { id: "tom", name: "Tom Visser", team: teamA },
+    { id: "nina", name: "Nina de Boer", team: teamA },
+    { id: "mark", name: "Mark Jansen", team: teamA },
     { id: "ahmed", name: "Ahmed El Idrissi", team: teamB },
     { id: "lotte", name: "Lotte Smit", team: teamB },
     { id: "elif", name: "Elif Yildiz", team: teamB },
@@ -79,7 +79,7 @@ type Editing = { dayIndex: number; shiftId?: string };
 
 export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
   const v = VENUES[venue];
-  const PEOPLE = makePeople(v.teamB);
+  const PEOPLE = makePeople(v.teamA, v.teamB);
   const TEMPLATES = v.templates;
   const personById = (id: string) => PEOPLE.find((p) => p.id === id);
   const [eveStart, eveEnd] = v.eve;
@@ -166,13 +166,13 @@ export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {days.map((day, dayIndex) => {
-            const teams: Team[] = ["Bediening", v.teamB];
+            const teams: Team[] = [v.teamA, v.teamB];
             return (
               <div key={day.label}>
                 <p className="text-center text-[10px] text-ink/40">{day.label}</p>
                 <div className="mt-1.5 space-y-2">
                   {teams.map((team) => {
-                    const style = team === "Bediening" ? TEAM_STYLE.first : TEAM_STYLE.second;
+                    const style = team === v.teamA ? TEAM_STYLE.first : TEAM_STYLE.second;
                     const shiftsForTeam = day.shifts.filter((s) => personById(s.personId)?.team === team);
                     return (
                       <div key={team}>
@@ -273,7 +273,7 @@ export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
                   className="w-full rounded-md border border-line px-1.5 py-1 text-[11px] focus:border-awning focus:outline-none"
                 >
                   <option value="">Kies een medewerker</option>
-                  {(["Bediening", v.teamB] as Team[]).map((team) => (
+                  {([v.teamA, v.teamB] as Team[]).map((team) => (
                     <optgroup key={team} label={team}>
                       {PEOPLE.filter((p) => p.team === team).map((p) => (
                         <option key={p.id} value={p.id}>
