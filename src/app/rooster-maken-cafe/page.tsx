@@ -162,6 +162,7 @@ export default function RoosterMakenCafePage() {
   return (
     <LandingPage
       content={{
+        venue: "cafe",
         eyebrow: `Voor cafés, kroegen, eetcafés & bars tot ${MAX_STANDARD_MEMBERS} medewerkers`,
         h1: TITLE,
         definition: (

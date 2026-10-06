@@ -6,6 +6,7 @@ import SiteFooter from "@/components/marketing/site-footer";
 import ScheduleMock from "@/components/schedule-mock";
 import HeroBoard from "@/components/marketing/hero-board";
 import FeatureFlipCards from "@/components/marketing/feature-flip-cards";
+import type { Venue } from "@/components/marketing/venue";
 import { PRICE_TIERS, MAX_STANDARD_MEMBERS, formatEuro, yearlyExclForTier } from "@/lib/pricing";
 
 export type LandingFaq = { name: string; answer: string };
@@ -13,6 +14,8 @@ export type LandingFaq = { name: string; answer: string };
 // Alle teksten van een landingspagina. De opmaak is voor de homepage en de
 // zaaktype-pagina's hetzelfde: alleen de teksten verschillen per doelgroep.
 export type LandingContent = {
+  /** Welke voorbeeldgegevens de rooster-voorbeelden tonen (standaard: restaurant). */
+  venue?: Venue;
   eyebrow: string;
   h1: string;
   definition: ReactNode;
@@ -83,7 +86,7 @@ export default function LandingPage({ content: c }: { content: LandingContent })
           <p className="text-sm text-ink/60">Geen creditcard nodig om te beginnen.</p>
         </div>
 
-        <HeroBoard />
+        <HeroBoard venue={c.venue} />
       </section>
 
       {/* De omslag */}
@@ -102,7 +105,7 @@ export default function LandingPage({ content: c }: { content: LandingContent })
           <p className="mt-4 text-lg leading-relaxed text-ink/70">{c.functiesIntro}</p>
         </div>
         <div className="mt-10">
-          <FeatureFlipCards bodies={c.cardBodies} />
+          <FeatureFlipCards bodies={c.cardBodies} venue={c.venue} />
         </div>
 
         <div className="mt-16">
@@ -129,7 +132,7 @@ export default function LandingPage({ content: c }: { content: LandingContent })
           </p>
         </div>
         <div className="rounded-3xl bg-white p-3 shadow-[0_30px_50px_-30px_rgba(30,51,38,0.45)] md:p-5">
-          <ScheduleMock />
+          <ScheduleMock venue={c.venue} />
         </div>
       </section>
 

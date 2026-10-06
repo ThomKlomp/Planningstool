@@ -2,6 +2,8 @@
 // staat (per dag een kolom, binnen elke dag per team, naam met de tijden
 // eronder). Puur CSS-animatie (zie .ui-* in globals.css): geen state, geen
 // scripts. Bij "minder beweging" staat alles stil.
+import { VENUES, range, type Venue } from "./venue";
+
 const BLUE = "#6E9BD1";
 const ORNG = "#E0A458";
 
@@ -45,7 +47,7 @@ function Shift({
   );
 }
 
-function TeamGroup({ team, children }: { team: "Bediening" | "Keuken"; children: React.ReactNode }) {
+function TeamGroup({ team, children }: { team: string; children: React.ReactNode }) {
   const dot = team === "Bediening" ? BLUE : ORNG;
   const text = team === "Bediening" ? "#3A6EA5" : "#9A5F10";
   return (
@@ -88,7 +90,12 @@ function DayCol({
   );
 }
 
-export default function HeroBoard() {
+export default function HeroBoard({ venue = "horeca" }: { venue?: Venue }) {
+  const v = VENUES[venue];
+  const DAY = "12:00–18:00";
+  const EVE = range(v.eve);
+  const LATE = range(v.late);
+  const SWAP = venue === "cafe" ? EVE : DAY; // dienst in het ruilverzoek
   return (
     <div className="min-w-0 rounded-[28px] bg-white p-5 shadow-[0_30px_50px_-30px_rgba(30,51,38,0.55)]">
       <div className="mb-3.5 flex items-center gap-2 font-display text-xl font-bold">
@@ -120,52 +127,52 @@ export default function HeroBoard() {
         <div className="grid min-w-[460px] grid-cols-5 gap-2">
           <DayCol label="Di 7" avail={5}>
             <TeamGroup team="Bediening">
-              <Shift name="Julia Bakker" time="12:00–18:00" k={1} />
+              <Shift name="Julia Bakker" time={DAY} k={1} />
             </TeamGroup>
-            <TeamGroup team="Keuken">
-              <Shift name="Mark Jansen" time="17:00–23:00" role="Chef" k={2} />
+            <TeamGroup team={v.teamB}>
+              <Shift name="Mark Jansen" time={EVE} role={v.chef} k={2} />
             </TeamGroup>
           </DayCol>
           <DayCol label="Wo 8" today avail={4}>
             <TeamGroup team="Bediening">
               <div className="relative h-[62px]">
                 <div className="ui-toast-a absolute inset-0">
-                  <Shift name="Tom Visser" time="12:00–18:00" state="offer" note="Aangeboden" />
+                  <Shift name="Tom Visser" time={SWAP} state="offer" note="Aangeboden" />
                 </div>
                 <div className="ui-toast-b absolute inset-0">
-                  <Shift name="Julia Bakker" time="12:00–18:00" state="taken" note="Overgenomen van Tom" />
+                  <Shift name="Julia Bakker" time={SWAP} state="taken" note="Overgenomen van Tom" />
                 </div>
               </div>
-              <Shift name="Nina de Boer" time="17:00–23:00" k={4} />
+              <Shift name="Nina de Boer" time={EVE} k={4} />
             </TeamGroup>
-            <TeamGroup team="Keuken">
-              <Shift name="Ahmed El Idrissi" time="12:00–18:00" k={5} />
+            <TeamGroup team={v.teamB}>
+              <Shift name="Ahmed El Idrissi" time={DAY} k={5} />
             </TeamGroup>
           </DayCol>
           <DayCol label="Do 9" avail={5}>
             <TeamGroup team="Bediening">
-              <Shift name="Julia Bakker" time="17:00–23:00" k={6} />
+              <Shift name="Julia Bakker" time={EVE} k={6} />
             </TeamGroup>
-            <TeamGroup team="Keuken">
-              <Shift name="Ahmed El Idrissi" time="12:00–18:00" role="Afwas" k={7} />
+            <TeamGroup team={v.teamB}>
+              <Shift name="Ahmed El Idrissi" time={DAY} role={v.afwas} k={7} />
             </TeamGroup>
           </DayCol>
           <DayCol label="Vr 10" avail={3}>
             <TeamGroup team="Bediening">
-              <Shift name="Tom Visser" time="17:00–23:00" k={8} />
-              <Shift name="Nog niet toegewezen" time="17:00–23:00" state="open" k={9} />
+              <Shift name="Tom Visser" time={LATE} k={8} />
+              <Shift name="Nog niet toegewezen" time={LATE} state="open" k={9} />
             </TeamGroup>
-            <TeamGroup team="Keuken">
-              <Shift name="Mark Jansen" time="17:00–23:00" k={10} />
+            <TeamGroup team={v.teamB}>
+              <Shift name="Mark Jansen" time={LATE} k={10} />
             </TeamGroup>
           </DayCol>
           <DayCol label="Za 11" avail={5}>
             <TeamGroup team="Bediening">
-              <Shift name="Nina de Boer" time="12:00–18:00" k={11} />
-              <Shift name="Julia Bakker" time="17:00–23:00" k={12} />
+              <Shift name="Nina de Boer" time={DAY} k={11} />
+              <Shift name="Julia Bakker" time={LATE} k={12} />
             </TeamGroup>
-            <TeamGroup team="Keuken">
-              <Shift name="Ahmed El Idrissi" time="17:00–23:00" k={13} />
+            <TeamGroup team={v.teamB}>
+              <Shift name="Ahmed El Idrissi" time={LATE} k={13} />
             </TeamGroup>
           </DayCol>
         </div>
@@ -174,7 +181,7 @@ export default function HeroBoard() {
       <div className="relative mt-3.5 h-14">
         <div className="ui-toast-a absolute inset-0 flex items-center gap-2.5 rounded-2xl bg-sand px-3 text-xs text-[#4A2A12]">
           <span className="flex-1">
-            <b>Ruilverzoek:</b> Tom wil wo 8 okt, 12:00–18:00 overgeven, Julia neemt het over
+            <b>Ruilverzoek:</b> Tom wil wo 8 okt, {SWAP} overgeven, Julia neemt het over
           </span>
           <span className="ui-press inline-block rounded-[10px] bg-terra px-3 py-2 text-xs font-bold text-white">
             Goedkeuren
