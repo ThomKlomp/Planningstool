@@ -1,12 +1,13 @@
 // Voorbeeldgegevens voor de rooster-voorbeelden op de landingspagina's
 // (hero, kaartjes en demo). "horeca" is de standaard (restaurant: bediening en
-// keuken). "cafe" is voor cafés, kroegen en bars: teams Bediening en Bar en
+// keuken). "cafe" is voor cafés, kroegen en bars: teams Bar en Zaal en
 // avonddiensten die tot in de nacht doorlopen. De opmaak is overal gelijk,
 // alleen deze gegevens verschillen.
 export type Venue = "horeca" | "cafe";
 
 export type VenueData = {
-  /** Naam van het tweede team (het eerste is altijd "Bediening"). */
+  /** Namen van de twee teams in de voorbeelden (eerste = blauw, tweede = oranje). */
+  teamA: string;
   teamB: string;
   /** Functies die in de voorbeelden voorkomen. */
   chef: string;
@@ -21,6 +22,7 @@ export type VenueData = {
 
 export const VENUES: Record<Venue, VenueData> = {
   horeca: {
+    teamA: "Bediening",
     teamB: "Keuken",
     chef: "Chef",
     afwas: "Afwas",
@@ -33,10 +35,11 @@ export const VENUES: Record<Venue, VenueData> = {
     ],
   },
   cafe: {
-    teamB: "Bar",
-    chef: "Barhoofd",
+    teamA: "Bar",
+    teamB: "Zaal",
+    chef: "Hoofd zaal",
     afwas: "Glazen",
-    kok: "Tap",
+    kok: "Terras",
     eve: ["17:00", "01:00"],
     late: ["20:00", "02:00"],
     templates: [

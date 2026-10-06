@@ -71,9 +71,9 @@ function Shift({
   );
 }
 
-function Group({ team, children }: { team: string; children: React.ReactNode }) {
-  const dot = team === "Bediening" ? BLUE : ORNG;
-  const text = team === "Bediening" ? "#3A6EA5" : "#9A5F10";
+function Group({ team, first = false, children }: { team: string; first?: boolean; children: React.ReactNode }) {
+  const dot = first ? BLUE : ORNG;
+  const text = first ? "#3A6EA5" : "#9A5F10";
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: text }}>
@@ -169,7 +169,7 @@ function RosterUi({ v }: { v: VenueData }) {
       <div className="font-display text-[13px] font-bold">Week 41 · 5 – 11 okt</div>
       <div className="grid grid-cols-3 gap-[7px]">
         <Day label="Wo 7" avail={4}>
-          <Group team="Bediening">
+          <Group team={v.teamA} first>
             <Shift name="Tom Visser" time="12:00–18:00" state="offer" note="Aangeboden" />
             <Shift name="Nina de Boer" time={range(v.eve)} />
           </Group>
@@ -178,7 +178,7 @@ function RosterUi({ v }: { v: VenueData }) {
           </Group>
         </Day>
         <Day label="Do 8" avail={5}>
-          <Group team="Bediening">
+          <Group team={v.teamA} first>
             <Shift name="Julia Bakker" time={range(v.eve)} state="taken" note="Overgenomen van Tom Visser" />
           </Group>
           <Group team={v.teamB}>
@@ -186,7 +186,7 @@ function RosterUi({ v }: { v: VenueData }) {
           </Group>
         </Day>
         <Day label="Vr 9" avail={3}>
-          <Group team="Bediening">
+          <Group team={v.teamA} first>
             <Shift name="Tom Visser" time={range(v.late)} />
             <Shift name="Nog niet toegewezen" time={range(v.late)} state="open" />
           </Group>
@@ -219,12 +219,12 @@ function TeamsUi({ v }: { v: VenueData }) {
   return (
     <Panel>
       <div className="font-display text-sm font-bold">Teams</div>
-      {row("Bediening", BLUE)}
+      {row(v.teamA, BLUE)}
       {row(v.teamB, ORNG)}
       <div className="border-t border-line pt-2 text-[11px] font-bold text-ink/55">Medewerkers indelen</div>
-      {mem("Julia Bakker", "Bediening", BLUE)}
+      {mem("Julia Bakker", v.teamA, BLUE)}
       {mem("Elif Yildiz", v.teamB, ORNG)}
-      {mem("Nina de Boer", "Bediening", BLUE)}
+      {mem("Nina de Boer", v.teamA, BLUE)}
       <div className="flex flex-wrap items-center gap-1.5">
         <MiniBtn variant="ghost">+ Extra team</MiniBtn>
         <MiniBtn variant="dark">+ Nieuw team</MiniBtn>
@@ -252,7 +252,7 @@ function SwapUi({ v }: { v: VenueData }) {
         <>
           <div className="rounded-lg border-l-4 bg-mist px-2 py-1.5" style={{ borderColor: BLUE }}>
             <b>Za 10 · {shortRange(v.late)}</b>
-            <div className="text-[11px] text-ink/55">Nina de Boer · Bediening</div>
+            <div className="text-[11px] text-ink/55">Nina de Boer · {v.teamA}</div>
           </div>
           <div>
             <Pill tone="sand">Aangeboden aan het team</Pill>
