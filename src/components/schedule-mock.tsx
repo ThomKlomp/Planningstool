@@ -1,64 +1,64 @@
 "use client";
 
 import { useState } from "react";
+import { VENUES, type Venue } from "./marketing/venue";
 
 // Zelfde teams, mensen en standaarddiensten als de echte demo-zaak
 // (api/admin/demo-company/reset), zodat dit precies aanvoelt als de tool
 // zelf, geen verzonnen namen of afwijkende flow.
-type Team = "Bediening" | "Keuken";
+type Team = string;
 
 type Person = { id: string; name: string; team: Team };
 
-const PEOPLE: Person[] = [
-  { id: "julia", name: "Julia Bakker", team: "Bediening" },
-  { id: "tom", name: "Tom Visser", team: "Bediening" },
-  { id: "nina", name: "Nina de Boer", team: "Bediening" },
-  { id: "mark", name: "Mark Jansen", team: "Bediening" },
-  { id: "ahmed", name: "Ahmed El Idrissi", team: "Keuken" },
-  { id: "lotte", name: "Lotte Smit", team: "Keuken" },
-  { id: "elif", name: "Elif Yildiz", team: "Keuken" },
-];
+function makePeople(teamB: string): Person[] {
+  return [
+    { id: "julia", name: "Julia Bakker", team: "Bediening" },
+    { id: "tom", name: "Tom Visser", team: "Bediening" },
+    { id: "nina", name: "Nina de Boer", team: "Bediening" },
+    { id: "mark", name: "Mark Jansen", team: "Bediening" },
+    { id: "ahmed", name: "Ahmed El Idrissi", team: teamB },
+    { id: "lotte", name: "Lotte Smit", team: teamB },
+    { id: "elif", name: "Elif Yildiz", team: teamB },
+  ];
+}
 
-const TEAM_STYLE: Record<Team, { color: string; dot: string }> = {
-  Bediening: { color: "text-awning", dot: "bg-awning" },
-  Keuken: { color: "text-amber-dark", dot: "bg-amber" },
+const TEAM_STYLE = {
+  first: { color: "text-awning", dot: "bg-awning" },
+  second: { color: "text-amber-dark", dot: "bg-amber" },
 };
-
-const TEMPLATES = [
-  { id: "middag", name: "Middagshift", startTime: "12:00", endTime: "18:00" },
-  { id: "avond", name: "Avondshift", startTime: "17:00", endTime: "23:00" },
-];
 
 type Shift = { id: string; personId: string; startTime: string; endTime: string; role: string };
 type Day = { label: string; shifts: Shift[] };
 
 let nextId = 100; // startpunt ruim boven de meegeleverde voorbeeld-ID's
 
-const initialDays: Day[] = [
-  {
-    label: "Wo 16",
-    shifts: [
-      { id: "1", personId: "julia", startTime: "12:00", endTime: "18:00", role: "" },
-      { id: "2", personId: "tom", startTime: "17:00", endTime: "23:00", role: "" },
-      { id: "3", personId: "ahmed", startTime: "17:00", endTime: "23:00", role: "Kok" },
-    ],
-  },
-  {
-    label: "Do 17",
-    shifts: [
-      { id: "4", personId: "nina", startTime: "12:00", endTime: "18:00", role: "" },
-      { id: "5", personId: "lotte", startTime: "17:00", endTime: "23:00", role: "Kok" },
-    ],
-  },
-  {
-    label: "Vr 18",
-    shifts: [{ id: "6", personId: "mark", startTime: "17:00", endTime: "23:00", role: "" }],
-  },
-];
-
-function personById(id: string) {
-  return PEOPLE.find((p) => p.id === id);
+function makeInitialDays(venue: Venue): Day[] {
+  const v = VENUES[venue];
+  const [eveStart, eveEnd] = v.eve;
+  const [lateStart, lateEnd] = v.late;
+  return [
+    {
+      label: "Wo 7",
+      shifts: [
+        { id: "1", personId: "julia", startTime: "12:00", endTime: "18:00", role: "" },
+        { id: "2", personId: "tom", startTime: eveStart, endTime: eveEnd, role: "" },
+        { id: "3", personId: "ahmed", startTime: eveStart, endTime: eveEnd, role: v.kok },
+      ],
+    },
+    {
+      label: "Do 8",
+      shifts: [
+        { id: "4", personId: "nina", startTime: "12:00", endTime: "18:00", role: "" },
+        { id: "5", personId: "lotte", startTime: eveStart, endTime: eveEnd, role: v.kok },
+      ],
+    },
+    {
+      label: "Vr 9",
+      shifts: [{ id: "6", personId: "mark", startTime: lateStart, endTime: lateEnd, role: "" }],
+    },
+  ];
 }
+
 
 /** "12:00" → "12", "12:30" → "12:30" (net als in de echte tool, compact waar het kan). */
 function shortTime(t: string) {
@@ -67,21 +67,34 @@ function shortTime(t: string) {
   return m === "00" ? hh : `${hh}:${m}`;
 }
 
+/** "17:00","01:00" → "17–01". Loopt de dienst door na middernacht, dan blijft de eindtijd tweecijferig ("17–1" leest als een tikfout). */
+function timeRange(start: string, end: string) {
+  if (end > start) return `${shortTime(start)}–${shortTime(end)}`;
+  const [h, m] = end.split(":");
+  const endLabel = `${h.padStart(2, "0")}${m && m !== "00" ? `:${m}` : ""}`;
+  return `${shortTime(start)}–${endLabel}`;
+}
+
 type Editing = { dayIndex: number; shiftId?: string };
 
-export default function ScheduleMock() {
-  const [days, setDays] = useState<Day[]>(initialDays);
+export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
+  const v = VENUES[venue];
+  const PEOPLE = makePeople(v.teamB);
+  const TEMPLATES = v.templates;
+  const personById = (id: string) => PEOPLE.find((p) => p.id === id);
+  const [eveStart, eveEnd] = v.eve;
+  const [days, setDays] = useState<Day[]>(() => makeInitialDays(venue));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [personId, setPersonId] = useState("");
-  const [startTime, setStartTime] = useState("17:00");
-  const [endTime, setEndTime] = useState("23:00");
+  const [startTime, setStartTime] = useState(eveStart);
+  const [endTime, setEndTime] = useState(eveEnd);
   const [role, setRole] = useState("");
 
   function openCreate(dayIndex: number) {
     setEditing({ dayIndex });
     setPersonId("");
-    setStartTime("17:00");
-    setEndTime("23:00");
+    setStartTime(eveStart);
+    setEndTime(eveEnd);
     setRole("");
   }
 
@@ -146,20 +159,20 @@ export default function ScheduleMock() {
     <div>
       <div className="relative rounded-2xl border border-line bg-white p-4 shadow-[0_2px_0_0_#DDD5C7] md:p-5">
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs uppercase tracking-wide text-ink/40">Week 38</p>
+          <p className="text-xs uppercase tracking-wide text-ink/40">Week 41</p>
           <span className="rounded-full bg-awning/10 px-2 py-0.5 text-[11px] font-medium text-awning">
             Open
           </span>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {days.map((day, dayIndex) => {
-            const teams: Team[] = ["Bediening", "Keuken"];
+            const teams: Team[] = ["Bediening", v.teamB];
             return (
               <div key={day.label}>
                 <p className="text-center text-[10px] text-ink/40">{day.label}</p>
                 <div className="mt-1.5 space-y-2">
                   {teams.map((team) => {
-                    const style = TEAM_STYLE[team];
+                    const style = team === "Bediening" ? TEAM_STYLE.first : TEAM_STYLE.second;
                     const shiftsForTeam = day.shifts.filter((s) => personById(s.personId)?.team === team);
                     return (
                       <div key={team}>
@@ -186,7 +199,7 @@ export default function ScheduleMock() {
                                   {s.role ? ` · ${s.role}` : ""}
                                 </p>
                                 <p className="text-[8px] leading-tight text-ink/50">
-                                  {shortTime(s.startTime)}–{shortTime(s.endTime)}
+                                  {timeRange(s.startTime, s.endTime)}
                                 </p>
                               </button>
                             );
@@ -233,7 +246,7 @@ export default function ScheduleMock() {
                         onClick={() => applyTemplate(t)}
                         className="rounded-full bg-mist px-2 py-0.5 text-[9px] font-medium text-ink/70 hover:bg-ink hover:text-paper"
                       >
-                        {t.name} ({shortTime(t.startTime)}–{shortTime(t.endTime)})
+                        {t.name} ({timeRange(t.startTime, t.endTime)})
                       </button>
                     ))}
                   </div>
@@ -260,7 +273,7 @@ export default function ScheduleMock() {
                   className="w-full rounded-md border border-line px-1.5 py-1 text-[11px] focus:border-awning focus:outline-none"
                 >
                   <option value="">Kies een medewerker</option>
-                  {(["Bediening", "Keuken"] as Team[]).map((team) => (
+                  {(["Bediening", v.teamB] as Team[]).map((team) => (
                     <optgroup key={team} label={team}>
                       {PEOPLE.filter((p) => p.team === team).map((p) => (
                         <option key={p.id} value={p.id}>

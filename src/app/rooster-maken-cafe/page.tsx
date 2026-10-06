@@ -44,7 +44,7 @@ const FAQS: LandingFaq[] = [
   {
     name: "Kan ik studenten en bijbaners inplannen?",
     answer:
-      "Ja. Iedereen die meewerkt zet je in het rooster. Je nodigt medewerkers uit met een uitnodiging of de link van je zaak. Shiftje houdt geen contracten bij.",
+      "Ja. Iedereen die meewerkt zet je in het rooster. Je nodigt medewerkers uit met een uitnodiging of de link van je zaak.",
   },
   {
     name: "Werkt Shiftje voor een café met een terras?",
@@ -57,19 +57,25 @@ const FAQS: LandingFaq[] = [
       "Ja. Je deelt medewerkers in bij teams zoals bar, bediening en keuken, en plant ze samen in één rooster. Elk team heeft een eigen kleur.",
   },
   {
-    name: "Wat als iemand een dienst niet kan werken?",
+    name: "Kan ik diensten tot na middernacht plannen?",
     answer:
-      "Die biedt de dienst aan het team aan. Een collega neemt hem over of ruilt, en jij ziet het meteen terug in het rooster. Wil je de ruil eerst zelf goedkeuren, dan kan dat.",
+      "Ja. Een dienst mag tot in de nacht doorlopen, bijvoorbeeld van 17:00 tot 01:00. De gewerkte uren worden dan gewoon goed berekend.",
+  },
+  {
+    name: "Kan ik een vaste dienst instellen, bijvoorbeeld elke vrijdag?",
+    answer:
+      "Ja. Met terugkerende diensten stel je een vast patroon één keer in en vult het rooster zich vooruit. Je vaste diensttijden bewaar je als sjabloon.",
+  },
+  {
+    name: "Wat als mijn café een dag dicht is?",
+    answer:
+      "Je stelt vaste sluitingsdagen in, bijvoorbeeld elke maandag, of een losse dag. Medewerkers zien dat meteen bij het doorgeven van hun beschikbaarheid.",
   },
   {
     name: "Wat kost Shiftje voor een café?",
-    answer: `Eén vast bedrag per zaak, op basis van het aantal medewerkers. Met 1 tot 10 medewerkers is dat ${formatEuro(
+    answer: `Eén vast bedrag per zaak, op basis van het aantal medewerkers. Het begint bij ${formatEuro(
       firstTier.monthlyExcl
-    )} per maand excl. btw. Het bedrag geldt voor de hele zaak, niet per medewerker.`,
-  },
-  {
-    name: "Kan ik Shiftje eerst proberen?",
-    answer: "Ja, je kunt 7 dagen gratis beginnen zonder creditcard.",
+    )} per maand excl. btw voor 1 tot 10 medewerkers. De andere staffels staan in het prijsblok hieronder. Het bedrag geldt voor de hele zaak, niet per medewerker.`,
   },
 ];
 
@@ -162,6 +168,7 @@ export default function RoosterMakenCafePage() {
   return (
     <LandingPage
       content={{
+        venue: "cafe",
         eyebrow: `Voor cafés, kroegen, eetcafés & bars tot ${MAX_STANDARD_MEMBERS} medewerkers`,
         h1: TITLE,
         definition: (
