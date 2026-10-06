@@ -14,6 +14,9 @@ export default function SiteFooter() {
           <Link href="/#prijs" className="hover:text-ink">
             Prijzen
           </Link>
+          <Link href="/over-ons" className="hover:text-ink">
+            Over ons
+          </Link>
           <Link href="/signin" className="hover:text-ink">
             Inloggen
           </Link>

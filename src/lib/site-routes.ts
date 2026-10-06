@@ -26,6 +26,7 @@ export const SITE_ROUTES: SiteRouteSection[] = [
     section: "Marketing / publiek",
     routes: [
       { path: "/", label: "Homepage", public: true },
+      { path: "/over-ons", label: "Over ons", public: true },
       { path: "/privacy", label: "Privacy & bezoekstatistieken", public: true },
       { path: "/voorwaarden", label: "Algemene voorwaarden", public: true },
     ],
