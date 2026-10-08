@@ -21,11 +21,6 @@ function matchesQuery(m: Member, query: string) {
 }
 
 const ROLE_ORDER: Role[] = ["OWNER", "MANAGER", "EMPLOYEE"];
-const ROLE_HEADING: Record<Role, string> = {
-  OWNER: "Eigenaar",
-  MANAGER: "Managers",
-  EMPLOYEE: "Medewerkers",
-};
 
 export default function MembersManager({
   members,
@@ -137,16 +132,26 @@ export default function MembersManager({
   const colorOf = (departmentId: string | null | undefined) =>
     departments.find((d) => d.id === departmentId)?.color ?? null;
 
-  // Eigenaar bovenaan, dan managers, dan medewerkers; binnen een groep op naam.
-  // Gebaseerd op de huidige (lokale) rol, zodat iemand direct meeverhuist
-  // zodra de status is aangepast.
-  const groups = ROLE_ORDER.map((role) => ({
-    role,
-    people: members
-      .filter((m) => roles[m.membershipId] === role)
-      .filter((m) => matchesQuery(m, query))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  })).filter((g) => g.people.length > 0);
+  // Per team (in de volgorde van Instellingen, "Geen team" onderaan); binnen een
+  // team eerst de eigenaar, dan managers, dan medewerkers, daarbinnen op naam.
+  // Gebaseerd op het huidige (lokale) team en de huidige rol, zodat iemand
+  // direct meeverhuist zodra die wordt aangepast. Een extra team telt hier niet
+  // mee: iemand staat onder zijn hoofdteam.
+  const byRoleThenName = (a: Member, b: Member) =>
+    ROLE_ORDER.indexOf(roles[a.membershipId]) - ROLE_ORDER.indexOf(roles[b.membershipId]) ||
+    a.name.localeCompare(b.name);
+  const visible = members.filter((m) => matchesQuery(m, query));
+  const groups: { id: string; name: string; color: string | null; people: Member[] }[] = [
+    ...departments.map((d) => ({ id: d.id, name: d.name, color: d.color as string | null })),
+    { id: "", name: "Geen team", color: null },
+  ]
+    .map((g) => ({
+      ...g,
+      people: visible
+        .filter((m) => (assignments[m.membershipId] ?? "") === g.id)
+        .sort(byRoleThenName),
+    }))
+    .filter((g) => g.people.length > 0);
 
   return (
     <div>
@@ -176,10 +181,20 @@ export default function MembersManager({
       )}
 
       {groups.map((g, i) => (
-        <div key={g.role} className={i > 0 ? "mt-5" : ""}>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/40">
-            {ROLE_HEADING[g.role]}
-          </p>
+        <div key={g.id || "geen-team"} className={i > 0 ? "mt-5" : ""}>
+          {departments.length > 0 && (
+            <p
+              className={`mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${
+                g.color ? "" : "text-ink/40"
+              }`}
+              style={g.color ? { color: g.color } : undefined}
+            >
+              {g.color && (
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: g.color }} />
+              )}
+              {g.name}
+            </p>
+          )}
           <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm">
           {g.people.map((m) => (
             <li key={m.membershipId} className="px-4 py-3">
