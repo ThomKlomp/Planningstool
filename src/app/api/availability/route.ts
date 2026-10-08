@@ -32,7 +32,10 @@ export async function GET(req: Request) {
         ? { companyId: membership.companyId }
         : { id: membership.membershipId },
     },
-    include: canManage ? { membership: { include: { user: true } } } : undefined,
+    // Nooit het hele gebruikersrecord meesturen (bevat o.a. het wachtwoord-hash).
+    include: canManage
+      ? { membership: { include: { user: { select: { id: true, name: true, email: true } } } } }
+      : undefined,
   });
 
   return NextResponse.json({ availabilities });

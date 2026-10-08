@@ -108,7 +108,7 @@ export async function POST(
     }),
   ]);
 
-  const recipientNames = recipientMembers.map((m) => m.user.name ?? m.user.email ?? "Onbekend");
+  const recipientNames = recipientMembers.map((m) => m.user.name ?? "Een collega");
 
   // 1. E-mail naar de teamgenoten die de dienst kunnen overnemen, en naar
   // managers/eigenaren zodat zij ook weten dat er een dienst openstaat.
