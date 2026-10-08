@@ -23,6 +23,9 @@ export default async function RosterPage({
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
+  // Naam van een collega; het e-mailadres is alleen voor managers een terugvaloptie.
+  const displayName = (u: { name: string | null; email: string | null }) =>
+    u.name ?? (canManage ? u.email : null) ?? "Onbekend";
   const week = resolveWeek(searchParams?.week);
 
   const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals, rosterWeek, rosterEvents, departments, slots] =
@@ -114,7 +117,7 @@ export default async function RosterPage({
 
   // membershipId -> naam, handig om in de goedkeuringslijst te tonen.
   const memberNameById = new Map(
-    membersRaw.map((m) => [m.id, m.user.name ?? m.user.email ?? "Onbekend"])
+    membersRaw.map((m) => [m.id, displayName(m.user)])
   );
 
   // Sorteer op team-volgorde (zoals ingesteld bij Instellingen), leden zonder
@@ -123,8 +126,8 @@ export default async function RosterPage({
     const orderA = a.department?.order ?? Number.POSITIVE_INFINITY;
     const orderB = b.department?.order ?? Number.POSITIVE_INFINITY;
     if (orderA !== orderB) return orderA - orderB;
-    const nameA = a.user.name ?? a.user.email ?? "";
-    const nameB = b.user.name ?? b.user.email ?? "";
+    const nameA = displayName(a.user);
+    const nameB = displayName(b.user);
     return nameA.localeCompare(nameB);
   });
 
@@ -268,7 +271,7 @@ export default async function RosterPage({
             weekLabel={`week ${getISOWeekNumber(week[0])}`}
             members={members.map((m) => ({
               membershipId: m.id,
-              name: m.user.name ?? m.user.email ?? "Onbekend",
+              name: displayName(m.user),
               departmentName: m.department?.name ?? null,
             }))}
             shifts={shiftsRaw.map((s) => ({
@@ -277,7 +280,7 @@ export default async function RosterPage({
               startTime: s.startTime,
               endTime: s.endTime,
               role: s.role,
-              memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+              memberName: s.membership ? displayName(s.membership.user) : null,
               membershipId: s.membershipId,
               departmentName: shiftTeam(s)?.name ?? null,
             }))}
@@ -352,7 +355,7 @@ export default async function RosterPage({
             week={week.map((d) => d.toISOString())}
             members={visibleMembers.map((m) => ({
               membershipId: m.id,
-              name: m.user.name ?? m.user.email ?? "Onbekend",
+              name: displayName(m.user),
               departmentName: m.department?.name ?? null,
               departmentColor: m.department?.color ?? null,
               teams: teamsOfMember(m),
@@ -378,7 +381,7 @@ export default async function RosterPage({
               endTime: s.endTime,
               role: s.role,
               membershipId: s.membershipId,
-              memberName: s.membership?.user.name ?? s.membership?.user.email ?? null,
+              memberName: s.membership ? displayName(s.membership.user) : null,
               departmentId: s.departmentId,
               departmentName: shiftTeam(s)?.name ?? null,
               departmentColor: shiftTeam(s)?.color ?? null,

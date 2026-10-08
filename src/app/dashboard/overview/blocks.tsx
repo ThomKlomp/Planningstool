@@ -117,8 +117,10 @@ async function TeamMembers({ ctx }: { ctx: BlockContext }) {
     <MemberList
       initialMembers={members.map((m) => ({
         id: m.id,
-        name: m.user.name ?? m.user.email ?? "Onbekend",
-        email: m.user.email ?? "",
+        // E-mailadressen van collega's zijn alleen zichtbaar voor eigenaar en managers
+        // (en worden voor medewerkers niet eens naar de browser gestuurd).
+        name: m.user.name ?? (isManagerRole(ctx.role) ? m.user.email : null) ?? "Onbekend",
+        email: isManagerRole(ctx.role) ? m.user.email ?? "" : "",
         role: m.role,
         departmentName: m.department?.name ?? null,
         departmentColor: m.department?.color ?? null,
