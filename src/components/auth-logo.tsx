@@ -7,7 +7,7 @@ export default function AuthLogo() {
   return (
     <Link
       href="/?home=1"
-      className="absolute left-6 top-5 flex items-center gap-2.5 font-display text-xl font-bold text-ink"
+      className="!absolute left-6 top-5 flex items-center gap-2.5 font-display text-xl font-bold text-ink"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-terra">
         <svg
