@@ -144,7 +144,7 @@ export default function DashboardBoard({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {pinnedIds.map((id) => {
           const b = byId.get(id);
           if (!b) return null;
@@ -256,7 +256,7 @@ function BlockShell({
 }) {
   return (
     <section
-      className={`h-full rounded-xl border bg-white p-5 ${block.wide ? "sm:col-span-2" : ""} ${
+      className={`h-full rounded-xl border bg-white p-5 ${block.wide ? "sm:col-span-2 xl:col-span-3" : ""} ${
         editing ? "border-dashed border-ink/30" : "border-line"
       }`}
     >
@@ -321,7 +321,7 @@ function SortableBlock({
         zIndex: isDragging ? 20 : undefined,
         opacity: isDragging ? 0.85 : 1,
       }}
-      className={block.wide ? "sm:col-span-2" : ""}
+      className={block.wide ? "sm:col-span-2 xl:col-span-3" : ""}
     >
       <BlockShell
         block={{ ...block, wide: false }}

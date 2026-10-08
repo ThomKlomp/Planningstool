@@ -96,7 +96,7 @@ async function TeamStats({ ctx }: { ctx: BlockContext }) {
     </div>
   );
   return (
-    <div className="stat-grid grid gap-3 sm:grid-cols-2">
+    <div className="stat-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <Card label="Teamleden" value={memberCount} />
       <Card label="Shifts deze week" value={shifts.length} />
       <Card label="Open diensten" value={open} />
