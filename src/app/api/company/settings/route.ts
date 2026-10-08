@@ -20,6 +20,7 @@ export async function PATCH(req: Request) {
     showCompanyRosterToEmployees?: boolean;
     autoApproveShiftSwaps?: boolean;
     autoApproveHours?: boolean;
+    emailWeekOpenToEmployees?: boolean;
     billingName?: string | null;
     kvkNumber?: string | null;
     vatNumber?: string | null;
@@ -51,6 +52,10 @@ export async function PATCH(req: Request) {
 
   if (body?.autoApproveShiftSwaps !== undefined) {
     data.autoApproveShiftSwaps = Boolean(body.autoApproveShiftSwaps);
+  }
+
+  if (body?.emailWeekOpenToEmployees !== undefined) {
+    data.emailWeekOpenToEmployees = Boolean(body.emailWeekOpenToEmployees);
   }
 
   if (body?.autoApproveHours !== undefined) {

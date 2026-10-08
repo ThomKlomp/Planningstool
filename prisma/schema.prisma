@@ -83,6 +83,7 @@ model Company {
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
+  emailWeekOpenToEmployees Boolean @default(true) // mail iedereen zodra een nieuwe week openstaat voor beschikbaarheid
   autoApproveHours Boolean @default(false) // ingediende uren worden automatisch goedgekeurd zonder managergoedkeuring
 
   // ---------- Abonnement ----------

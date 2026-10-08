@@ -9,6 +9,7 @@ import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
+import WeekOpenEmailSetting from "./week-open-email-setting";
 import AutoApprovalSettings from "./auto-approval-settings";
 import JoinLink from "./join-link";
 import CompanyDetailsSetting from "./company-details-setting";
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
         showCompanyRosterToEmployees: true,
         autoApproveShiftSwaps: true,
         autoApproveHours: true,
+        emailWeekOpenToEmployees: true,
         subscriptionStatus: true,
         trialEndsAt: true,
         billingName: true,
@@ -156,10 +158,14 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-ink/60">
           Een week staat standaard dicht voor medewerkers, totdat hij binnen
           dit aantal weken vooruit valt. Zodra een nieuwe week opengaat, krijgt
-          iedereen daar automatisch een e-mail over.
+          iedereen daar standaard een e-mail over; die mail kun je hieronder
+          uitzetten.
         </p>
         <div className="mt-4">
           <AutoOpenWeeksSetting initialValue={company?.autoOpenWeeks ?? 2} />
+        </div>
+        <div className="mt-3">
+          <WeekOpenEmailSetting initialValue={company?.emailWeekOpenToEmployees ?? true} />
         </div>
       </section>
 

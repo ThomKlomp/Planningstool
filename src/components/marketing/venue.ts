@@ -9,6 +9,8 @@ export type VenueData = {
   /** Namen van de twee teams in de voorbeelden (eerste = blauw, tweede = oranje). */
   teamA: string;
   teamB: string;
+  /** Optioneel derde team (paars), alleen waar dat bij het type zaak past. */
+  teamC?: string;
   /** Functies die in de voorbeelden voorkomen. */
   chef: string;
   afwas: string;
@@ -24,6 +26,7 @@ export const VENUES: Record<Venue, VenueData> = {
   horeca: {
     teamA: "Bediening",
     teamB: "Keuken",
+    teamC: "Bezorgers",
     chef: "Chef",
     afwas: "Afwas",
     kok: "Kok",
