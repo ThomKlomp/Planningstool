@@ -106,11 +106,11 @@ export default function MemberList({
                 <li key={m.id} className="flex items-center justify-between px-4 py-3">
                   <div>
                     <p className="text-sm font-medium">{m.name}</p>
-                    <p className="text-xs text-ink/50">{m.email}</p>
+                    {m.email && <p className="text-xs text-ink/50">{m.email}</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs uppercase tracking-wide text-ink/40">{m.role}</span>
-                    {isDemoCompany && m.id !== viewerMembershipId && (
+                    {isDemoCompany && m.email && m.id !== viewerMembershipId && (
                       <a
                         href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
                         target="_blank"
