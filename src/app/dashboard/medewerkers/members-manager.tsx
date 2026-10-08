@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-type Department = { id: string; name: string };
+type Department = { id: string; name: string; color: string };
 type Role = "OWNER" | "MANAGER" | "EMPLOYEE";
 type Member = {
   membershipId: string;
@@ -13,6 +13,13 @@ type Member = {
   role: Role;
   departmentId: string | null;
   extraDepartmentIds: string[];
+};
+
+const ROLE_ORDER: Role[] = ["OWNER", "MANAGER", "EMPLOYEE"];
+const ROLE_HEADING: Record<Role, string> = {
+  OWNER: "Eigenaar",
+  MANAGER: "Managers",
+  EMPLOYEE: "Medewerkers",
 };
 
 export default function MembersManager({
@@ -121,6 +128,19 @@ export default function MembersManager({
     }
   }
 
+  const colorOf = (departmentId: string | null | undefined) =>
+    departments.find((d) => d.id === departmentId)?.color ?? null;
+
+  // Eigenaar bovenaan, dan managers, dan medewerkers; binnen een groep op naam.
+  // Gebaseerd op de huidige (lokale) rol, zodat iemand direct meeverhuist
+  // zodra de status is aangepast.
+  const groups = ROLE_ORDER.map((role) => ({
+    role,
+    people: members
+      .filter((m) => roles[m.membershipId] === role)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  })).filter((g) => g.people.length > 0);
+
   return (
     <div>
       {departments.length === 0 && (
@@ -133,94 +153,101 @@ export default function MembersManager({
         </p>
       )}
 
-      <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm">
-        {members.map((m) => (
-          <li key={m.membershipId} className="px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <div className="min-w-0">
-                <p className="truncate font-medium">{m.name}</p>
-                <p className="truncate text-xs text-ink/50">{m.email}</p>
+      {groups.map((g, i) => (
+        <div key={g.role} className={i > 0 ? "mt-5" : ""}>
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/40">
+            {ROLE_HEADING[g.role]}
+          </p>
+          <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm">
+          {g.people.map((m) => (
+            <li key={m.membershipId} className="px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{m.name}</p>
+                  <p className="truncate text-xs text-ink/50">{m.email}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {canChangeRole(m) ? (
+                    <select
+                      value={roles[m.membershipId]}
+                      disabled={busyId === m.membershipId}
+                      onChange={(e) => changeRole(m, e.target.value as "MANAGER" | "EMPLOYEE")}
+                      aria-label={`Status van ${m.name}`}
+                      className="rounded-full border border-line bg-white px-2 py-1 text-xs text-ink/70 hover:border-ink disabled:opacity-50"
+                    >
+                      <option value="EMPLOYEE">Medewerker</option>
+                      <option value="MANAGER">Manager</option>
+                    </select>
+                  ) : (
+                    <span className="rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink/50">
+                      {roles[m.membershipId] === "OWNER"
+                        ? "Eigenaar"
+                        : roles[m.membershipId] === "MANAGER"
+                        ? "Manager"
+                        : "Medewerker"}
+                    </span>
+                  )}
+                  {departments.length > 0 && (
+                    <select
+                      value={assignments[m.membershipId] ?? ""}
+                      onChange={(e) => assignMember(m.membershipId, e.target.value)}
+                      aria-label={`Team van ${m.name}`}
+                      className="rounded-lg border border-line px-2 py-1 text-xs focus:border-awning focus:outline-none"
+                    >
+                      <option value="">Geen team</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {canChangeRole(m) ? (
-                  <select
-                    value={roles[m.membershipId]}
-                    disabled={busyId === m.membershipId}
-                    onChange={(e) => changeRole(m, e.target.value as "MANAGER" | "EMPLOYEE")}
-                    aria-label={`Status van ${m.name}`}
-                    className="rounded-full border border-line bg-white px-2 py-1 text-xs text-ink/70 hover:border-ink disabled:opacity-50"
+              {/* Extra teams: bewust klein en ingeklapt, dit is een uitzondering. */}
+              {departments.length > 1 && (
+                <div className="mt-1 text-right">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenExtrasId(openExtrasId === m.membershipId ? null : m.membershipId)
+                    }
+                    className="text-[11px] text-ink/40 hover:text-ink hover:underline"
                   >
-                    <option value="EMPLOYEE">Medewerker</option>
-                    <option value="MANAGER">Manager</option>
-                  </select>
-                ) : (
-                  <span className="rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink/50">
-                    {roles[m.membershipId] === "OWNER"
-                      ? "Eigenaar"
-                      : roles[m.membershipId] === "MANAGER"
-                      ? "Manager"
-                      : "Medewerker"}
-                  </span>
-                )}
-                {departments.length > 0 && (
-                  <select
-                    value={assignments[m.membershipId] ?? ""}
-                    onChange={(e) => assignMember(m.membershipId, e.target.value)}
-                    aria-label={`Team van ${m.name}`}
-                    className="rounded-lg border border-line px-2 py-1 text-xs focus:border-awning focus:outline-none"
-                  >
-                    <option value="">Geen team</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </div>
-            {/* Extra teams: bewust klein en ingeklapt, dit is een uitzondering. */}
-            {departments.length > 1 && (
-              <div className="mt-1 text-right">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpenExtrasId(openExtrasId === m.membershipId ? null : m.membershipId)
-                  }
-                  className="text-[11px] text-ink/40 hover:text-ink hover:underline"
-                >
-                  {(extras[m.membershipId] ?? []).length > 0
-                    ? `Extra teams (${(extras[m.membershipId] ?? []).length})`
-                    : "+ Extra team"}
-                </button>
-                {openExtrasId === m.membershipId && (
-                  <div className="mt-1.5 flex flex-wrap justify-end gap-1.5">
-                    {departments
-                      .filter((d) => d.id !== assignments[m.membershipId])
-                      .map((d) => {
-                        const active = (extras[m.membershipId] ?? []).includes(d.id);
-                        return (
-                          <button
-                            key={d.id}
-                            type="button"
-                            onClick={() => toggleExtra(m.membershipId, d.id)}
-                            className={`rounded-full border px-2.5 py-1 text-xs ${
-                              active
-                                ? "border-ink bg-ink text-paper"
-                                : "border-line text-ink/60 hover:border-ink"
-                            }`}
-                          >
-                            {d.name}
-                          </button>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+                    {(extras[m.membershipId] ?? []).length > 0
+                      ? `Extra teams (${(extras[m.membershipId] ?? []).length})`
+                      : "+ Extra team"}
+                  </button>
+                  {openExtrasId === m.membershipId && (
+                    <div className="mt-1.5 flex flex-wrap justify-end gap-1.5">
+                      {departments
+                        .filter((d) => d.id !== assignments[m.membershipId])
+                        .map((d) => {
+                          const active = (extras[m.membershipId] ?? []).includes(d.id);
+                          return (
+                            <button
+                              key={d.id}
+                              type="button"
+                              onClick={() => toggleExtra(m.membershipId, d.id)}
+                              className={`rounded-full border px-2.5 py-1 text-xs ${
+                                active
+                                  ? "border-ink bg-ink text-paper"
+                                  : "border-line text-ink/60 hover:border-ink"
+                              }`}
+                            >
+                              {d.name}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          ))}
+          </ul>
+        </div>
+      ))}
 
       {viewerRole !== "OWNER" && (
         <p className="mt-2 text-xs text-ink/50">

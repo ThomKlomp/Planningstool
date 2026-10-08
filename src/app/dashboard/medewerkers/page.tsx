@@ -24,7 +24,7 @@ export default async function MembersPage() {
     prisma.department.findMany({
       where: { companyId: membership.companyId },
       orderBy: [{ order: "asc" }, { name: "asc" }],
-      select: { id: true, name: true },
+      select: { id: true, name: true, color: true },
     }),
   ]);
 
