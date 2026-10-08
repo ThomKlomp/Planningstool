@@ -203,7 +203,7 @@ body {
 }
 /* Is de kaart omgedraaid, dan mag het onzichtbare klikvlak niet meer over de
    achterkant liggen: anders kun je het voorbeeld daarop niet scrollen. Terug
-   draaien gaat dan via de kop en "Klik om terug te draaien" (labels). */
+   draaien gaat dan via een label over de achterkant (zie feature-flip-cards). */
 .flip > input:checked {
   pointer-events: none;
 }

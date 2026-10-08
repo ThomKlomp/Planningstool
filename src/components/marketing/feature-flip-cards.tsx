@@ -433,18 +433,23 @@ export default function FeatureFlipCards({
               </div>
             </div>
             <div className="flip-face flip-back flex flex-col gap-3 p-5" style={{ backgroundColor: f.tile }}>
-              <label htmlFor={`flip-${i}`} className="flex cursor-pointer items-center justify-between gap-2">
-                <div className="font-display text-[19px] font-bold">{f.title}</div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold">In de app</span>
-              </label>
-              {/* Past het voorbeeld niet in de kaart (smal scherm), dan scrol je erin. */}
-              <div className="flip-scroll min-h-0 flex-1">{f.ui(v)}</div>
+              {/* Klikken op de achterkant draait terug, behalve op het voorbeeld zelf
+                  (dat scrolt). De label ligt over de hele kaart; het voorbeeld ligt
+                  erboven (z-10), kop en voettekst laten de klik erdoorheen. */}
               <label
                 htmlFor={`flip-${i}`}
-                className="flex cursor-pointer items-center gap-1.5 text-[13px] font-bold"
-              >
+                aria-hidden="true"
+                className="absolute inset-0 cursor-pointer"
+              />
+              <div className="pointer-events-none flex items-center justify-between gap-2">
+                <div className="font-display text-[19px] font-bold">{f.title}</div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold">In de app</span>
+              </div>
+              {/* Past het voorbeeld niet in de kaart (smal scherm), dan scrol je erin. */}
+              <div className="flip-scroll relative z-10 min-h-0 flex-1">{f.ui(v)}</div>
+              <div className="pointer-events-none flex items-center gap-1.5 text-[13px] font-bold">
                 ↺ Klik om terug te draaien
-              </label>
+              </div>
             </div>
           </div>
         </div>
