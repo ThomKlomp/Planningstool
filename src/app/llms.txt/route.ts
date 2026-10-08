@@ -16,6 +16,8 @@ export function GET() {
 - [Prijzen](${SITE_URL}/#prijs): per maand excl. btw: ${prices}
 - [Veelgestelde vragen](${SITE_URL}/#faq)
 - [Rooster maken voor je café, kroeg of bar](${SITE_URL}/rooster-maken-cafe): hoe Shiftje werkt voor cafés, kroegen, eetcafés en bars
+- [Rooster maken in de horeca: zo pak je het aan](${SITE_URL}/gids/rooster-maken-horeca): praktische gids met stappen, voorbeelden en checklist
+- [Oproepkrachten inplannen in de horeca](${SITE_URL}/rooster-oproepkrachten-horeca): artikel over rooster maken met oproepkrachten en wisselende werktijden
 - [Over ons](${SITE_URL}/over-ons): gemaakt door Thom en Daniel, twee ondernemers met horeca-ervaring
 
 ## Functies

@@ -29,6 +29,7 @@ const CTA_LABELS: Record<string, string> = {
   "cta-over-ons": "Op Over ons",
   "cta-cafe-hero": "Café-pagina, bovenaan",
   "cta-cafe-prijs": "Café-pagina, bij de prijzen",
+  "cta-gids": "Gids: rooster maken",
 };
 
 export default async function VisitsPage() {
@@ -37,7 +38,7 @@ export default async function VisitsPage() {
 
   const publicVisitor = { isPlatformAdmin: false, createdAt: { gte: from } };
 
-  const [total24h, total7d, total30d, views, distinctCompanies, homeVisits, onboardingVisits, ctaClicks, newCompanies, aiVisits] = await Promise.all([
+  const [total24h, total7d, total30d, views, distinctCompanies, homeVisits, onboardingVisits, ctaClicks, newCompanies, aiVisits, articleClicks] = await Promise.all([
     countInPeriod(1),
     countInPeriod(7),
     countInPeriod(periodDays),
@@ -67,6 +68,8 @@ export default async function VisitsPage() {
         OR: [{ referrer: { in: AI_SOURCES } }, { utmSource: { in: AI_SOURCES } }],
       },
     }),
+    // Doorklik van het artikel over oproepkrachten naar de homepage.
+    prisma.pageView.count({ where: { ...publicVisitor, event: "link-oproep" } }),
   ]);
   const totalClicks = ctaClicks.reduce((sum, c) => sum + c._count._all, 0);
 
@@ -119,7 +122,9 @@ export default async function VisitsPage() {
             />
           </div>
           <div>
-            <p className="text-xs font-medium text-ink/60">Bezoeken via AI-tools</p>
+            <p className="text-xs font-medium text-ink/60">Doorkliks naar de homepage vanaf het artikel over oproepkrachten</p>
+            <p className="mt-2 font-display text-2xl">{articleClicks}</p>
+            <p className="mt-4 text-xs font-medium text-ink/60">Bezoeken via AI-tools</p>
             <p className="mt-2 font-display text-2xl">{aiVisits}</p>
             <p className="mt-1 text-xs text-ink/50">
               ChatGPT, Perplexity, Claude, Gemini, Copilot. Niet elke AI-tool stuurt een herkomst mee, dit
