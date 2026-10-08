@@ -26,7 +26,7 @@ function describeAuthError(code: string) {
   }
 }
 
-function SignInContent() {
+function SignInContent({ companyName, joinSlug }: { companyName?: string; joinSlug?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -85,10 +85,14 @@ function SignInContent() {
   return (
     <>
       <h1 className="font-display text-2xl text-ink">
-        {isSignup ? "Welkom bij Shiftje" : "Welkom terug"}
+        {companyName ?? (isSignup ? "Welkom bij Shiftje" : "Welkom terug")}
       </h1>
       <p className="mt-2 text-sm text-ink/60">
-        {isSignup ? "Maak een gratis account aan om te starten." : "Log in om bij je zaak te komen."}
+        {companyName
+          ? "Log in om je rooster te bekijken."
+          : isSignup
+          ? "Maak een gratis account aan om te starten."
+          : "Log in om bij je zaak te komen."}
       </p>
 
       {authErrorCode && (
@@ -179,7 +183,10 @@ function SignInContent() {
 
           <p className="mt-5 text-center text-xs text-ink/50">
             Nog geen account?{" "}
-            <Link href="/register" className="text-awning hover:underline">
+            <Link
+              href={joinSlug ? `/join/${joinSlug}` : "/register"}
+              className="text-awning hover:underline"
+            >
               Account aanmaken
             </Link>
           </p>
@@ -189,12 +196,18 @@ function SignInContent() {
   );
 }
 
-export default function SignInForm() {
+export default function SignInForm({
+  companyName,
+  joinSlug,
+}: {
+  companyName?: string;
+  joinSlug?: string;
+}) {
   return (
     <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 text-center">
         <Suspense fallback={null}>
-          <SignInContent />
+          <SignInContent companyName={companyName} joinSlug={joinSlug} />
         </Suspense>
       </div>
     </main>
