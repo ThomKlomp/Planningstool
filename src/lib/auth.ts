@@ -4,6 +4,27 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { rootDomain, safeCallbackUrl, mainOrigin } from "@/lib/company-url";
+
+// Met subdomeinen per zaak moet het sessiecookie voor alle subdomeinen gelden
+// (.shiftje.nl). Zonder ROOT_DOMAIN blijft het standaardgedrag van NextAuth.
+const root = rootDomain();
+const useSecure = (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
+const sharedCookies =
+  root && root !== "localhost"
+    ? {
+        sessionToken: {
+          name: `${useSecure ? "__Secure-" : ""}next-auth.session-token`,
+          options: {
+            httpOnly: true,
+            sameSite: "lax" as const,
+            path: "/",
+            secure: useSecure,
+            domain: `.${root}`,
+          },
+        },
+      }
+    : undefined;
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -57,10 +78,18 @@ export const authOptions: NextAuthOptions = {
     // sluit en later weer terugkomt. Bij elk bezoek wordt de periode verlengd.
     maxAge: 7 * 24 * 60 * 60,
   },
+  ...(sharedCookies ? { cookies: sharedCookies } : {}),
   pages: {
     signIn: "/signin",
   },
   callbacks: {
+    // Na het inloggen mag je naar het hoofdadres of naar een subdomein van
+    // ons eigen domein, nooit naar een vreemde site.
+    async redirect({ url, baseUrl }) {
+      const safe = safeCallbackUrl(url, "");
+      if (!safe) return baseUrl;
+      return safe.startsWith("/") ? `${mainOrigin()}${safe}` : safe;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

@@ -26,10 +26,18 @@ function describeAuthError(code: string) {
   }
 }
 
-function SignInContent({ companyName, joinSlug }: { companyName?: string; joinSlug?: string }) {
+function SignInContent({
+  companyName,
+  joinSlug,
+  safeCallbackUrl,
+}: {
+  companyName?: string;
+  joinSlug?: string;
+  safeCallbackUrl?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackUrl ?? searchParams.get("callbackUrl") ?? "/dashboard";
   const authErrorCode = searchParams.get("error");
   // Zet /onboarding (en eventueel andere "begin nu"-knoppen) niet op een
   // "Welkom terug, log in"-scherm: iemand die net wil starten heeft
@@ -67,6 +75,12 @@ function SignInContent({ companyName, joinSlug }: { companyName?: string; joinSl
       return;
     }
 
+    // Een volledig adres (subdomein van de zaak) vraagt om een echte
+    // paginanavigatie; router.push kan alleen binnen dezelfde site.
+    if (/^https?:\/\//.test(callbackUrl)) {
+      window.location.assign(callbackUrl);
+      return;
+    }
     router.push(callbackUrl);
     router.refresh();
   }
@@ -199,15 +213,18 @@ function SignInContent({ companyName, joinSlug }: { companyName?: string; joinSl
 export default function SignInForm({
   companyName,
   joinSlug,
+  safeCallbackUrl,
 }: {
   companyName?: string;
   joinSlug?: string;
+  // Door de server gecontroleerde terugkeer-URL (relatief of eigen subdomein).
+  safeCallbackUrl?: string;
 }) {
   return (
     <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 text-center">
         <Suspense fallback={null}>
-          <SignInContent companyName={companyName} joinSlug={joinSlug} />
+          <SignInContent companyName={companyName} joinSlug={joinSlug} safeCallbackUrl={safeCallbackUrl} />
         </Suspense>
       </div>
     </main>

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing";
 import { slugify } from "@/lib/slug";
+import { RESERVED_SUBDOMAINS } from "@/lib/company-url";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -17,7 +18,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Naam is verplicht" }, { status: 400 });
   }
 
-  const baseSlug = slugify(name) || "zaak";
+  // Maximaal 40 tekens (een subdomein mag 63) en geen gereserveerde naam.
+  let baseSlug = slugify(name).slice(0, 40).replace(/-$/, "") || "zaak";
+  if (RESERVED_SUBDOMAINS.includes(baseSlug)) baseSlug = `${baseSlug}-zaak`;
   let slug = baseSlug;
   let attempt = 1;
   // Zorg dat de slug uniek is; probeer anders met een suffix.

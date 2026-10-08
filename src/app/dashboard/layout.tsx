@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { companyOrigin, rootDomain } from "@/lib/company-url";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireMembership } from "@/lib/current-membership";
@@ -36,6 +39,17 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { session, membership } = await requireMembership();
+
+  // Subdomeinen per zaak: het dashboard hoort op <zaak>.shiftje.nl. Wie het
+  // via het hoofdadres opent (bv. een link uit een e-mail) gaat daarheen door,
+  // met behoud van het pad.
+  if (rootDomain()) {
+    const h = headers();
+    const expected = new URL(companyOrigin(membership.companySlug));
+    if (h.get("host")?.toLowerCase() !== expected.host) {
+      redirect(`${expected.origin}${h.get("x-url") ?? "/dashboard"}`);
+    }
+  }
 
   const [unreadCount, company] = await Promise.all([
     prisma.notification.count({
