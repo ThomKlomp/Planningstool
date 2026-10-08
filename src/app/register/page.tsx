@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import RegisterForm from "./register-form";
+import AuthLogo from "@/components/auth-logo";
 
 // Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
 export const metadata: Metadata = {
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6 py-12">
+    <main className="auth-backdrop relative flex min-h-screen items-center justify-center px-6 py-12">
+      <AuthLogo />
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8">
         <h1 className="font-display text-2xl text-ink">Account aanmaken</h1>
         <p className="mt-2 text-sm text-ink/60">
