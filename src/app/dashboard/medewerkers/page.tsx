@@ -3,6 +3,7 @@ import { requireMembership, requireActiveSubscription } from "@/lib/current-memb
 import { prisma } from "@/lib/prisma";
 import JoinLink from "../settings/join-link";
 import MembersManager from "./members-manager";
+import TeamSection from "../team-section";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function MembersPage() {
     redirect("/dashboard");
   }
 
-  const [members, departments] = await Promise.all([
+  const [members, departments, pendingInvites] = await Promise.all([
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
       include: { user: true, extraDepartments: true },
@@ -25,6 +26,10 @@ export default async function MembersPage() {
       where: { companyId: membership.companyId },
       orderBy: [{ order: "asc" }, { name: "asc" }],
       select: { id: true, name: true, color: true },
+    }),
+    prisma.invite.findMany({
+      where: { companyId: membership.companyId, acceptedAt: null },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -40,6 +45,7 @@ export default async function MembersPage() {
         <MembersManager
           viewerRole={membership.role}
           viewerMembershipId={membership.membershipId}
+          isDemoCompany={membership.companySlug === "demo"}
           departments={departments}
           members={members.map((m) => ({
             membershipId: m.id,
@@ -51,6 +57,17 @@ export default async function MembersPage() {
           }))}
         />
       </section>
+
+      <TeamSection
+        departments={departments}
+        initialPendingInvites={pendingInvites.map((i) => ({
+          id: i.id,
+          email: i.email,
+          role: i.role,
+          token: i.token,
+          departmentId: i.departmentId,
+        }))}
+      />
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Medewerkers uitnodigen via link</h2>

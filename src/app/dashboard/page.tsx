@@ -3,9 +3,7 @@ import { requireMembership, requireActiveSubscription } from "@/lib/current-memb
 import { prisma } from "@/lib/prisma";
 import { resolveWeek } from "@/lib/week";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
-import TeamSection from "./team-section";
 import MemberList from "./member-list";
-import JoinLink from "./settings/join-link";
 
 // Zelfde reden als dashboard/layout.tsx en dashboard/notifications: dit
 // overzicht toont tellers (open diensten, wachtende overnames) die anders
@@ -18,19 +16,13 @@ export default async function DashboardOverviewPage() {
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const week = resolveWeek();
 
-  const [members, pendingInvites, allWeekShifts, pendingHours, pendingSwapCount, company] =
+  const [members, allWeekShifts, pendingHours, pendingSwapCount, company] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
         include: { user: true, department: true },
         orderBy: { createdAt: "asc" },
       }),
-      canManage
-        ? prisma.invite.findMany({
-            where: { companyId: membership.companyId, acceptedAt: null },
-            orderBy: { createdAt: "desc" },
-          })
-        : Promise.resolve([]),
       prisma.shift.findMany({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
       }),
@@ -57,15 +49,6 @@ export default async function DashboardOverviewPage() {
           })
         : Promise.resolve(null),
     ]);
-
-  // Teams voor het uitnodigingsformulier (alleen nodig voor managers/eigenaren).
-  const departmentsForInvite = canManage
-    ? await prisma.department.findMany({
-        where: { companyId: membership.companyId },
-        orderBy: { order: "asc" },
-        select: { id: true, name: true },
-      })
-    : [];
 
   // Medewerkers tellen alleen mee wat ze ook in het rooster mogen zien.
   const weekShifts = canManage
@@ -119,49 +102,33 @@ export default async function DashboardOverviewPage() {
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Team</h2>
-        <div className="mt-3">
-          <MemberList
-            initialMembers={members.map((m) => ({
-              id: m.id,
-              name: m.user.name ?? m.user.email ?? "Onbekend",
-              email: m.user.email ?? "",
-              role: m.role,
-              departmentName: m.department?.name ?? null,
-              departmentColor: m.department?.color ?? null,
-            }))}
-            canManage={canManage}
-            viewerRole={membership.role}
-            viewerMembershipId={membership.membershipId}
-            isDemoCompany={membership.companySlug === "demo"}
-          />
-        </div>
-      </section>
-
-      {canManage && company?.slug && (
-        <section className="mt-10">
-          <h2 className="font-display text-xl">Medewerkers uitnodigen via link</h2>
+        {canManage ? (
           <p className="mt-1 text-sm text-ink/60">
-            Deel deze link met je team, iedereen die 'm opent sluit zichzelf
-            aan als medewerker.
+            Medewerkers beheren, uitnodigen en indelen in teams doe je bij{" "}
+            <Link href="/dashboard/medewerkers" className="text-awning underline hover:no-underline">
+              Medewerkers
+            </Link>
+            .
           </p>
-          <div className="mt-4">
-            <JoinLink slug={company.slug} />
+        ) : (
+          <div className="mt-3">
+            <MemberList
+              initialMembers={members.map((m) => ({
+                id: m.id,
+                name: m.user.name ?? m.user.email ?? "Onbekend",
+                email: m.user.email ?? "",
+                role: m.role,
+                departmentName: m.department?.name ?? null,
+                departmentColor: m.department?.color ?? null,
+              }))}
+              canManage={false}
+              viewerRole={membership.role}
+              viewerMembershipId={membership.membershipId}
+              isDemoCompany={membership.companySlug === "demo"}
+            />
           </div>
-        </section>
-      )}
-
-      {canManage && (
-        <TeamSection
-          departments={departmentsForInvite}
-          initialPendingInvites={pendingInvites.map((i) => ({
-            id: i.id,
-            email: i.email,
-            role: i.role,
-            token: i.token,
-            departmentId: i.departmentId,
-          }))}
-        />
-      )}
+        )}
+      </section>
     </div>
   );
 }

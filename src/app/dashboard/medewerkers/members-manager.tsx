@@ -27,11 +27,13 @@ export default function MembersManager({
   departments,
   viewerRole,
   viewerMembershipId,
+  isDemoCompany = false,
 }: {
   members: Member[];
   departments: Department[];
   viewerRole: Role;
   viewerMembershipId: string;
+  isDemoCompany?: boolean;
 }) {
   const router = useRouter();
   const [assignments, setAssignments] = useState<Record<string, string | null>>(() => {
@@ -46,6 +48,7 @@ export default function MembersManager({
     for (const m of members) map[m.membershipId] = m.extraDepartmentIds;
     return map;
   });
+  const [removed, setRemoved] = useState<string[]>([]);
   const [roles, setRoles] = useState<Record<string, Role>>(() => {
     const map: Record<string, Role> = {};
     for (const m of members) map[m.membershipId] = m.role;
@@ -129,6 +132,40 @@ export default function MembersManager({
     }
   }
 
+  function canRemove(m: Member) {
+    if (m.membershipId === viewerMembershipId) return false;
+    if (m.role === "OWNER") return false;
+    // Een manager mag alleen medewerkers verwijderen, geen andere managers.
+    if (viewerRole === "MANAGER" && roles[m.membershipId] !== "EMPLOYEE") return false;
+    return true;
+  }
+
+  async function removeMember(m: Member) {
+    if (
+      !confirm(
+        `${m.name} verwijderen uit het team? Deze persoon verliest direct toegang. Toekomstige shifts van deze persoon blijven staan als openstaande shift.`
+      )
+    ) {
+      return;
+    }
+    setBusyId(m.membershipId);
+    setError(null);
+    setRemoved((prev) => [...prev, m.membershipId]);
+    try {
+      const res = await fetch(`/api/memberships/${m.membershipId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Verwijderen mislukt.");
+      }
+      router.refresh();
+    } catch (e) {
+      setRemoved((prev) => prev.filter((id) => id !== m.membershipId));
+      setError(e instanceof Error ? e.message : "Verwijderen mislukt.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const colorOf = (departmentId: string | null | undefined) =>
     departments.find((d) => d.id === departmentId)?.color ?? null;
 
@@ -140,7 +177,9 @@ export default function MembersManager({
   const byRoleThenName = (a: Member, b: Member) =>
     ROLE_ORDER.indexOf(roles[a.membershipId]) - ROLE_ORDER.indexOf(roles[b.membershipId]) ||
     a.name.localeCompare(b.name);
-  const visible = members.filter((m) => matchesQuery(m, query));
+  const visible = members.filter(
+    (m) => !removed.includes(m.membershipId) && matchesQuery(m, query)
+  );
   const groups: { id: string; name: string; color: string | null; people: Member[] }[] = [
     ...departments.map((d) => ({ id: d.id, name: d.name, color: d.color as string | null })),
     { id: "", name: "Geen team", color: null },
@@ -228,19 +267,47 @@ export default function MembersManager({
                     </span>
                   )}
                   {departments.length > 0 && (
-                    <select
-                      value={assignments[m.membershipId] ?? ""}
-                      onChange={(e) => assignMember(m.membershipId, e.target.value)}
-                      aria-label={`Team van ${m.name}`}
-                      className="rounded-lg border border-line px-2 py-1 text-xs focus:border-awning focus:outline-none"
+                    <span className="relative inline-flex items-center">
+                      <span
+                        className="pointer-events-none absolute left-2.5 h-2.5 w-2.5 rounded-full border border-line"
+                        style={{ backgroundColor: colorOf(assignments[m.membershipId]) ?? "transparent" }}
+                        aria-hidden
+                      />
+                      <select
+                        value={assignments[m.membershipId] ?? ""}
+                        onChange={(e) => assignMember(m.membershipId, e.target.value)}
+                        aria-label={`Team van ${m.name}`}
+                        className="rounded-lg border border-line py-1 pl-7 pr-2 text-xs focus:border-awning focus:outline-none"
+                        style={{ borderColor: colorOf(assignments[m.membershipId]) ?? undefined }}
+                      >
+                        <option value="">Geen team</option>
+                        {departments.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </select>
+                    </span>
+                  )}
+                  {isDemoCompany && m.membershipId !== viewerMembershipId && (
+                    <a
+                      href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-awning hover:underline"
                     >
-                      <option value="">Geen team</option>
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
+                      Inloggen als
+                    </a>
+                  )}
+                  {canRemove(m) && (
+                    <button
+                      type="button"
+                      onClick={() => removeMember(m)}
+                      disabled={busyId === m.membershipId}
+                      className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                    >
+                      Verwijderen
+                    </button>
                   )}
                 </div>
               </div>
@@ -275,6 +342,11 @@ export default function MembersManager({
                                   : "border-line text-ink/60 hover:border-ink"
                               }`}
                             >
+                              <span
+                                className="mr-1.5 inline-block h-2 w-2 rounded-full"
+                                style={{ backgroundColor: d.color }}
+                                aria-hidden
+                              />
                               {d.name}
                             </button>
                           );
