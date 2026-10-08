@@ -22,7 +22,7 @@ function countryFromRequest(req: Request): string | null {
 }
 
 // Toegestane klik-events (alleen deze worden opgeslagen).
-const ALLOWED_EVENTS = new Set(["cta-hero", "cta-prijs", "cta-header", "cta-over-ons", "cta-cafe-hero", "cta-cafe-prijs", "cta-gids"]);
+const ALLOWED_EVENTS = new Set(["cta-hero", "cta-prijs", "cta-header", "cta-over-ons", "cta-cafe-hero", "cta-cafe-prijs", "cta-gids", "link-oproep"]);
 
 /**
  * Legt één paginabezoek vast: welk pad, waar de bezoeker vandaan kwam
