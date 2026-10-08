@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { requireAcceptedTerms } from "@/lib/auth-guards";
 import OnboardingForm from "./onboarding-form";
+import AuthLogo from "@/components/auth-logo";
 
 // Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
 export const metadata: Metadata = {
@@ -25,7 +26,8 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
+    <main className="auth-backdrop relative flex min-h-screen items-center justify-center px-6">
+      <AuthLogo />
       <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8">
         <h1 className="font-display text-2xl text-ink">Jouw zaak aanmaken</h1>
         <p className="mt-2 text-sm text-ink/60">

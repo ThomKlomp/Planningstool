@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import AuthLogo from "@/components/auth-logo";
 
 // NextAuth geeft bij een mislukte OAuth-poging alleen een technische code
 // terug (?error=...), niet een mensvriendelijke tekst. Deze vertaalt de
@@ -221,7 +222,8 @@ export default function SignInForm({
   safeCallbackUrl?: string;
 }) {
   return (
-    <main className="auth-backdrop flex min-h-screen items-center justify-center px-6">
+    <main className="auth-backdrop relative flex min-h-screen items-center justify-center px-6">
+      <AuthLogo />
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 text-center">
         <Suspense fallback={null}>
           <SignInContent companyName={companyName} joinSlug={joinSlug} safeCallbackUrl={safeCallbackUrl} />
