@@ -221,6 +221,7 @@ function TeamsUi({ v }: { v: VenueData }) {
       <div className="font-display text-sm font-bold">Teams</div>
       {row(v.teamA, BLUE)}
       {row(v.teamB, ORNG)}
+      {v.teamC && row(v.teamC, "#A58BCB")}
       <div className="border-t border-line pt-2 text-[11px] font-bold text-ink/55">Medewerkers indelen</div>
       {mem("Julia Bakker", v.teamA, BLUE)}
       {mem("Elif Yildiz", v.teamB, ORNG)}

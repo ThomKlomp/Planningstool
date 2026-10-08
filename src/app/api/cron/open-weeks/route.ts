@@ -41,9 +41,13 @@ export async function GET(req: Request) {
     if (existing?.notifiedAt) continue;
     if (existing && !existing.isOpen) continue;
 
-    const recipients = company.memberships
-      .map((m) => m.user.email)
-      .filter((e): e is string => Boolean(e));
+    // De zaak kan de openingsmail uitzetten (Instellingen); de week wordt
+    // dan wel gewoon als gemeld gemarkeerd, zodat er geen mail volgt.
+    const recipients = company.emailWeekOpenToEmployees
+      ? company.memberships
+          .map((m) => m.user.email)
+          .filter((e): e is string => Boolean(e))
+      : [];
 
     if (recipients.length > 0) {
       await sendEmail({

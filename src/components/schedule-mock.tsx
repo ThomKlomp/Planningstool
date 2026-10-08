@@ -10,7 +10,7 @@ type Team = string;
 
 type Person = { id: string; name: string; team: Team };
 
-function makePeople(teamA: string, teamB: string): Person[] {
+function makePeople(teamA: string, teamB: string, teamC?: string): Person[] {
   return [
     { id: "julia", name: "Julia Bakker", team: teamA },
     { id: "tom", name: "Tom Visser", team: teamA },
@@ -19,12 +19,14 @@ function makePeople(teamA: string, teamB: string): Person[] {
     { id: "ahmed", name: "Ahmed El Idrissi", team: teamB },
     { id: "lotte", name: "Lotte Smit", team: teamB },
     { id: "elif", name: "Elif Yildiz", team: teamB },
+    ...(teamC ? [{ id: "daan", name: "Daan Mulder", team: teamC }] : []),
   ];
 }
 
 const TEAM_STYLE = {
   first: { color: "text-awning", dot: "bg-awning" },
   second: { color: "text-amber-dark", dot: "bg-amber" },
+  third: { color: "text-[#6B4B9A]", dot: "bg-[#A58BCB]" },
 };
 
 type Shift = { id: string; personId: string; startTime: string; endTime: string; role: string };
@@ -43,6 +45,7 @@ function makeInitialDays(venue: Venue): Day[] {
         { id: "1", personId: "julia", startTime: "12:00", endTime: "18:00", role: "" },
         { id: "2", personId: "tom", startTime: eveStart, endTime: eveEnd, role: "" },
         { id: "3", personId: "ahmed", startTime: eveStart, endTime: eveEnd, role: v.kok },
+        ...(v.teamC ? [{ id: "7", personId: "daan", startTime: eveStart, endTime: eveEnd, role: "" }] : []),
       ],
     },
     {
@@ -50,11 +53,15 @@ function makeInitialDays(venue: Venue): Day[] {
       shifts: [
         { id: "4", personId: "nina", startTime: "12:00", endTime: "18:00", role: "" },
         { id: "5", personId: "lotte", startTime: eveStart, endTime: eveEnd, role: v.kok },
+        ...(v.teamC ? [{ id: "8", personId: "daan", startTime: eveStart, endTime: eveEnd, role: "" }] : []),
       ],
     },
     {
       label: "Vr 9",
-      shifts: [{ id: "6", personId: "mark", startTime: lateStart, endTime: lateEnd, role: "" }],
+      shifts: [
+        { id: "6", personId: "mark", startTime: lateStart, endTime: lateEnd, role: "" },
+        ...(v.teamC ? [{ id: "9", personId: "daan", startTime: lateStart, endTime: lateEnd, role: "" }] : []),
+      ],
     },
   ];
 }
@@ -79,7 +86,8 @@ type Editing = { dayIndex: number; shiftId?: string };
 
 export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
   const v = VENUES[venue];
-  const PEOPLE = makePeople(v.teamA, v.teamB);
+  const TEAMS: Team[] = [v.teamA, v.teamB, ...(v.teamC ? [v.teamC] : [])];
+  const PEOPLE = makePeople(v.teamA, v.teamB, v.teamC);
   const TEMPLATES = v.templates;
   const personById = (id: string) => PEOPLE.find((p) => p.id === id);
   const [eveStart, eveEnd] = v.eve;
@@ -166,13 +174,13 @@ export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {days.map((day, dayIndex) => {
-            const teams: Team[] = [v.teamA, v.teamB];
             return (
               <div key={day.label}>
                 <p className="text-center text-[10px] text-ink/40">{day.label}</p>
                 <div className="mt-1.5 space-y-2">
-                  {teams.map((team) => {
-                    const style = team === v.teamA ? TEAM_STYLE.first : TEAM_STYLE.second;
+                  {TEAMS.map((team) => {
+                    const style =
+                      team === v.teamA ? TEAM_STYLE.first : team === v.teamB ? TEAM_STYLE.second : TEAM_STYLE.third;
                     const shiftsForTeam = day.shifts.filter((s) => personById(s.personId)?.team === team);
                     return (
                       <div key={team}>
@@ -273,7 +281,7 @@ export default function ScheduleMock({ venue = "horeca" }: { venue?: Venue }) {
                   className="w-full rounded-md border border-line px-1.5 py-1 text-[11px] focus:border-awning focus:outline-none"
                 >
                   <option value="">Kies een medewerker</option>
-                  {([v.teamA, v.teamB] as Team[]).map((team) => (
+                  {TEAMS.map((team) => (
                     <optgroup key={team} label={team}>
                       {PEOPLE.filter((p) => p.team === team).map((p) => (
                         <option key={p.id} value={p.id}>
