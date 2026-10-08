@@ -4,10 +4,17 @@ import { getISOWeekNumber, toDateParam, getWeekDates } from "@/lib/week";
 export default function WeekNav({
   basePath,
   weekStart,
+  extraQuery,
 }: {
   basePath: string;
   weekStart: Date;
+  /** Extra queryparameters die bij elke link behouden blijven, bv. "tab=rooster". */
+  extraQuery?: string;
 }) {
+  const href = (date?: Date) => {
+    const params = [extraQuery, date ? `week=${toDateParam(date)}` : ""].filter(Boolean).join("&");
+    return params ? `${basePath}?${params}` : basePath;
+  };
   const prev = new Date(weekStart);
   prev.setDate(prev.getDate() - 7);
   const next = new Date(weekStart);
@@ -21,7 +28,7 @@ export default function WeekNav({
   return (
     <div className="flex items-center gap-2 text-sm">
       <Link
-        href={`${basePath}?week=${toDateParam(prev)}`}
+        href={href(prev)}
         className="rounded-full border border-line px-2.5 py-1 hover:border-ink"
         aria-label="Vorige week"
       >
@@ -35,7 +42,7 @@ export default function WeekNav({
         </span>
       </span>
       <Link
-        href={`${basePath}?week=${toDateParam(next)}`}
+        href={href(next)}
         className="rounded-full border border-line px-2.5 py-1 hover:border-ink"
         aria-label="Volgende week"
       >
@@ -43,7 +50,7 @@ export default function WeekNav({
       </Link>
       {!isCurrentWeek && (
         <Link
-          href={basePath}
+          href={href()}
           className="rounded-full px-2.5 py-1 text-xs text-awning hover:underline"
         >
           Vandaag

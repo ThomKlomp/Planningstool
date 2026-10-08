@@ -15,6 +15,11 @@ type Member = {
   extraDepartmentIds: string[];
 };
 
+function matchesQuery(m: Member, query: string) {
+  const q = query.trim().toLowerCase();
+  return !q || m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
+}
+
 const ROLE_ORDER: Role[] = ["OWNER", "MANAGER", "EMPLOYEE"];
 const ROLE_HEADING: Record<Role, string> = {
   OWNER: "Eigenaar",
@@ -54,6 +59,7 @@ export default function MembersManager({
   const [openExtrasId, setOpenExtrasId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   async function patch(membershipId: string, body: object) {
     const res = await fetch(`/api/team-members/${membershipId}`, {
@@ -138,6 +144,7 @@ export default function MembersManager({
     role,
     people: members
       .filter((m) => roles[m.membershipId] === role)
+      .filter((m) => matchesQuery(m, query))
       .sort((a, b) => a.name.localeCompare(b.name)),
   })).filter((g) => g.people.length > 0);
 
@@ -153,6 +160,21 @@ export default function MembersManager({
         </p>
       )}
 
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Zoek een medewerker"
+        aria-label="Zoek een medewerker"
+        className="mb-4 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-awning focus:outline-none"
+      />
+
+      {groups.length === 0 && (
+        <p className="rounded-lg bg-ink/5 px-4 py-3 text-sm text-ink/60">
+          Niemand gevonden voor “{query.trim()}”.
+        </p>
+      )}
+
       {groups.map((g, i) => (
         <div key={g.role} className={i > 0 ? "mt-5" : ""}>
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/40">
@@ -162,10 +184,13 @@ export default function MembersManager({
           {g.people.map((m) => (
             <li key={m.membershipId} className="px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <div className="min-w-0">
+                <Link
+                  href={`/dashboard/medewerkers/${m.membershipId}`}
+                  className="min-w-0 hover:underline"
+                >
                   <p className="truncate font-medium">{m.name}</p>
                   <p className="truncate text-xs text-ink/50">{m.email}</p>
-                </div>
+                </Link>
                 <div className="flex flex-wrap items-center gap-2">
                   {canChangeRole(m) ? (
                     <select
