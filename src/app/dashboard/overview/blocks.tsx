@@ -10,6 +10,7 @@ import { filterVisibleForEmployee } from "@/lib/roster-publish";
 import { teamIdsOf } from "@/lib/teams";
 import { workedHours, formatHours } from "@/lib/worked-hours";
 import { isManagerRole, type DashboardBlockId } from "@/lib/dashboard-blocks";
+import MemberList from "../member-list";
 
 // Inhoud van de blokken op het overzicht. Elk blok haalt zijn eigen gegevens
 // op en wordt alleen gerenderd als de gebruiker het ook op zijn overzicht heeft.
@@ -17,6 +18,7 @@ import { isManagerRole, type DashboardBlockId } from "@/lib/dashboard-blocks";
 export type BlockContext = {
   membershipId: string;
   companyId: string;
+  companySlug: string;
   role: string;
 };
 
@@ -101,6 +103,31 @@ async function TeamStats({ ctx }: { ctx: BlockContext }) {
       <Card label="Zonder shift deze week" value={Math.max(0, withoutShift)} />
       {manager && <Card label="Uren ter goedkeuring" value={pendingHours} />}
     </div>
+  );
+}
+
+async function TeamMembers({ ctx }: { ctx: BlockContext }) {
+  const members = await prisma.membership.findMany({
+    where: { companyId: ctx.companyId },
+    include: { user: true, department: true },
+    orderBy: { createdAt: "asc" },
+  });
+  // Alleen-lezen: beheren (indelen, status, verwijderen) doen managers bij Medewerkers.
+  return (
+    <MemberList
+      initialMembers={members.map((m) => ({
+        id: m.id,
+        name: m.user.name ?? m.user.email ?? "Onbekend",
+        email: m.user.email ?? "",
+        role: m.role,
+        departmentName: m.department?.name ?? null,
+        departmentColor: m.department?.color ?? null,
+      }))}
+      canManage={false}
+      viewerRole={ctx.role}
+      viewerMembershipId={ctx.membershipId}
+      isDemoCompany={ctx.companySlug === "demo"}
+    />
   );
 }
 
@@ -450,6 +477,8 @@ export function renderBlock(id: DashboardBlockId, ctx: BlockContext): React.Reac
   switch (id) {
     case "team-stats":
       return <TeamStats ctx={ctx} />;
+    case "team-members":
+      return <TeamMembers ctx={ctx} />;
     case "next-shift":
       return <NextShift ctx={ctx} />;
     case "my-week":

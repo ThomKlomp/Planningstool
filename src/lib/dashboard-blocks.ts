@@ -7,6 +7,7 @@
 
 export type DashboardBlockId =
   | "team-stats"
+  | "team-members"
   | "next-shift"
   | "my-week"
   | "open-shifts"
@@ -31,6 +32,7 @@ export type DashboardBlockDef = {
 
 export const DASHBOARD_BLOCKS: DashboardBlockDef[] = [
   { id: "team-stats", title: "Team in cijfers", description: "Aantal teamleden, shifts van deze week en open diensten.", audience: "ALL", wide: true },
+  { id: "team-members", title: "Team", description: "Je collega's, per team.", audience: "ALL", wide: true },
   { id: "next-shift", title: "Mijn eerstvolgende dienst", description: "Wanneer en waar je als eerste weer moet werken.", audience: "ALL" },
   { id: "my-week", title: "Mijn week", description: "Je diensten van deze week en het aantal uren.", audience: "ALL" },
   { id: "open-shifts", title: "Open diensten", description: "Diensten zonder medewerker, voor medewerkers van hun eigen team.", audience: "ALL" },
@@ -47,7 +49,7 @@ export const DASHBOARD_BLOCKS: DashboardBlockDef[] = [
 const BY_ID = new Map(DASHBOARD_BLOCKS.map((b) => [b.id as string, b]));
 
 export const DEFAULT_LAYOUT: Record<"EMPLOYEE" | "MANAGER", DashboardBlockId[]> = {
-  EMPLOYEE: ["next-shift", "my-week", "open-shifts", "availability-status", "team-stats"],
+  EMPLOYEE: ["next-shift", "my-week", "open-shifts", "availability-status", "team-stats", "team-members"],
   MANAGER: ["team-stats", "swap-requests", "open-shifts", "working-today", "hours-approval"],
 };
 
