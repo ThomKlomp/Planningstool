@@ -29,6 +29,7 @@ const CTA_LABELS: Record<string, string> = {
   "cta-over-ons": "Op Over ons",
   "cta-cafe-hero": "Café-pagina, bovenaan",
   "cta-cafe-prijs": "Café-pagina, bij de prijzen",
+  "cta-gids": "Gids: rooster maken",
 };
 
 export default async function VisitsPage() {

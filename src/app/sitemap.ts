@@ -10,6 +10,7 @@ const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 const routes = [
   { path: "/", lastModified: "2026-10-05", priority: 1, changeFrequency: "weekly" as const },
   { path: "/rooster-maken-cafe", lastModified: "2026-10-06", priority: 0.7, changeFrequency: "monthly" as const },
+  { path: "/gids/rooster-maken-horeca", lastModified: "2026-10-08", priority: 0.7, changeFrequency: "monthly" as const },
   { path: "/over-ons", lastModified: "2026-10-06", priority: 0.6, changeFrequency: "yearly" as const },
 ];
 

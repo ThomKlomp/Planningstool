@@ -27,6 +27,7 @@ export const SITE_ROUTES: SiteRouteSection[] = [
     routes: [
       { path: "/", label: "Homepage", public: true },
       { path: "/over-ons", label: "Over ons", public: true },
+      { path: "/gids/rooster-maken-horeca", label: "Gids: rooster maken in de horeca", public: true },
       { path: "/rooster-maken-cafe", label: "Rooster maken voor je café (proefpagina)", public: true },
       { path: "/privacy", label: "Privacy & bezoekstatistieken", public: true },
       { path: "/voorwaarden", label: "Algemene voorwaarden", public: true },
