@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { companyOrigin, mainOrigin, slugFromHost } from "@/lib/company-url";
 import SignInForm from "@/app/signin/signin-form";
 
 // Eigen inloglink per zaak (shiftje.nl/z/<slug>): medewerkers slaan deze op
@@ -47,6 +49,14 @@ export default async function CompanyLoginPage({ params }: { params: { slug: str
   const session = await getServerSession(authOptions).catch(() => null);
   if (session?.user) {
     redirect("/dashboard");
+  }
+
+  // Op het subdomein van de zaak vindt het inloggen zelf plaats op het
+  // hoofdadres (Google kent geen wildcard-adressen). Het sessiecookie geldt
+  // voor alle subdomeinen, dus daarna kom je terug op het dashboard hier.
+  if (slugFromHost(headers().get("host"))) {
+    const back = encodeURIComponent(`${companyOrigin(company.slug)}/dashboard`);
+    redirect(`${mainOrigin()}/signin?company=${company.slug}&callbackUrl=${back}`);
   }
 
   return <SignInForm companyName={company.name} joinSlug={company.slug} />;

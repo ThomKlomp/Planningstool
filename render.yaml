@@ -11,6 +11,8 @@ services:
         sync: false
       - key: NEXTAUTH_URL
         sync: false
+      - key: ROOT_DOMAIN
+        sync: false
       - key: NEXTAUTH_SECRET
         generateValue: true
       - key: GOOGLE_CLIENT_ID

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { safeCallbackUrl } from "@/lib/company-url";
 import SignInForm from "./signin-form";
 
 // Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
@@ -19,12 +21,24 @@ export const metadata: Metadata = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams: { callbackUrl?: string; company?: string };
 }) {
   const session = await getServerSession(authOptions).catch(() => null);
   if (session?.user) {
-    redirect(searchParams?.callbackUrl || "/dashboard");
+    redirect(safeCallbackUrl(searchParams?.callbackUrl));
   }
 
-  return <SignInForm />;
+  // ?company=<slug>: inlogpagina met de naam van de zaak (vanaf het subdomein).
+  const company = searchParams?.company
+    ? await prisma.company.findUnique({
+        where: { slug: searchParams.company },
+        select: { name: true, slug: true },
+      })
+    : null;
+
+  return <SignInForm
+      companyName={company?.name}
+      joinSlug={company?.slug}
+      safeCallbackUrl={safeCallbackUrl(searchParams?.callbackUrl)}
+    />;
 }
