@@ -39,6 +39,9 @@ export default async function CompanyLoginPage({ params }: { params: { slug: str
           <p className="mt-2 text-ink/60">
             Vraag je werkgever om de meest recente link te delen.
           </p>
+          <a href="/?home=1" className="mt-4 inline-block text-sm text-awning hover:underline">
+            Naar de homepage
+          </a>
         </div>
       </main>
     );

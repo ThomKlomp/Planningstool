@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
+import RememberCompany from "@/components/remember-company";
 import CancellationCountdown from "./cancellation-countdown";
 import DashboardNav, { type DashboardNavItem } from "./dashboard-nav";
 
@@ -81,6 +82,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-paper text-ink sm:flex">
+      <RememberCompany slug={membership.companySlug} />
       <aside className="sticky top-0 z-40 border-b border-line bg-white sm:flex sm:h-screen sm:w-60 sm:flex-col sm:justify-between sm:overflow-y-auto sm:border-b-0 sm:border-r">
         <div>
           <div className="h-1.5 bg-orange" aria-hidden />
