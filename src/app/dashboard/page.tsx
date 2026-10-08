@@ -1,70 +1,66 @@
 import Link from "next/link";
 import { requireMembership, requireActiveSubscription } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
-import { resolveWeek } from "@/lib/week";
-import { filterVisibleForEmployee } from "@/lib/roster-publish";
+import { allowedBlocks, isManagerRole, pinnableBlockIds, resolveLayout } from "@/lib/dashboard-blocks";
 import MemberList from "./member-list";
+import DashboardBoard from "./overview/dashboard-board";
+import { renderBlock } from "./overview/blocks";
 
-// Zelfde reden als dashboard/layout.tsx en dashboard/notifications: dit
-// overzicht toont tellers (open diensten, wachtende overnames) die anders
+// Het overzicht toont tellers (open diensten, wachtende overnames) die anders
 // een tijdje verouderd kunnen blijven staan na een actie elders in de app.
 export const dynamic = "force-dynamic";
 
 export default async function DashboardOverviewPage() {
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
-  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
-  const week = resolveWeek();
+  const canManage = isManagerRole(membership.role);
 
-  const [members, allWeekShifts, pendingHours, pendingSwapCount, company] =
-    await Promise.all([
-      prisma.membership.findMany({
-        where: { companyId: membership.companyId },
-        include: { user: true, department: true },
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.shift.findMany({
-        where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
-      }),
-      canManage
-        ? prisma.timeEntry.count({
-            where: { companyId: membership.companyId, status: "SUBMITTED" },
-          })
-        : Promise.resolve(0),
-      canManage
-        ? prisma.shiftSwapRequest.count({
-            where: { companyId: membership.companyId, status: "PENDING_APPROVAL" },
-          })
-        : Promise.resolve(0),
-      canManage
-        ? prisma.company.findUnique({
-            where: { id: membership.companyId },
-            select: {
-              slug: true,
-              billingName: true,
-              kvkNumber: true,
-              address: true,
-              postalCode: true,
-            },
-          })
-        : Promise.resolve(null),
-    ]);
+  const [me, company, members] = await Promise.all([
+    prisma.membership.findUnique({
+      where: { id: membership.membershipId },
+      select: { dashboardLayout: true },
+    }),
+    prisma.company.findUnique({
+      where: { id: membership.companyId },
+      select: {
+        pinnedDashboardBlocks: true,
+        billingName: true,
+        kvkNumber: true,
+        address: true,
+        postalCode: true,
+      },
+    }),
+    // De teamlijst onderaan is alleen voor medewerkers (managers hebben het tabblad Medewerkers).
+    canManage
+      ? Promise.resolve([])
+      : prisma.membership.findMany({
+          where: { companyId: membership.companyId },
+          include: { user: true, department: true },
+          orderBy: { createdAt: "asc" },
+        }),
+  ]);
 
-  // Medewerkers tellen alleen mee wat ze ook in het rooster mogen zien.
-  const weekShifts = canManage
-    ? allWeekShifts
-    : await filterVisibleForEmployee(membership.companyId, allWeekShifts);
-
-  const openShiftCount = weekShifts.filter((s) => !s.membershipId).length;
-  const assignedMembershipIds = new Set(
-    weekShifts.filter((s) => s.membershipId).map((s) => s.membershipId as string)
+  const layout = resolveLayout(
+    membership.role,
+    me?.dashboardLayout,
+    company?.pinnedDashboardBlocks ?? []
   );
-  const membersWithoutShiftCount = members.filter((m) => !assignedMembershipIds.has(m.id)).length;
+
+  // Alleen de blokken die nu getoond worden, worden op de server uitgerekend.
+  const ctx = {
+    membershipId: membership.membershipId,
+    companyId: membership.companyId,
+    role: membership.role,
+  };
+  const nodes: Record<string, React.ReactNode> = {};
+  for (const id of [...layout.pinned, ...layout.own]) nodes[id] = renderBlock(id, ctx);
 
   const billingIncomplete =
     canManage &&
     company &&
     !(company.billingName && company.kvkNumber && company.address && company.postalCode);
+
+  const pinnable = pinnableBlockIds();
 
   return (
     <div className="max-w-3xl">
@@ -79,26 +75,20 @@ export default async function DashboardOverviewPage() {
         </div>
       )}
 
-      <div className="stat-grid mt-6 grid gap-4 sm:grid-cols-2">
-        <StatCard label="Teamleden" value={members.length} />
-        <StatCard label="Shifts deze week" value={weekShifts.length} />
-        <StatCard label="Open diensten" value={openShiftCount} />
-        <StatCard label="Zonder shift deze week" value={membersWithoutShiftCount} />
-        {canManage && <StatCard label="Uren ter goedkeuring" value={pendingHours} />}
-        {canManage && pendingSwapCount > 0 && (
-          <Link
-            href="/dashboard/rooster"
-            className="rounded-xl border border-amber/40 bg-amber/10 px-5 py-4 transition-colors hover:border-amber"
-          >
-            <p className="text-2xl font-display text-amber-dark">{pendingSwapCount}</p>
-            <p className="text-sm text-amber-dark">
-              {pendingSwapCount === 1
-                ? "ruilverzoek wacht op goedkeuring"
-                : "ruilverzoeken wachten op goedkeuring"}
-            </p>
-          </Link>
-        )}
-      </div>
+      <DashboardBoard
+        isManager={canManage}
+        blocks={allowedBlocks(membership.role).map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          wide: Boolean(b.wide),
+          pinnable: pinnable.includes(b.id),
+        }))}
+        pinnedIds={layout.pinned}
+        ownIds={layout.own}
+        nodes={nodes}
+        initialPinnedByManager={company?.pinnedDashboardBlocks ?? []}
+      />
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Team</h2>
@@ -129,15 +119,6 @@ export default async function DashboardOverviewPage() {
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-line bg-white px-5 py-4">
-      <p className="text-2xl font-display">{value}</p>
-      <p className="text-sm text-ink/50">{label}</p>
     </div>
   );
 }
