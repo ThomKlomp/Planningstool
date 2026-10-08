@@ -10,9 +10,17 @@ const SUBDOMAIN_PATHS = ["/dashboard", "/z/", "/api/", "/_next/", "/icon", "/fav
 const SESSION_COOKIES = ["__Secure-next-auth.session-token", "next-auth.session-token"];
 
 export function middleware(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+
+  // Wie al is ingelogd en de homepage opent, gaat direct naar het dashboard.
+  // Alleen op aanwezigheid van het sessiecookie; de dashboard-pagina controleert
+  // zelf of de sessie nog geldig is. Werkt ook zonder subdomeinen.
+  if (pathname === "/" && !slugFromHost(req.headers.get("host")) && SESSION_COOKIES.some((c) => req.cookies.has(c))) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   if (!rootDomain()) return NextResponse.next();
 
-  const { pathname, search } = req.nextUrl;
   const slug = slugFromHost(req.headers.get("host"));
 
   // Het volledige pad meegeven, zodat het dashboard bij een redirect naar het
@@ -30,14 +38,6 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(`${mainOrigin()}${pathname}${search}`);
     }
     return NextResponse.next({ request: { headers } });
-  }
-
-  // Hoofdadres: wie al is ingelogd, krijgt bij het openen van de homepage
-  // direct het dashboard (dat stuurt door naar het subdomein van de zaak).
-  // Alleen op aanwezigheid van het cookie; de dashboard-pagina controleert
-  // zelf of de sessie nog geldig is.
-  if (pathname === "/" && SESSION_COOKIES.some((c) => req.cookies.has(c))) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.next({ request: { headers } });
