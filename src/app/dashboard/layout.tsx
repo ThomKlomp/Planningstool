@@ -74,7 +74,10 @@ export default async function DashboardLayout({
     { href: "/dashboard/calendar", label: "Agenda-koppeling" },
     { href: "/dashboard/notifications", label: "Meldingen", badge: unreadCount },
     ...(membership.role === "OWNER" || membership.role === "MANAGER"
-      ? [{ href: "/dashboard/settings", label: "Instellingen" }]
+      ? [
+          { href: "/dashboard/medewerkers", label: "Medewerkers" },
+          { href: "/dashboard/settings", label: "Instellingen" },
+        ]
       : []),
     { href: "/dashboard/account", label: "Mijn account" },
     ...(session.user.isPlatformAdmin ? [{ href: "/admin", label: "Adminportaal" }] : []),
