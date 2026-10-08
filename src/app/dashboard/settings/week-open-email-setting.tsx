@@ -11,6 +11,15 @@ export default function WeekOpenEmailSetting({ initialValue }: { initialValue: b
 
   async function toggle() {
     const next = !value;
+    // Uitzetten vraagt om bevestiging; aanzetten gaat direct.
+    if (
+      !next &&
+      !confirm(
+        "Weet je zeker dat je de mail wilt uitzetten? Medewerkers krijgen dan geen e-mail meer als een nieuwe week openstaat voor beschikbaarheid, waardoor er minder beschikbaarheid binnen kan komen."
+      )
+    ) {
+      return;
+    }
     setValue(next);
     setSaving(true);
     setFailed(false);
