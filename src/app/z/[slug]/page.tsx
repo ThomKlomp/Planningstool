@@ -8,9 +8,20 @@ import SignInForm from "@/app/signin/signin-form";
 // Eigen inloglink per zaak (shiftje.nl/z/<slug>): medewerkers slaan deze op
 // als bladwijzer en komen zo direct bij de inlogpagina van hun zaak, zonder
 // omweg via de homepage. Niet indexeren.
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+//
+// De paginatitel is "<Zaaknaam> - Shiftje": zo onthoudt de browser de pagina
+// onder de naam van de zaak, en komt die bij het intypen van "shiftje" in de
+// adresbalk als eerste suggestie naar voren.
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const company = await prisma.company.findUnique({
+    where: { slug: params.slug },
+    select: { name: true },
+  });
+  return {
+    title: { absolute: company ? `${company.name} - Shiftje` : "Shiftje" },
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function CompanyLoginPage({ params }: { params: { slug: string } }) {
   const company = await prisma.company.findUnique({
