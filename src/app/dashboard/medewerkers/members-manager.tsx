@@ -245,39 +245,45 @@ export default function MembersManager({
                   <p className="truncate font-medium">{m.name}</p>
                   <p className="truncate text-xs text-ink/50">{m.email}</p>
                 </Link>
-                <div className="flex flex-wrap items-center gap-2">
-                  {canChangeRole(m) ? (
-                    <select
-                      value={roles[m.membershipId]}
-                      disabled={busyId === m.membershipId}
-                      onChange={(e) => changeRole(m, e.target.value as "MANAGER" | "EMPLOYEE")}
-                      aria-label={`Status van ${m.name}`}
-                      className="rounded-full border border-line bg-white px-2 py-1 text-xs text-ink/70 hover:border-ink disabled:opacity-50"
-                    >
-                      <option value="EMPLOYEE">Medewerker</option>
-                      <option value="MANAGER">Manager</option>
-                    </select>
-                  ) : (
-                    <span className="rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink/50">
-                      {roles[m.membershipId] === "OWNER"
-                        ? "Eigenaar"
-                        : roles[m.membershipId] === "MANAGER"
-                        ? "Manager"
-                        : "Medewerker"}
-                    </span>
-                  )}
+                {/* Vaste kolombreedtes, zodat statuskeuze, teamkeuze en acties in elke
+                    rij onder elkaar staan (ook zonder "Verwijderen"). */}
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="w-32">
+                    {canChangeRole(m) ? (
+                      <select
+                        value={roles[m.membershipId]}
+                        disabled={busyId === m.membershipId}
+                        onChange={(e) => changeRole(m, e.target.value as "MANAGER" | "EMPLOYEE")}
+                        aria-label={`Status van ${m.name}`}
+                        className="w-full rounded-full border border-line bg-white px-2 py-1 text-xs text-ink/70 hover:border-ink disabled:opacity-50"
+                      >
+                        <option value="EMPLOYEE">Medewerker</option>
+                        <option value="MANAGER">Manager</option>
+                      </select>
+                    ) : (
+                      <span className="block rounded-full bg-ink/5 px-2.5 py-1 text-center text-xs text-ink/50">
+                        {roles[m.membershipId] === "OWNER"
+                          ? "Eigenaar"
+                          : roles[m.membershipId] === "MANAGER"
+                          ? "Manager"
+                          : "Medewerker"}
+                      </span>
+                    )}
+                  </div>
                   {departments.length > 0 && (
-                    <span className="relative inline-flex items-center">
+                    <div className="flex w-44 items-center gap-1.5">
                       <span
-                        className="pointer-events-none absolute left-2.5 h-2.5 w-2.5 rounded-full border border-line"
-                        style={{ backgroundColor: colorOf(assignments[m.membershipId]) ?? "transparent" }}
+                        className="h-2.5 w-2.5 shrink-0 rounded-full border border-line"
+                        style={{
+                          backgroundColor: colorOf(assignments[m.membershipId]) ?? "transparent",
+                        }}
                         aria-hidden
                       />
                       <select
                         value={assignments[m.membershipId] ?? ""}
                         onChange={(e) => assignMember(m.membershipId, e.target.value)}
                         aria-label={`Team van ${m.name}`}
-                        className="rounded-lg border border-line py-1 pl-7 pr-2 text-xs focus:border-awning focus:outline-none"
+                        className="min-w-0 flex-1 rounded-lg border border-line px-2 py-1 text-xs focus:border-awning focus:outline-none"
                         style={{ borderColor: colorOf(assignments[m.membershipId]) ?? undefined }}
                       >
                         <option value="">Geen team</option>
@@ -287,28 +293,34 @@ export default function MembersManager({
                           </option>
                         ))}
                       </select>
-                    </span>
+                    </div>
                   )}
-                  {isDemoCompany && m.membershipId !== viewerMembershipId && (
-                    <a
-                      href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-awning hover:underline"
-                    >
-                      Inloggen als
-                    </a>
-                  )}
-                  {canRemove(m) && (
-                    <button
-                      type="button"
-                      onClick={() => removeMember(m)}
-                      disabled={busyId === m.membershipId}
-                      className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                    >
-                      Verwijderen
-                    </button>
-                  )}
+                  <div
+                    className={`flex items-center justify-end gap-3 ${
+                      isDemoCompany ? "w-44" : "w-24"
+                    }`}
+                  >
+                    {isDemoCompany && m.membershipId !== viewerMembershipId && (
+                      <a
+                        href={`/demo-switch?email=${encodeURIComponent(m.email)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-awning hover:underline"
+                      >
+                        Inloggen als
+                      </a>
+                    )}
+                    {canRemove(m) && (
+                      <button
+                        type="button"
+                        onClick={() => removeMember(m)}
+                        disabled={busyId === m.membershipId}
+                        className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        Verwijderen
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               {/* Extra teams: bewust klein en ingeklapt, dit is een uitzondering. */}
