@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pinnableBlockIds } from "@/lib/dashboard-blocks";
 
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
@@ -21,6 +22,7 @@ export async function PATCH(req: Request) {
     autoApproveShiftSwaps?: boolean;
     autoApproveHours?: boolean;
     emailWeekOpenToEmployees?: boolean;
+    pinnedDashboardBlocks?: string[];
     billingName?: string | null;
     kvkNumber?: string | null;
     vatNumber?: string | null;
@@ -52,6 +54,19 @@ export async function PATCH(req: Request) {
 
   if (body?.autoApproveShiftSwaps !== undefined) {
     data.autoApproveShiftSwaps = Boolean(body.autoApproveShiftSwaps);
+  }
+
+  // Blokken op het overzicht die voor medewerkers zijn vastgezet.
+  if (body?.pinnedDashboardBlocks !== undefined) {
+    if (
+      !Array.isArray(body.pinnedDashboardBlocks) ||
+      !body.pinnedDashboardBlocks.every(
+        (id: unknown) => typeof id === "string" && pinnableBlockIds().includes(id)
+      )
+    ) {
+      return NextResponse.json({ error: "Ongeldige blokken" }, { status: 400 });
+    }
+    data.pinnedDashboardBlocks = Array.from(new Set<string>(body.pinnedDashboardBlocks));
   }
 
   if (body?.emailWeekOpenToEmployees !== undefined) {

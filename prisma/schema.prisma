@@ -83,6 +83,7 @@ model Company {
   autoOpenWeeks Int @default(2) // hoeveel weken vooruit de datumprikker standaard open staat
   showCompanyRosterToEmployees Boolean @default(true) // medewerkers mogen het hele bedrijfsrooster zien, niet alleen hun team/eigen dienst
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
+  pinnedDashboardBlocks String[] @default([]) // blokken die managers voor medewerkers op het overzicht hebben vastgezet
   emailWeekOpenToEmployees Boolean @default(true) // mail iedereen zodra een nieuwe week openstaat voor beschikbaarheid
   autoApproveHours Boolean @default(false) // ingediende uren worden automatisch goedgekeurd zonder managergoedkeuring
 
@@ -208,6 +209,7 @@ model Membership {
   departmentId String?
   createdAt DateTime @default(now())
   calendarToken String? @unique // geheime token voor de ICS-agenda-feed van deze medewerker
+  dashboardLayout Json? // eigen indeling van het overzicht: geordende lijst blok-id's; leeg = standaardindeling
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
