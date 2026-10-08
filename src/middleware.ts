@@ -15,8 +15,18 @@ export function middleware(req: NextRequest) {
   // Wie al is ingelogd en de homepage opent, gaat direct naar het dashboard.
   // Alleen op aanwezigheid van het sessiecookie; de dashboard-pagina controleert
   // zelf of de sessie nog geldig is. Werkt ook zonder subdomeinen.
-  if (pathname === "/" && !slugFromHost(req.headers.get("host")) && SESSION_COOKIES.some((c) => req.cookies.has(c))) {
+  // ?home=1 laat de homepage zien (voor wie 'm bewust wil bekijken).
+  const onMainRoot =
+    pathname === "/" && !slugFromHost(req.headers.get("host")) && !req.nextUrl.searchParams.has("home");
+  if (onMainRoot && SESSION_COOKIES.some((c) => req.cookies.has(c))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  // Geen (geldige) sessie meer, bv. lang niet ingelogd: naar de inlogpagina
+  // van de laatst gebruikte zaak, zodat de homepage overgeslagen wordt.
+  const lastCompany = req.cookies.get("shiftje_zaak")?.value;
+  if (onMainRoot && lastCompany && /^[a-z0-9-]{1,63}$/.test(lastCompany)) {
+    return NextResponse.redirect(new URL(`/z/${lastCompany}`, req.url));
   }
 
   if (!rootDomain()) return NextResponse.next();
