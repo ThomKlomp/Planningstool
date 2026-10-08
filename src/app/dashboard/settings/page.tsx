@@ -128,31 +128,6 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      {company?.slug && (
-        <section className="mt-10">
-          <h2 className="font-display text-xl">Medewerkers uitnodigen via link</h2>
-          <p className="mt-1 text-sm text-ink/60">
-            Deel deze link met je team. Iedereen die 'm opent kan zelf inloggen
-            of een account aanmaken en sluit direct aan als medewerker, je
-            hoeft dan niet iedereen los uit te nodigen.
-          </p>
-          <div className="mt-4">
-            <JoinLink slug={company.slug} />
-          </div>
-
-          <h2 className="mt-8 font-display text-xl">Inloglink voor je team</h2>
-          <p className="mt-1 text-sm text-ink/60">
-            Medewerkers die al een account hebben kunnen deze link als
-            bladwijzer opslaan of op hun beginscherm zetten. Ze komen dan
-            direct op de inlogpagina van jouw zaak, zonder omweg via de
-            homepage.
-          </p>
-          <div className="mt-4">
-            <JoinLink slug={company.slug} path="z" />
-          </div>
-        </section>
-      )}
-
       <section className="mt-10">
         <h2 className="font-display text-xl">Beschikbaarheid automatisch openen</h2>
         <p className="mt-1 text-sm text-ink/60">
@@ -201,8 +176,12 @@ export default async function SettingsPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl">Teams</h2>
         <p className="mt-1 text-sm text-ink/60">
-          Deel je medewerkers in teams in, bijvoorbeeld Bediening en Keuken,
-          dan zie je dat onderscheid terug op het rooster.
+          Maak hier teams aan, bijvoorbeeld Bediening en Keuken. Daarna deel je
+          je medewerkers in bij{" "}
+          <Link href="/dashboard/medewerkers" className="text-awning underline hover:no-underline">
+            Medewerkers
+          </Link>
+          , dan zie je dat onderscheid terug op het rooster.
         </p>
         <div className="mt-4">
           <DepartmentsManager
@@ -211,12 +190,6 @@ export default async function SettingsPage() {
               name: d.name,
               color: d.color,
               order: d.order,
-            }))}
-            members={members.map((m) => ({
-              membershipId: m.id,
-              name: m.user.name ?? m.user.email ?? "Onbekend",
-              departmentId: m.departmentId,
-              extraDepartmentIds: m.extraDepartments.map((e) => e.departmentId),
             }))}
           />
         </div>
