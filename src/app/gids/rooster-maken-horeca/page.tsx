@@ -113,6 +113,17 @@ function Example({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+// Korte, duidelijk afgebakende toelichting hoe een stap in Shiftje werkt.
+// De gids blijft zonder tool bruikbaar. Houd dit gelijk aan wat de app echt doet.
+function InShiftje({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-4 rounded-xl border-l-4 border-terra bg-sand/40 px-4 py-3 text-sm leading-relaxed text-ink/80">
+      <p className="text-xs font-bold uppercase tracking-wide text-terra">Zo doe je dat in Shiftje</p>
+      <p className="mt-1">{children}</p>
+    </div>
+  );
+}
+
 export default function RoosterMakenHorecaGids() {
   return (
     <main className="page-sage min-h-screen text-ink">
@@ -233,6 +244,7 @@ export default function RoosterMakenHorecaGids() {
             Alles wat daarbovenop komt blijft een inschatting.
           </li>
         </ul>
+        <InShiftje>Naast het rooster zie je de weersverwachting voor jouw plaats, met een korte terrashint per dag. Een steuntje bij het inplannen, geen voorspelling van drukte.</InShiftje>
 
         <h2 className={H2}>2. Haal beschikbaarheid op voordat je plant</h2>
         <p className={P}>
@@ -258,6 +270,7 @@ export default function RoosterMakenHorecaGids() {
             stages en vakanties vroeg doorgeven. Vaste vrije dagen vraag je één keer.
           </li>
         </ul>
+        <InShiftje>Medewerkers geven per dag of per shift aan of ze kunnen (✓), het nog niet weten (?) of niet kunnen (✕). Jij zet weken vooraf open, of laat Shiftje de komende weken automatisch openzetten.</InShiftje>
 
         <h2 className={H2}>3. Plan eerst de vaste kern, dan de rest</h2>
         <p className={P}>
@@ -270,6 +283,7 @@ export default function RoosterMakenHorecaGids() {
           binnenkomt. Dat is makkelijker dan iemand afbellen en voorkomt dat je altijd te veel mensen hebt
           staan.
         </p>
+        <InShiftje>Je ziet de beschikbaarheid naast het rooster terwijl je plant. Een vaste dienst stel je één keer in als terugkerende dienst, en een dienst die nog niemand heeft blijft zichtbaar als open dienst. Medewerkers kunnen hem zelf pakken, of jij wijst hem toe.</InShiftje>
 
         <h2 className={H2}>4. Verdeel de zware diensten zichtbaar eerlijk</h2>
         <p className={P}>
@@ -326,6 +340,7 @@ export default function RoosterMakenHorecaGids() {
           Hoe eerder je het deelt, hoe meer rust het geeft, zeker voor bijbaners die er hun studie omheen
           plannen. Een vast publicatiemoment werkt beter dan &ldquo;zodra het af is&rdquo;.
         </p>
+        <InShiftje>Het rooster blijft een concept tot je het publiceert: tot dan zien medewerkers het niet. Daarna kun je het mailen naar je team, en medewerkers kunnen hun diensten in hun eigen agenda zien.</InShiftje>
 
         <h2 className={H2}>6. Leg vast hoe ruilen werkt</h2>
         <p className={P}>
@@ -344,6 +359,7 @@ export default function RoosterMakenHorecaGids() {
           Het akkoord van de leidinggevende is geen wantrouwen. Het zorgt ervoor dat je niet ineens twee
           mensen met onvoldoende ervaring op dezelfde dienst hebt staan.
         </p>
+        <InShiftje>Een medewerker biedt de dienst aan het team aan, een collega neemt hem over en jij geeft akkoord. Dat akkoord is een instelling: je kunt het ook uitzetten.</InShiftje>
 
         <h2 className={H2}>7. Kijk elke week kort terug</h2>
         <p className={P}>
@@ -351,6 +367,7 @@ export default function RoosterMakenHorecaGids() {
           diensten werden geruild of zijn laat ingevuld? Wat moet er in het volgende rooster anders? Wat je
           opschrijft, hoef je de week erna niet opnieuw te bedenken.
         </p>
+        <InShiftje>Gewerkte uren vullen zich deels vanzelf in op basis van het rooster. Medewerkers bevestigen en jij keurt goed (ook dat kan automatisch). De goedgekeurde uren per periode kun je exporteren.</InShiftje>
 
         <h2 className={H2}>Veelgemaakte fouten</h2>
         <ul className={LIST}>
