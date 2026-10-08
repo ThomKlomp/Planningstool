@@ -42,6 +42,7 @@ export const SITE_ROUTES: SiteRouteSection[] = [
       { path: "/accept-terms", label: "Voorwaarden accepteren", public: false, note: "Vereist inloggen" },
       { path: "/invite/[token]", label: "Uitnodiging accepteren", public: true, note: "Alleen bruikbaar met geldige, niet-verlopen uitnodigingslink" },
       { path: "/join/[slug]", label: "Join-link (zelf aansluiten)", public: true, note: "Alleen bruikbaar met de juiste zaak-link" },
+      { path: "/z/[slug]", label: "Inloglink van een zaak", public: true, note: "Inlogpagina met de naam van de zaak; stuurt ingelogde leden direct door naar het dashboard" },
       { path: "/demo-switch", label: "Demo-account inloggen", public: true, note: "Logt automatisch in op de demo-zaak met een vast wachtwoord" },
     ],
   },

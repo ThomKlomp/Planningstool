@@ -137,6 +137,17 @@ export default async function SettingsPage() {
           <div className="mt-4">
             <JoinLink slug={company.slug} />
           </div>
+
+          <h2 className="mt-8 font-display text-xl">Inloglink voor je team</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Medewerkers die al een account hebben kunnen deze link als
+            bladwijzer opslaan of op hun beginscherm zetten. Ze komen dan
+            direct op de inlogpagina van jouw zaak, zonder omweg via de
+            homepage.
+          </p>
+          <div className="mt-4">
+            <JoinLink slug={company.slug} path="z" />
+          </div>
         </section>
       )}
 

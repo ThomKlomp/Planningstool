@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
-export default function JoinLink({ slug }: { slug: string }) {
+export default function JoinLink({ slug, path = "join" }: { slug: string; path?: "join" | "z" }) {
   const [copied, setCopied] = useState(false);
   const url =
-    typeof window !== "undefined" ? `${window.location.origin}/join/${slug}` : `/join/${slug}`;
+    typeof window !== "undefined" ? `${window.location.origin}/${path}/${slug}` : `/${path}/${slug}`;
 
   async function copy() {
     try {

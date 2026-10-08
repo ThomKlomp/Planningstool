@@ -1,15 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { requireMembership } from "@/lib/current-membership";
 import { prisma } from "@/lib/prisma";
 import SignOutButton from "@/components/sign-out-button";
 import CancellationCountdown from "./cancellation-countdown";
 import DashboardNav, { type DashboardNavItem } from "./dashboard-nav";
 
-// Geen zoekresultaat: ingelogde of token-afhankelijke pagina.
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+// Geen zoekresultaat: ingelogde of token-afhankelijke pagina. De standaardtitel
+// is de naam van de zaak ("<Zaaknaam> - Shiftje"), zodat de browsergeschiedenis
+// en bladwijzers de zaak herkennen. Pagina's met een eigen titel overschrijven dit.
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const companyId = session?.user?.memberships?.[0]?.companyId;
+  const company = companyId
+    ? await prisma.company.findUnique({ where: { id: companyId }, select: { name: true } })
+    : null;
+  return {
+    title: company ? { absolute: `${company.name} - Shiftje` } : undefined,
+    robots: { index: false, follow: false },
+  };
+}
 
 // Zonder dit blijft Next.js de vorige render van deze layout (en dus het
 // aantal ongelezen meldingen) een tijdje hergebruiken bij client-side
