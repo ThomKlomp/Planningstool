@@ -121,7 +121,8 @@ async function TeamMembers({ ctx }: { ctx: BlockContext }) {
         // (en worden voor medewerkers niet eens naar de browser gestuurd).
         name: m.user.name ?? (isManagerRole(ctx.role) ? m.user.email : null) ?? "Onbekend",
         email: isManagerRole(ctx.role) ? m.user.email ?? "" : "",
-        role: m.role,
+        // De status (eigenaar/manager/medewerker) van collega's is alleen voor managers.
+        role: isManagerRole(ctx.role) ? m.role : "",
         departmentName: m.department?.name ?? null,
         departmentColor: m.department?.color ?? null,
       }))}
