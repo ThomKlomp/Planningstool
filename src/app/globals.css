@@ -201,6 +201,21 @@ body {
 .flip-back {
   transform: rotateY(180deg);
 }
+/* Is de kaart omgedraaid, dan mag het onzichtbare klikvlak niet meer over de
+   achterkant liggen: anders kun je het voorbeeld daarop niet scrollen. Terug
+   draaien gaat dan via een label over de achterkant (zie feature-flip-cards). */
+.flip > input:checked {
+  pointer-events: none;
+}
+.flip-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 51, 38, 0.3) transparent;
+  /* Zachte fade onderaan: laat zien dat er meer is om naartoe te scrollen. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+}
 .flip > input:focus-visible ~ .flip-inner .flip-front {
   outline: 3px solid #b8542f;
   outline-offset: 3px;
