@@ -23,17 +23,30 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "start en end zijn verplicht" }, { status: 400 });
   }
 
+  // Nooit het hele gebruikersrecord meesturen (bevat o.a. het wachtwoord-hash):
+  // alleen een naam, en het e-mailadres alleen voor managers.
+  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const allShifts = await prisma.shift.findMany({
     where: {
       companyId: membership.companyId,
       date: { gte: new Date(start), lte: new Date(end) },
     },
-    include: { membership: { include: { user: true } } },
+    include: {
+      membership: {
+        // Medewerkers krijgen van een collega alleen de naam en het team: geen
+        // status (rol) en geen e-mailadres.
+        select: {
+          id: true,
+          departmentId: true,
+          role: canManage,
+          user: { select: { id: true, name: true, email: canManage } },
+        },
+      },
+    },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
   // Medewerkers krijgen alleen shifts uit gepubliceerde (of verleden) weken.
-  const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
   const shifts = canManage
     ? allShifts
     : await filterVisibleForEmployee(membership.companyId, allShifts);

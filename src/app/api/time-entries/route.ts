@@ -20,7 +20,12 @@ export async function GET() {
     where: canManage
       ? { companyId: membership.companyId }
       : { membershipId: membership.membershipId },
-    include: { membership: { include: { user: true } } },
+    // Nooit het hele gebruikersrecord meesturen (bevat o.a. het wachtwoord-hash).
+    include: {
+      membership: {
+        include: { user: { select: { id: true, name: true, email: canManage } } },
+      },
+    },
     orderBy: { date: "desc" },
     take: 100,
   });
