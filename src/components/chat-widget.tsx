@@ -9,7 +9,7 @@ type Conversation = { id: string; status: string; messages: Message[] } | null;
 const GUEST_TOKEN_KEY = "shiftje_guest_token";
 
 // Pagina's zonder chatknop: losse artikelen die als neutrale bron moeten aanvoelen.
-const NO_CHAT_PATHS = ["/rooster-oproepkrachten-horeca"];
+const NO_CHAT_PATHS = ["/rooster-oproepkrachten-horeca", "/gids"];
 
 export default function ChatWidget({
   defaultName = "",

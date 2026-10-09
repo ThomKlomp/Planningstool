@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
 
@@ -135,25 +134,15 @@ export default function RoosterMakenHorecaGids() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <SiteHeader />
+      <SiteHeader minimal homeTrack="link-gids" />
 
       <article className="mx-auto max-w-2xl px-6 pb-20 pt-10 md:pt-14">
-        <nav aria-label="Kruimelpad" className="text-sm text-ink/55">
-          <Link href="/" className="hover:text-ink">
-            Shiftje
-          </Link>{" "}
-          <span aria-hidden="true">›</span> <span>Gids: rooster maken in de horeca</span>
-        </nav>
 
-        <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+        <h1 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
           {TITLE}
         </h1>
         <p className="mt-3 text-sm text-ink/55">
-          Door{" "}
-          <Link href="/over-ons" className="underline hover:text-ink">
-            Thom en Daniel
-          </Link>
-          , die zelf in de horeca hebben gewerkt. Laatst bijgewerkt:{" "}
+          Door Thom en Daniel, de makers van Shiftje, die zelf in de horeca hebben gewerkt. Laatst bijgewerkt:{" "}
           <time dateTime={LAST_UPDATED}>8 oktober 2026</time>.
         </p>
 
@@ -413,13 +402,6 @@ export default function RoosterMakenHorecaGids() {
           Shiftje maakten. Het helpt je bij precies de stappen uit deze gids: beschikbaarheid ophalen, een
           rooster maken, diensten ruilen en uren bijhouden, zonder dat het een zwaar systeem wordt.
         </p>
-        <p className={P}>
-          Meer over hoe dat werkt voor een café, kroeg of bar staat op de pagina{" "}
-          <Link href="/rooster-maken-cafe" className="underline hover:text-ink">
-            rooster maken voor je café, kroeg of bar
-          </Link>
-          .
-        </p>
 
         <h2 className={H2}>Veelgestelde vragen</h2>
         <div className="mt-4 flex flex-col gap-2.5">
@@ -435,21 +417,9 @@ export default function RoosterMakenHorecaGids() {
             </details>
           ))}
         </div>
-
-        <div className="mt-12 rounded-3xl bg-sand p-6 text-[#4A2A12] md:p-8">
-          <p className="font-display text-xl font-bold md:text-2xl">Liever niet meer zoeken in appjes?</p>
-          <p className="mt-2">Probeer Shiftje zeven dagen gratis, zonder creditcard.</p>
-          <Link
-            href="/onboarding"
-            data-track="cta-gids"
-            className="mt-4 inline-block rounded-full bg-terra px-6 py-3 font-bold text-white transition-colors hover:bg-terra-dark"
-          >
-            Begin gratis
-          </Link>
-        </div>
       </article>
 
-      <SiteFooter />
+      <SiteFooter minimal />
     </main>
   );
 }
