@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import SiteHeader from "@/components/marketing/site-header";
 import SiteFooter from "@/components/marketing/site-footer";
 
@@ -82,18 +81,14 @@ export default function OproepkrachtenArtikel() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <SiteHeader />
+      <SiteHeader minimal homeTrack="link-oproep" />
 
       <article className="mx-auto max-w-2xl px-6 pb-20 pt-10 md:pt-14">
         <h1 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
           {TITLE}
         </h1>
         <p className="mt-3 text-sm text-ink/55">
-          Door{" "}
-          <Link href="/over-ons" className="underline hover:text-ink">
-            Thom en Daniel
-          </Link>
-          , de makers van Shiftje. Laatst bijgewerkt: <time dateTime={LAST_UPDATED}>9 oktober 2026</time>.
+          Door Thom en Daniel, de makers van Shiftje. Laatst bijgewerkt: <time dateTime={LAST_UPDATED}>9 oktober 2026</time>.
         </p>
 
         <p className="mt-6 text-lg leading-relaxed text-ink/85">
@@ -225,20 +220,9 @@ export default function OproepkrachtenArtikel() {
             ))}
           </ul>
         </div>
-
-        <h2 className={H2}>Hoe doe je dit in de praktijk?</h2>
-        <p className={P}>
-          Dit kan met een spreadsheet en een groepsapp, zolang je team overzichtelijk blijft en je discipline
-          houdt. Wordt het meer dan dat te beheren, dan loont het om beschikbaarheid, rooster, ruilen en uren
-          op één plek te regelen. Dat is waarom wij Shiftje maakten. Wil je zien hoe dat eruitziet?{" "}
-          <Link href="/" data-track="link-oproep" className="underline hover:text-ink">
-            Bekijk de homepage
-          </Link>
-          .
-        </p>
       </article>
 
-      <SiteFooter />
+      <SiteFooter minimal />
     </main>
   );
 }

@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type Message = { id: string; sender: string; body: string; createdAt: string };
 type Conversation = { id: string; status: string; messages: Message[] } | null;
 
 const GUEST_TOKEN_KEY = "shiftje_guest_token";
+
+// Pagina's zonder chatknop: losse artikelen die als neutrale bron moeten aanvoelen.
+const NO_CHAT_PATHS = ["/rooster-oproepkrachten-horeca"];
 
 export default function ChatWidget({
   defaultName = "",
@@ -16,6 +20,7 @@ export default function ChatWidget({
   defaultEmail?: string;
   isLoggedIn?: boolean;
 }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [conversation, setConversation] = useState<Conversation>(null);
   const [name, setName] = useState(defaultName);
@@ -124,6 +129,8 @@ export default function ChatWidget({
     setDraft("");
     setSending(false);
   }
+
+  if (NO_CHAT_PATHS.some((p) => pathname === p || pathname?.startsWith(p + "/"))) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
