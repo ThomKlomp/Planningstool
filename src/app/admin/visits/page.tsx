@@ -68,8 +68,8 @@ export default async function VisitsPage() {
         OR: [{ referrer: { in: AI_SOURCES } }, { utmSource: { in: AI_SOURCES } }],
       },
     }),
-    // Doorklik van het artikel over oproepkrachten naar de homepage.
-    prisma.pageView.count({ where: { ...publicVisitor, event: "link-oproep" } }),
+    // Doorklik van de artikelen (oproepkrachten en gids) naar de homepage, via het logo.
+    prisma.pageView.count({ where: { ...publicVisitor, event: { in: ["link-oproep", "link-gids"] } } }),
   ]);
   const totalClicks = ctaClicks.reduce((sum, c) => sum + c._count._all, 0);
 
@@ -122,7 +122,7 @@ export default async function VisitsPage() {
             />
           </div>
           <div>
-            <p className="text-xs font-medium text-ink/60">Doorkliks naar de homepage vanaf het artikel over oproepkrachten</p>
+            <p className="text-xs font-medium text-ink/60">Doorkliks naar de homepage vanaf de artikelen (logo)</p>
             <p className="mt-2 font-display text-2xl">{articleClicks}</p>
             <p className="mt-4 text-xs font-medium text-ink/60">Bezoeken via AI-tools</p>
             <p className="mt-2 font-display text-2xl">{aiVisits}</p>

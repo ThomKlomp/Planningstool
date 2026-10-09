@@ -1,6 +1,16 @@
 import Link from "next/link";
 
-export default function SiteFooter() {
+// minimal: geen links, alleen een regel tekst (voor losse artikelen).
+export default function SiteFooter({ minimal = false }: { minimal?: boolean }) {
+  if (minimal) {
+    return (
+      <footer className="border-t border-line">
+        <p className="mx-auto max-w-6xl px-6 py-8 text-sm text-ink/50">
+          © {new Date().getFullYear()} Shiftje
+        </p>
+      </footer>
+    );
+  }
   return (
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-sm text-ink/60">
