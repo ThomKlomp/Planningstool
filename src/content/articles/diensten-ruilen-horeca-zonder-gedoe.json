@@ -1,0 +1,71 @@
+{
+  "slug": "diensten-ruilen-horeca-zonder-gedoe",
+  "title": "Diensten ruilen in de horeca zonder gedoe: 6 afspraken",
+  "description": "Hoe laat je medewerkers diensten ruilen zonder dat het rooster ondersneeuwt? Zes duidelijke afspraken, een stappenplan en een checklist voor lokale horeca.",
+  "published": "2026-10-10",
+  "updated": "2026-10-10",
+  "intro": "Diensten ruilen gaat zonder gedoe als je van tevoren vastlegt wie mag ruilen, tot wanneer en wie het laatste woord heeft, en als elke ruil op één plek zichtbaar wordt. Het rooster is dan altijd het enige waarheidsbestand. Met zes korte afspraken en een vast stappenplan voorkom je dat je op vrijdagavond ontdekt dat er twee mensen te veel of te weinig staan.",
+  "blocks": [
+    { "type": "h2", "text": "Waarom ruilen vaak misgaat" },
+    { "type": "p", "text": "In veel lokale horecazaken regelt het team ruilen onderling, meestal in een groepsapp. Dat is snel en laagdrempelig, en daarom begrijpelijk. Het probleem zit in wat er daarna gebeurt: de ruil is afgesproken, maar het rooster is niet aangepast. De ene medewerker denkt dat de andere de dienst heeft overgenomen, de eigenaar kijkt naar de oude versie, en niemand weet nog wat de laatste stand is." },
+    { "type": "p", "text": "Dit patroon komt ook in vakpublicaties terug. Zo noemt een Nederlands artikel over roosters die elke week niet kloppen versnipperde communicatie als een terugkerende oorzaak: wanneer verzoeken via WhatsApp, e-mail en mondelinge afspraken binnenkomen, valt er snel iets tussen wal en schip. Een andere horecagids adviseert om personeel nog wel de kans te geven later diensten te ruilen, maar vooraf duidelijk vast te leggen hoe en binnen welke termijn dat moet gebeuren." },
+    { "type": "p", "text": "Ruilen zelf is dus niet het probleem. Het ontbreken van vaste afspraken en van één plek waar de uitkomst staat, is dat wel." },
+    { "type": "h2", "text": "Zes afspraken die ruilen overzichtelijk houden" },
+    { "type": "ol", "items": [
+      "**Eén plek voor de waarheid.** Het rooster dat jij als eigenaar of manager beheert, is de enige geldige versie. Een ruil telt pas mee als die daar staat.",
+      "**Vraag eerst, wissel dan.** Een medewerker vraagt een collega, en meldt de afspraak daarna bij jou. Geen verrassingen op de dag zelf.",
+      "**Een uiterste moment.** Spreek een vaste termijn af waarbinnen een ruil kan, bijvoorbeeld tot twee dagen voor de dienst. Later is het een afmelding en regel je het anders.",
+      "**Gelijkwaardige diensten.** Wie ruilt, neemt een dienst terug die qua functie en uren past. Een barmedewerker kan niet zomaar een keukendienst overnemen.",
+      "**Eén persoon die akkoord geeft.** Bepaal wie het laatste woord heeft: jij, een vaste manager of de teamleider van de avond. Zo is er nooit onduidelijkheid over wie bevestigt.",
+      "**Wat als het misgaat?** Leg vast wie verantwoordelijk is als een geruilde dienst niet wordt gedraaid. Dat is meestal de medewerker die de dienst in het rooster had, tot de ruil is bevestigd."
+    ] },
+    { "type": "h2", "text": "Het stappenplan voor één ruil" },
+    { "type": "p", "text": "Een vast stappenplan haalt discussie weg. Hang het op in de personeelsruimte of zet het bovenaan de teamchat, zodat iedereen weet wat er verwacht wordt." },
+    { "type": "ol", "items": [
+      "De medewerker kijkt in het rooster of de collega die dag kan en wil werken.",
+      "Beiden spreken af welke dienst naar wie gaat.",
+      "De medewerker meldt de ruil bij jou, met datum, dienst en naam van de collega, vóór het afgesproken uiterste moment.",
+      "Jij controleert of de bezetting nog klopt: staan er genoeg mensen, in de goede functies?",
+      "Jij past het rooster aan en bevestigt aan beiden dat de ruil klopt.",
+      "Pas dan is de ruil officieel. Tot die bevestiging blijft de oorspronkelijke planning staan."
+    ] },
+    { "type": "h2", "text": "Wat als niemand wil ruilen?" },
+    { "type": "p", "text": "Soms vraagt iemand om ruil en komt er geen reactie. Maak daarvoor een vaste route, zodat een afzegging niet op jouw telefoon landt op het slechtste moment. Een gangbare aanpak is een open dienst: je meldt dat er een dienst vrij is en de eerste geschikte collega die kan, pakt hem. Is er na een dag nog niemand, dan neem jij het over en zoek je actief iemand." },
+    { "type": "p", "text": "Hou ook een eenvoudige reservelijst bij: twee of drie mensen die aangegeven hebben dat ze op korte termijn soms kunnen inspringen. Vraag ze vooraf of ze dat willen. Wie niet gevraagd wil worden, hoort er niet op." },
+    { "type": "h2", "text": "Eerlijk blijven: voorkom dat dezelfde mensen alles opvangen" },
+    { "type": "p", "text": "In elk team zijn er een paar collega's die altijd ja zeggen. Dat lijkt handig, maar het kost je op termijn die mensen. Noteer daarom een maand lang bij wie de geruilde en overgenomen diensten terechtkomen. Zie je dat één of twee mensen het meeste opvangen, bedank hen dan expliciet en vraag anderen ook eens. Een rooster werkt het best als de lasten redelijk verdeeld zijn." },
+    { "type": "h2", "text": "Een voorbeeld van een korte teamregel" },
+    { "type": "p", "text": "Wil je het kort houden? Dit is een voorbeeld dat je kunt aanpassen aan je eigen zaak. Het is geen norm, alleen een startpunt." },
+    { "type": "table", "label": "Voorbeeld, geen norm: ruilregels voor een café met een klein team", "headers": ["Onderdeel", "Afspraak"], "rows": [
+      ["Wie mag ruilen", "Iedereen met een vaste dienst in het rooster"],
+      ["Tot wanneer", "Uiterlijk twee dagen voor de dienst"],
+      ["Waar melden", "Bij de manager, met datum, dienst en naam collega"],
+      ["Wie bevestigt", "De manager, nadat de bezetting is gecontroleerd"],
+      ["Als de ruil te laat is", "Het geldt als afmelding; manager regelt vervanging"],
+      ["Bij twijfel", "De oorspronkelijke planning blijft staan"]
+    ] },
+    { "type": "h2", "text": "Checklist: is jouw ruilregeling op orde?" },
+    { "type": "checklist", "title": "Loop dit na met je team", "items": [
+      "Weet iedereen wat het uiterste moment voor een ruil is?",
+      "Is er één persoon die een ruil bevestigt?",
+      "Staat de uitkomst altijd direct in het rooster dat iedereen ziet?",
+      "Is duidelijk wie verantwoordelijk blijft totdat de ruil bevestigd is?",
+      "Is er een route voor het geval niemand wil ruilen, zoals een open dienst?",
+      "Heb je de lijst met mensen die kunnen inspringen vooraf met hen afgestemd?",
+      "Kijk je periodiek of de lasten eerlijk verdeeld zijn?"
+    ] },
+    { "type": "h2", "text": "Met pen en papier, Excel of een app" },
+    { "type": "p", "text": "Deze afspraken werken met elk hulpmiddel. Op papier of in Excel moet je zelf de wijziging doorvoeren en het bijgewerkte rooster opnieuw delen, wat in een drukke week snel blijft liggen. In een groepsapp is het snel, maar de afspraken staan tussen gewone berichten en de stand van zaken is lastig terug te vinden. Een eenvoudige regel helpt bij alle drie: na een bevestigde ruil stuur je het bijgewerkte rooster, of een bevestiging, naar beide betrokkenen." },
+    { "type": "p", "text": "Begin klein. Kies twee of drie afspraken uit de lijst hierboven, bespreek ze één keer in een teamoverleg en kijk na een maand of het rustiger is geworden." }
+  ],
+  "faqs": [
+    { "q": "Moet de manager elke ruil goedkeuren?", "a": "Dat is een keuze. Een akkoord van de manager geeft controle over de bezetting en voorkomt dat er gaten vallen. In een klein, vertrouwd team kun je ook afspreken dat medewerkers zelf ruilen, zolang ze het melden. Kies wat bij je zaak past en leg het vast." },
+    { "q": "Wat als twee medewerkers ruilen zonder het te melden?", "a": "Behandel dat als een les, niet als een schandaal. Pas het rooster aan zodat het klopt, en bespreek nog eens de afspraak dat een ruil pas telt als jij die bevestigt." },
+    { "q": "Hoe voorkom je dat ruilen een excuus wordt om af te zeggen?", "a": "Door een uiterste moment en een vaste route af te spreken. Wie een dienst niet wil draaien, moet zelf iemand vinden of het tijdig melden. Zo blijft ruilen een gunst tussen collega's en geen vluchtroute." }
+  ],
+  "sources": [
+    { "title": "Werkrooster maken in de horeca (Ondernemen met personeel)", "url": "https://www.ondernemenmetpersoneel.nl/mijn-branche/horeca/werkrooster-maken-de-horeca-een-stappenplan", "accessed": "2026-10-10" },
+    { "title": "Waarom klopt mijn personeelsrooster elke week niet? (Staff Support)", "url": "https://staff.nl/waarom-klopt-mijn-personeelsrooster-elke-week-niet/", "accessed": "2026-10-10" },
+    { "title": "Personeelsplanning horeca: slim roosteren (De Horeca Helper)", "url": "https://dehorecahelper.nl/blog/personeelsplanning-horeca/", "accessed": "2026-10-10" }
+  ]
+}
