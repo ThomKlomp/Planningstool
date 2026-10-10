@@ -15,3 +15,4 @@ Eén regel per week. De skill leest dit om herhaling te voorkomen: kies geen ond
 
 | Datum | Artikel (slug) | Forum of review | SEO/GEO-update |
 |---|---|---|---|
+| 2026-10-10 | Diensten ruilen zonder gedoe (diensten-ruilen-horeca-zonder-gedoe) | B: uitnodiging voor eerlijke feedback | author.url in Article-schema |
