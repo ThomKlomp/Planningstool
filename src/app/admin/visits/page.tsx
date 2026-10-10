@@ -69,7 +69,7 @@ export default async function VisitsPage() {
       },
     }),
     // Doorklik van de artikelen (oproepkrachten en gids) naar de homepage, via het logo.
-    prisma.pageView.count({ where: { ...publicVisitor, event: { in: ["link-oproep", "link-gids"] } } }),
+    prisma.pageView.count({ where: { ...publicVisitor, event: { in: ["link-oproep", "link-gids", "link-artikel"] } } }),
   ]);
   const totalClicks = ctaClicks.reduce((sum, c) => sum + c._count._all, 0);
 

@@ -1,10 +1,14 @@
 import { PRICE_TIERS, formatEuro } from "@/lib/pricing";
+import { listArticles } from "@/lib/articles";
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 
 // Korte, feitelijke beschrijving voor AI-systemen (https://llmstxt.org).
 // Houd dit gelijk aan de homepage; alleen wat het product echt doet.
 export function GET() {
+  const articleLines = listArticles()
+    .map((a) => `- [${a.title}](${SITE_URL}/artikel/${a.slug}): ${a.description}`)
+    .join("\n");
   const prices = PRICE_TIERS.map((t) => `${formatEuro(t.monthlyExcl)} (${t.label})`).join(", ");
 
   const body = `# Shiftje
@@ -18,7 +22,7 @@ export function GET() {
 - [Rooster maken voor je café, kroeg of bar](${SITE_URL}/rooster-maken-cafe): hoe Shiftje werkt voor cafés, kroegen, eetcafés en bars
 - [Rooster maken in de horeca: zo pak je het aan](${SITE_URL}/gids/rooster-maken-horeca): praktische gids met stappen, voorbeelden en checklist
 - [Oproepkrachten inplannen in de horeca](${SITE_URL}/rooster-oproepkrachten-horeca): artikel over rooster maken met oproepkrachten en wisselende werktijden
-- [Over ons](${SITE_URL}/over-ons): gemaakt door Thom en Daniel, twee ondernemers met horeca-ervaring
+${articleLines ? articleLines + "\n" : ""}- [Over ons](${SITE_URL}/over-ons): gemaakt door Thom en Daniel, twee ondernemers met horeca-ervaring
 
 ## Functies
 Beschikbaarheid doorgeven, rooster maken, teams, open diensten, diensten ruilen en overnemen, terugkerende diensten, dienstsjablonen, uren registreren en goedkeuren, notificaties, rooster in je agenda, weersverwachting bij het rooster, rooster mailen en downloaden (PDF, CSV), uren exporteren, verschillende gebruikersrechten, chatondersteuning.

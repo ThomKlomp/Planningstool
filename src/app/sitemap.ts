@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { listArticles } from "@/lib/articles";
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 
@@ -16,7 +17,14 @@ const routes = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return routes.map((r) => ({
+  // Artikelen uit src/content/articles worden automatisch toegevoegd.
+  const articleRoutes = listArticles().map((a) => ({
+    path: `/artikel/${a.slug}`,
+    lastModified: a.updated,
+    priority: 0.6,
+    changeFrequency: "monthly" as const,
+  }));
+  return [...routes, ...articleRoutes].map((r) => ({
     url: `${SITE_URL}${r.path}`,
     lastModified: new Date(r.lastModified),
     changeFrequency: r.changeFrequency,
