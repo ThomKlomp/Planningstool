@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import MembersTable from "./members-table";
 import DeleteCompanyButton from "./delete-company-button";
+import ResendOpenWeekMailButton from "./resend-open-week-mail-button";
 
 export default async function AdminCompanyDetailPage({
   params,
@@ -49,6 +50,17 @@ export default async function AdminCompanyDetailPage({
         <StatCard label="Uren ter goedkeuring" value={submitted} />
         <StatCard label="Uren afgehandeld" value={approved + rejected} />
       </div>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Beschikbaarheidsmail</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Verstuur de mail dat de nieuwste week openstaat voor beschikbaarheid opnieuw naar alle leden,
+          bijvoorbeeld als die niet is aangekomen.
+        </p>
+        <div className="mt-3">
+          <ResendOpenWeekMailButton companyId={company.id} memberCount={company.memberships.length} />
+        </div>
+      </section>
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Team</h2>

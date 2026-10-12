@@ -3,7 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifySupportOfMessage } from "@/lib/support-notify";
-import { createConversation, resolveContact, type ChatOwner } from "@/lib/support-chat";
+import {
+  createConversation,
+  findOpenConversation,
+  resolveContact,
+  type ChatOwner,
+} from "@/lib/support-chat";
 
 export async function POST(
   req: Request,
@@ -43,10 +48,40 @@ export async function POST(
   const name = sender?.name ?? conversation.guestName ?? "Onbekend";
   const email = sender?.email ?? conversation.guestEmail ?? "";
 
-  // Een gesloten gesprek wordt niet meer aangevuld: een nieuw bericht start een
-  // nieuw gesprek (bv. als wij het net hebben afgehandeld terwijl de klant typte).
+  const owner: ChatOwner = { userId: conversation.userId, guestToken: conversation.guestToken };
+
+  // Een klant mag een gesloten gesprek bewust heropenen (reopen), maar alleen als
+  // er geen ander lopend gesprek is: er is hooguit één open gesprek per klant.
+  if (conversation.status === "CLOSED" && body?.reopen === true) {
+    const open = await findOpenConversation(owner);
+    if (open) {
+      return NextResponse.json(
+        { error: "Je hebt al een lopend gesprek. Sluit of beantwoord dat eerst.", openConversationId: open.id },
+        { status: 409 }
+      );
+    }
+    await prisma.supportMessage.create({
+      data: { conversationId: conversation.id, sender: "USER", body: message },
+    });
+    const reopened = await prisma.supportConversation.update({
+      where: { id: conversation.id },
+      data: { status: "OPEN" },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
+    await notifySupportOfMessage({
+      conversationId: conversation.id,
+      name,
+      email,
+      message,
+      isNew: false,
+      reopened: true,
+    });
+    return NextResponse.json({ conversation: reopened, reopened: true });
+  }
+
+  // Zonder dat: een gesloten gesprek wordt niet aangevuld, een nieuw bericht start
+  // een nieuw gesprek (bv. als wij het net hebben afgehandeld terwijl de klant typte).
   if (conversation.status === "CLOSED") {
-    const owner: ChatOwner = { userId: conversation.userId, guestToken: conversation.guestToken };
     const contact = await resolveContact(owner, { name, email }, sender);
     const { conversation: created } = await createConversation(owner, contact, message);
     await notifySupportOfMessage({

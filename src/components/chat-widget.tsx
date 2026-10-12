@@ -65,6 +65,8 @@ export default function ChatWidget({
   }
 
   async function openClosed(id: string) {
+    setError(null);
+    setDraft("");
     const res = await fetch(`/api/support/conversation?id=${encodeURIComponent(id)}`, {
       headers: authHeaders(),
     });
@@ -119,6 +121,28 @@ export default function ChatWidget({
     if (!draft.trim()) return;
     setSending(true);
     setError(null);
+
+    // Een gesloten gesprek uit de lijst bewust heropenen en erop reageren.
+    if (view === "closed" && viewing) {
+      const res = await fetch(`/api/support/conversation/${viewing.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ message: draft, reopen: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Versturen mislukt.");
+        setSending(false);
+        return;
+      }
+      setConversation(data.conversation);
+      setViewing(null);
+      setView("chat");
+      setDraft("");
+      setSending(false);
+      loadConversation();
+      return;
+    }
 
     // Geen lopend gesprek (of het is gesloten): dit bericht start een nieuw gesprek.
     if (!conversation || conversation.status === "CLOSED") {
@@ -274,13 +298,46 @@ export default function ChatWidget({
 
           {view === "closed" && (
             <div className="space-y-2 border-t border-line px-4 py-3">
-              <p className="text-xs text-ink/50">Dit gesprek is gesloten en kan niet meer worden aangevuld.</p>
-              <button
-                onClick={startNewChat}
-                className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning"
-              >
-                Nieuw gesprek starten
-              </button>
+              {conversation && conversation.status !== "CLOSED" ? (
+                <>
+                  <p className="text-xs text-ink/50">
+                    Je hebt al een lopend gesprek. Heropenen kan pas als dat is afgerond.
+                  </p>
+                  <button
+                    onClick={() => setView("chat")}
+                    className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning"
+                  >
+                    Naar het lopende gesprek
+                  </button>
+                </>
+              ) : (
+                <>
+                  <form onSubmit={sendMessage} className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Reageer om dit gesprek te heropenen"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={sending}
+                      className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+                    >
+                      {sending ? "..." : "Stuur"}
+                    </button>
+                  </form>
+                  {error && <p className="text-xs text-red-600">{error}</p>}
+                  <button
+                    onClick={startNewChat}
+                    className="text-xs text-ink/50 hover:text-ink hover:underline"
+                  >
+                    Of begin een nieuw gesprek
+                  </button>
+                </>
+              )}
             </div>
           )}
 
