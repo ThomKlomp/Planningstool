@@ -168,6 +168,7 @@ export default function ArtikelPage({ params }: { params: { slug: string } }) {
       headline: a.title,
       description: a.description,
       inLanguage: "nl-NL",
+      image: `${SITE_URL}/api/og?eyebrow=Artikel&title=${encodeURIComponent(a.title)}`,
       datePublished: a.published,
       dateModified: a.updated,
       mainEntityOfPage: url,
