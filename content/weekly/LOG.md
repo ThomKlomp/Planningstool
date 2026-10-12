@@ -15,3 +15,4 @@ Eén regel per week. De skill leest dit om herhaling te voorkomen: kies geen ond
 
 | Datum | Artikel (slug) | Forum of review | SEO/GEO-update |
 |---|---|---|---|
+| 2026-10-12 | Uitval opvangen: reserve-route (uitval-opvangen-horeca-reserve-route) | Reviewverzoek aan proefgebruikers (B) | `image` in Article-schema van artikelen |
