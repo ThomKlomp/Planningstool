@@ -1,7 +1,22 @@
 import { SITE_ROUTES, countPublicRoutes } from "@/lib/site-routes";
+import { listArticles } from "@/lib/articles";
+
+// Pagina's die we bewust niet als link tonen: ze doen iets zodra je ze opent
+// (/demo-switch logt je in als demo-account en vervangt dus je eigen sessie) of
+// ze werken alleen met een token/id uit een echte link.
+const NO_LINK = new Set(["/demo-switch", "/verify-email", "/invite/[token]", "/admin/companies/[id]", "/admin/support/[id]"]);
+
+/** Voorbeeldadres voor een pad met een dynamisch deel, of null als er geen is. */
+function exampleFor(path: string, firstArticleSlug: string | null): string | null {
+  if (path === "/artikel/[slug]") return firstArticleSlug ? `/artikel/${firstArticleSlug}` : null;
+  if (path === "/join/[slug]") return "/join/demo";
+  if (path === "/z/[slug]") return "/z/demo";
+  return null;
+}
 
 export default function AdminPagesOverview() {
   const { total, public: publicCount } = countPublicRoutes();
+  const firstArticleSlug = listArticles()[0]?.slug ?? null;
 
   return (
     <div>
@@ -35,7 +50,9 @@ export default function AdminPagesOverview() {
                 <tbody className="divide-y divide-line bg-white">
                   {section.routes.map((route) => (
                     <tr key={route.path}>
-                      <td className="px-4 py-2 font-mono text-xs text-ink/70">{route.path}</td>
+                      <td className="px-4 py-2 font-mono text-xs text-ink/70">
+                        <RouteLink path={route.path} firstArticleSlug={firstArticleSlug} />
+                      </td>
                       <td className="px-4 py-2">
                         {route.label}
                         {route.note && (
@@ -62,5 +79,23 @@ export default function AdminPagesOverview() {
         ))}
       </div>
     </div>
+  );
+}
+
+/** Pad als klikbare link die in een nieuw tabblad opent, tenzij er geen veilige link voor is. */
+function RouteLink({ path, firstArticleSlug }: { path: string; firstArticleSlug: string | null }) {
+  const isDynamic = path.includes("[");
+  const href = NO_LINK.has(path) ? null : isDynamic ? exampleFor(path, firstArticleSlug) : path;
+  if (!href) return <span>{path}</span>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={isDynamic ? `Opent een voorbeeld: ${href}` : `Opent ${href} in een nieuw tabblad`}
+      className="text-awning hover:underline"
+    >
+      {path} <span aria-hidden>↗</span>
+    </a>
   );
 }
