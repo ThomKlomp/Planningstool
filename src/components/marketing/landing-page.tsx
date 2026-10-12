@@ -113,7 +113,7 @@ export default function LandingPage({ content: c }: { content: LandingContent })
         <div className="mb-6 text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Probeer het zelf</h2>
           <p className="mt-2 text-ink/70">
-            Klik op een dienst, pas de tijden aan of voeg er een toe. Zo werkt het ook in de app.
+            Klik op een dienst, pas de tijden aan of voeg er een toe. Zo werkt het ook in Shiftje.
           </p>
         </div>
         <div className="rounded-3xl bg-white p-3 shadow-[0_30px_50px_-30px_rgba(30,51,38,0.45)] md:p-5">

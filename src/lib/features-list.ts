@@ -31,7 +31,7 @@ export const MORE_FEATURES: { title: string; body: string }[] = [
   },
   {
     title: "Meldingen",
-    body: "Je krijgt een melding in de app en per e-mail, bijvoorbeeld bij opengestelde diensten of een verzoek dat op goedkeuring wacht.",
+    body: "Je krijgt een melding in Shiftje en per e-mail, bijvoorbeeld bij opengestelde diensten of een verzoek dat op goedkeuring wacht.",
   },
   {
     title: "Chat",
