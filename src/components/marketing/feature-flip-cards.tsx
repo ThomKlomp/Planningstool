@@ -1,5 +1,5 @@
 // Functieblokken op de homepage. Klik (of druk Enter/spatie) op een blok en
-// het draait om: op de achterkant zie je hoe die functie er in de app uitziet.
+// het draait om: op de achterkant zie je hoe die functie werkt.
 // Puur CSS (een verborgen checkbox, zie .flip in globals.css), dus geen
 // client-JavaScript nodig en toegankelijk met het toetsenbord.
 import { VENUES, range, shortRange, type Venue, type VenueData } from "./venue";
@@ -409,7 +409,7 @@ export default function FeatureFlipCards({
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {FEATURES.map((f, i) => (
         <div key={f.title} className="flip">
-          <input type="checkbox" id={`flip-${i}`} aria-label={`Bekijk ${f.label} in de app`} />
+          <input type="checkbox" id={`flip-${i}`} aria-label={`Bekijk hoe ${f.label} werkt`} />
           <div className="flip-inner">
             <div className="flip-face flip-front flex flex-col gap-3.5 bg-white p-8">
               <div
@@ -429,7 +429,7 @@ export default function FeatureFlipCards({
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3326" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" />
                 </svg>
-                Bekijk in de app
+                Bekijk hoe het werkt
               </div>
             </div>
             <div className="flip-face flip-back flex flex-col gap-3 p-5" style={{ backgroundColor: f.tile }}>
@@ -443,7 +443,7 @@ export default function FeatureFlipCards({
               />
               <div className="pointer-events-none flex items-center justify-between gap-2">
                 <div className="font-display text-[19px] font-bold">{f.title}</div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold">In de app</span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold">Zo werkt het</span>
               </div>
               {/* Past het voorbeeld niet in de kaart (smal scherm), dan scrol je erin. */}
               <div className="flip-scroll relative z-10 min-h-0 flex-1">{f.ui(v)}</div>
