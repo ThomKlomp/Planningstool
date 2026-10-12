@@ -8,6 +8,9 @@ import { topUpAllRecurringShifts } from "@/lib/recurring-shifts";
 // (bv. cron-job.org), met header: Authorization: Bearer <CRON_SECRET>.
 // Idempotent: gebruikt WeekStatus.notifiedAt om te voorkomen dat dezelfde
 // week twee keer gemaild wordt, ook als de cron vaker draait dan nodig.
+// Aantal bcc-ontvangers per bericht.
+const BCC_BATCH_SIZE = 40;
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
@@ -21,6 +24,7 @@ export async function GET(req: Request) {
 
   const currentWeekStart = getWeekDates(new Date())[0];
   let notifiedCompanies = 0;
+  const failed: { company: string; reason: string }[] = [];
 
   for (const company of companies) {
     if (company.autoOpenWeeks <= 0) continue;
@@ -50,23 +54,52 @@ export async function GET(req: Request) {
       : [];
 
     if (recipients.length > 0) {
-      await sendEmail({
-        // Iedereen in bcc, niemand ziet andermans e-mailadres. Het
-        // "aan"-veld is een nep-adres van de zaak zelf, dat nergens op
-        // aankomt (zelfde patroon als bij de andere groepsmails).
-        to: `${company.slug}@shiftje.nl`,
-        bcc: recipients,
-        subject: `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open bij ${company.name}`,
-        html: emailLayout(
-          `Nieuwe week open bij ${company.name}`,
-          `<p>Je kunt nu je beschikbaarheid doorgeven voor week ${getISOWeekNumber(
-            boundaryWeekStart
-          )} (${boundaryWeekStart.toLocaleDateString("nl-NL", {
-            day: "numeric",
-            month: "long",
-          })}).</p>`
-        ),
-      });
+      const subject = `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open bij ${company.name}`;
+      const html = emailLayout(
+        `Nieuwe week open bij ${company.name}`,
+        `<p>Je kunt nu je beschikbaarheid doorgeven voor week ${getISOWeekNumber(
+          boundaryWeekStart
+        )} (${boundaryWeekStart.toLocaleDateString("nl-NL", {
+          day: "numeric",
+          month: "long",
+        })}).</p>`
+      );
+
+      // In delen versturen: mailproviders accepteren maar een beperkt aantal
+      // ontvangers per bericht (Resend: 50 in totaal), en één te grote zaak
+      // mag niet alle mails voor die zaak laten mislukken.
+      let sentBatches = 0;
+      const problems: string[] = [];
+      for (let i = 0; i < recipients.length; i += BCC_BATCH_SIZE) {
+        try {
+          const result = (await sendEmail({
+            // Iedereen in bcc, niemand ziet andermans e-mailadres. Het
+            // "aan"-veld is een nep-adres van de zaak zelf, dat nergens op
+            // aankomt (zelfde patroon als bij de andere groepsmails).
+            to: `${company.slug}@shiftje.nl`,
+            bcc: recipients.slice(i, i + BCC_BATCH_SIZE),
+            subject,
+            html,
+          })) as { skipped?: boolean; error?: { message?: string } | null };
+          if (result?.skipped) problems.push("RESEND_API_KEY ontbreekt");
+          else if (result?.error) problems.push(result.error.message ?? "onbekende fout van de mailservice");
+          else sentBatches += 1;
+        } catch (err) {
+          problems.push(err instanceof Error ? err.message : "versturen mislukt");
+        }
+      }
+
+      // Is er niets verstuurd, dan de week NIET als gemeld markeren: de volgende
+      // run probeert het opnieuw, en de fout staat in de log en in het antwoord.
+      if (sentBatches === 0) {
+        console.error(`[cron/open-weeks] geen mail verstuurd voor ${company.name}: ${problems.join("; ")}`);
+        failed.push({ company: company.name, reason: problems.join("; ") });
+        continue;
+      }
+      if (problems.length > 0) {
+        console.error(`[cron/open-weeks] deels mislukt voor ${company.name}: ${problems.join("; ")}`);
+        failed.push({ company: company.name, reason: `deels: ${problems.join("; ")}` });
+      }
     }
 
     await prisma.weekStatus.upsert({
@@ -95,5 +128,10 @@ export async function GET(req: Request) {
     console.error("[cron/open-weeks] terugkerende diensten bijvullen mislukt", err);
   }
 
-  return NextResponse.json({ ok: true, notifiedCompanies, recurring });
+  // Bij een mislukte mail een foutstatus teruggeven, zodat de cron-dienst
+  // (bv. cron-job.org) dat meldt in plaats van het als gelukt te zien.
+  return NextResponse.json(
+    { ok: failed.length === 0, notifiedCompanies, failed, recurring },
+    { status: failed.length === 0 ? 200 : 500 }
+  );
 }
