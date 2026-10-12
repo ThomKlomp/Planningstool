@@ -3,91 +3,87 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifySupportOfMessage } from "@/lib/support-notify";
-import { randomBytes } from "crypto";
+import {
+  createConversation,
+  findOpenConversation,
+  findOwnedConversation,
+  listClosedConversations,
+  resolveContact,
+  type ChatOwner,
+} from "@/lib/support-chat";
 
-async function findConversation(userId: string | null, guestToken: string | null) {
-  if (userId) {
-    return prisma.supportConversation.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    });
-  }
-  if (guestToken) {
-    return prisma.supportConversation.findUnique({
-      where: { guestToken },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    });
-  }
-  return null;
+async function ownerOf(req: Request) {
+  const session = await getServerSession(authOptions).catch(() => null);
+  const owner: ChatOwner = {
+    userId: session?.user?.id ?? null,
+    guestToken: req.headers.get("x-guest-token"),
+  };
+  return { session, owner };
 }
 
+// Zonder ?id: het lopende gesprek (of null) en een lijst met gesloten
+// gesprekken. Met ?id=: één gesprek van deze klant, ook als het gesloten is.
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions).catch(() => null);
-  const guestToken = req.headers.get("x-guest-token");
+  const { owner } = await ownerOf(req);
 
-  const conversation = await findConversation(session?.user?.id ?? null, guestToken);
-  return NextResponse.json({ conversation });
+  const id = new URL(req.url).searchParams.get("id");
+  if (id) {
+    const conversation = await findOwnedConversation(owner, id);
+    if (!conversation) return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
+    return NextResponse.json({ conversation });
+  }
+
+  const [conversation, closed] = await Promise.all([
+    findOpenConversation(owner),
+    listClosedConversations(owner),
+  ]);
+  return NextResponse.json({ conversation, closed });
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions).catch(() => null);
-  const guestTokenHeader = req.headers.get("x-guest-token");
+  const { session, owner } = await ownerOf(req);
 
   const body = await req.json().catch(() => ({}));
-  const name = (body?.name ?? "").trim();
-  const email = (body?.email ?? "").trim();
   const message = (body?.message ?? "").trim();
-
-  if (!name || !email || !message) {
-    return NextResponse.json(
-      { error: "Naam, e-mail en bericht zijn verplicht" },
-      { status: 400 }
-    );
+  if (!message) {
+    return NextResponse.json({ error: "Bericht is verplicht" }, { status: 400 });
   }
 
-  const userId = session?.user?.id ?? null;
-  let conversation = await findConversation(userId, guestTokenHeader);
-
-  const newGuestToken = !userId && !conversation ? randomBytes(16).toString("hex") : undefined;
-
-  if (!conversation) {
-    conversation = await prisma.supportConversation.create({
-      data: {
-        userId,
-        guestToken: newGuestToken,
-        guestName: name,
-        guestEmail: email,
-        messages: { create: { sender: "USER", body: message } },
-      },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    });
-
-    await notifySupportOfMessage({
-      conversationId: conversation.id,
-      name,
-      email,
-      message,
-      isNew: true,
-    });
-  } else {
+  // Is er een lopend gesprek, dan hoort het bericht daarbij; anders starten we
+  // een nieuw gesprek (ook als er gesloten gesprekken zijn).
+  const open = await findOpenConversation(owner);
+  if (open) {
     await prisma.supportMessage.create({
-      data: { conversationId: conversation.id, sender: "USER", body: message },
+      data: { conversationId: open.id, sender: "USER", body: message },
     });
-    conversation = await prisma.supportConversation.findUnique({
-      where: { id: conversation.id },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
+    const updated = await findOpenConversation(owner);
+    await notifySupportOfMessage({
+      conversationId: open.id,
+      name: open.guestName ?? session?.user?.name ?? "Onbekend",
+      email: open.guestEmail ?? session?.user?.email ?? "",
+      message,
+      isNew: false,
     });
-    if (conversation) {
-      await notifySupportOfMessage({
-        conversationId: conversation.id,
-        name,
-        email,
-        message,
-        isNew: false,
-      });
-    }
+    return NextResponse.json({ conversation: updated });
   }
+
+  const contact = await resolveContact(
+    owner,
+    { name: (body?.name ?? "").trim(), email: (body?.email ?? "").trim() },
+    session?.user ?? null
+  );
+  if (!contact.name || !contact.email) {
+    return NextResponse.json({ error: "Naam, e-mail en bericht zijn verplicht" }, { status: 400 });
+  }
+
+  const { conversation, newGuestToken } = await createConversation(owner, contact, message);
+  await notifySupportOfMessage({
+    conversationId: conversation.id,
+    name: contact.name,
+    email: contact.email,
+    message,
+    isNew: true,
+  });
 
   return NextResponse.json({ conversation, guestToken: newGuestToken });
 }

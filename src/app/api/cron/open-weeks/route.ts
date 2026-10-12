@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, emailLayout } from "@/lib/email";
-import { getWeekDates, getISOWeekNumber } from "@/lib/week";
+import { boundaryWeekFor, sendOpenWeekMail } from "@/lib/open-week-mail";
 import { topUpAllRecurringShifts } from "@/lib/recurring-shifts";
 
 // Bedoeld om 1x per dag aangeroepen te worden door een externe cron-dienst
@@ -19,70 +18,64 @@ export async function GET(req: Request) {
     include: { memberships: { include: { user: true } } },
   });
 
-  const currentWeekStart = getWeekDates(new Date())[0];
   let notifiedCompanies = 0;
+  const failed: { company: string; reason: string }[] = [];
 
+  // Elke zaak apart: een fout bij één zaak mag de rest niet laten mislukken.
   for (const company of companies) {
-    if (company.autoOpenWeeks <= 0) continue;
+    try {
+      if (company.autoOpenWeeks <= 0) continue;
 
-    // De "nieuwste" week die nu binnen het automatisch-open-venster valt.
-    const boundaryWeekStart = new Date(currentWeekStart);
-    boundaryWeekStart.setDate(
-      boundaryWeekStart.getDate() + (company.autoOpenWeeks - 1) * 7
-    );
+      // De "nieuwste" week die nu binnen het automatisch-open-venster valt.
+      const boundaryWeekStart = boundaryWeekFor(company.autoOpenWeeks);
 
-    const existing = await prisma.weekStatus.findUnique({
-      where: {
-        companyId_weekStart: { companyId: company.id, weekStart: boundaryWeekStart },
-      },
-    });
-
-    // Al gemaild, of expliciet dichtgezet door de manager: overslaan.
-    if (existing?.notifiedAt) continue;
-    if (existing && !existing.isOpen) continue;
-
-    // De zaak kan de openingsmail uitzetten (Instellingen); de week wordt
-    // dan wel gewoon als gemeld gemarkeerd, zodat er geen mail volgt.
-    const recipients = company.emailWeekOpenToEmployees
-      ? company.memberships
-          .map((m) => m.user.email)
-          .filter((e): e is string => Boolean(e))
-      : [];
-
-    if (recipients.length > 0) {
-      await sendEmail({
-        // Iedereen in bcc, niemand ziet andermans e-mailadres. Het
-        // "aan"-veld is een nep-adres van de zaak zelf, dat nergens op
-        // aankomt (zelfde patroon als bij de andere groepsmails).
-        to: `${company.slug}@shiftje.nl`,
-        bcc: recipients,
-        subject: `Beschikbaarheid week ${getISOWeekNumber(boundaryWeekStart)} staat open bij ${company.name}`,
-        html: emailLayout(
-          `Nieuwe week open bij ${company.name}`,
-          `<p>Je kunt nu je beschikbaarheid doorgeven voor week ${getISOWeekNumber(
-            boundaryWeekStart
-          )} (${boundaryWeekStart.toLocaleDateString("nl-NL", {
-            day: "numeric",
-            month: "long",
-          })}).</p>`
-        ),
+      const existing = await prisma.weekStatus.findUnique({
+        where: {
+          companyId_weekStart: { companyId: company.id, weekStart: boundaryWeekStart },
+        },
       });
+
+      // Al gemaild, of expliciet dichtgezet door de manager: overslaan.
+      if (existing?.notifiedAt) continue;
+      if (existing && !existing.isOpen) continue;
+
+      // De zaak kan de openingsmail uitzetten (Instellingen); de week wordt
+      // dan wel gewoon als gemeld gemarkeerd, zodat er geen mail volgt.
+      if (company.emailWeekOpenToEmployees) {
+        const { sent, problems } = await sendOpenWeekMail(company, boundaryWeekStart);
+        const hasRecipients = company.memberships.some((m) => m.user.email);
+
+        // Is er niets verstuurd, dan de week NIET als gemeld markeren: de volgende
+        // run probeert het opnieuw, en de fout staat in de log en in het antwoord.
+        if (hasRecipients && sent === 0) {
+          console.error(`[cron/open-weeks] geen mail verstuurd voor ${company.name}: ${problems.join("; ")}`);
+          failed.push({ company: company.name, reason: problems.join("; ") });
+          continue;
+        }
+        if (problems.length > 0) {
+          console.error(`[cron/open-weeks] deels mislukt voor ${company.name}: ${problems.join("; ")}`);
+          failed.push({ company: company.name, reason: `deels: ${problems.join("; ")}` });
+        }
+      }
+
+      await prisma.weekStatus.upsert({
+        where: {
+          companyId_weekStart: { companyId: company.id, weekStart: boundaryWeekStart },
+        },
+        update: { notifiedAt: new Date(), isOpen: true },
+        create: {
+          companyId: company.id,
+          weekStart: boundaryWeekStart,
+          isOpen: true,
+          notifiedAt: new Date(),
+        },
+      });
+
+      notifiedCompanies += 1;
+    } catch (err) {
+      console.error(`[cron/open-weeks] fout bij ${company.name}`, err);
+      failed.push({ company: company.name, reason: err instanceof Error ? err.message : "onbekende fout" });
     }
-
-    await prisma.weekStatus.upsert({
-      where: {
-        companyId_weekStart: { companyId: company.id, weekStart: boundaryWeekStart },
-      },
-      update: { notifiedAt: new Date(), isOpen: true },
-      create: {
-        companyId: company.id,
-        weekStart: boundaryWeekStart,
-        isOpen: true,
-        notifiedAt: new Date(),
-      },
-    });
-
-    notifiedCompanies += 1;
   }
 
   // Terugkerende diensten: elke dag bijvullen tot 8 weken vooruit. Zit hier
@@ -95,5 +88,10 @@ export async function GET(req: Request) {
     console.error("[cron/open-weeks] terugkerende diensten bijvullen mislukt", err);
   }
 
-  return NextResponse.json({ ok: true, notifiedCompanies, recurring });
+  // Bij een mislukte mail een foutstatus teruggeven, zodat de cron-dienst
+  // (bv. cron-job.org) dat meldt in plaats van het als gelukt te zien.
+  return NextResponse.json(
+    { ok: failed.length === 0, notifiedCompanies, failed, recurring },
+    { status: failed.length === 0 ? 200 : 500 }
+  );
 }

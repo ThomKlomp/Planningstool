@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 type Message = { id: string; sender: string; body: string; createdAt: string };
 type Conversation = { id: string; status: string; messages: Message[] } | null;
+type ClosedSummary = { id: string; createdAt: string; updatedAt: string; preview: string };
 
 const GUEST_TOKEN_KEY = "shiftje_guest_token";
 
@@ -29,6 +30,11 @@ export default function ChatWidget({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // Gesloten gesprekken (geschiedenis) en wat er nu getoond wordt: het gesprek
+  // zelf, de lijst met eerdere gesprekken, of één gesloten gesprek (alleen lezen).
+  const [closedList, setClosedList] = useState<ClosedSummary[]>([]);
+  const [view, setView] = useState<"chat" | "history" | "closed">("chat");
+  const [viewing, setViewing] = useState<Conversation>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   function guestToken() {
@@ -45,9 +51,36 @@ export default function ChatWidget({
     const res = await fetch("/api/support/conversation", { headers: authHeaders() });
     if (res.ok) {
       const data = await res.json();
-      setConversation(data.conversation);
+      setClosedList(data.closed ?? []);
+      if (data.conversation) {
+        setConversation(data.conversation);
+      } else {
+        // Geen lopend gesprek meer: is het net door ons afgesloten terwijl het
+        // venster openstond, dan blijft het zichtbaar (als gesloten) tot de
+        // klant een nieuw bericht stuurt; anders is er gewoon geen gesprek.
+        setConversation((prev) => (prev ? { ...prev, status: "CLOSED" } : null));
+      }
     }
     setLoaded(true);
+  }
+
+  async function openClosed(id: string) {
+    setError(null);
+    setDraft("");
+    const res = await fetch(`/api/support/conversation?id=${encodeURIComponent(id)}`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    setViewing(data.conversation);
+    setView("closed");
+  }
+
+  function startNewChat() {
+    // Het gesloten gesprek maakt plaats voor een leeg, nieuw gesprek.
+    setConversation((prev) => (prev?.status === "CLOSED" ? null : prev));
+    setViewing(null);
+    setView("chat");
   }
 
   useEffect(() => {
@@ -89,9 +122,34 @@ export default function ChatWidget({
     setSending(true);
     setError(null);
 
-    if (!conversation) {
-      // Eerste bericht: naam + e-mail zijn dan verplicht.
-      if (!name.trim() || !email.trim()) {
+    // Een gesloten gesprek uit de lijst bewust heropenen en erop reageren.
+    if (view === "closed" && viewing) {
+      const res = await fetch(`/api/support/conversation/${viewing.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ message: draft, reopen: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Versturen mislukt.");
+        setSending(false);
+        return;
+      }
+      setConversation(data.conversation);
+      setViewing(null);
+      setView("chat");
+      setDraft("");
+      setSending(false);
+      loadConversation();
+      return;
+    }
+
+    // Geen lopend gesprek (of het is gesloten): dit bericht start een nieuw gesprek.
+    if (!conversation || conversation.status === "CLOSED") {
+      // Eerste bericht: naam + e-mail zijn dan verplicht, tenzij we ze al kennen
+      // (ingelogd, of een bezoeker met eerdere gesprekken).
+      const known = isLoggedIn || closedList.length > 0 || conversation !== null;
+      if (!known && (!name.trim() || !email.trim())) {
         setError("Vul je naam en e-mail in.");
         setSending(false);
         return;
@@ -111,6 +169,8 @@ export default function ChatWidget({
         localStorage.setItem(GUEST_TOKEN_KEY, data.guestToken);
       }
       setConversation(data.conversation);
+      setView("chat");
+      loadConversation();
     } else {
       const res = await fetch(`/api/support/conversation/${conversation.id}/messages`, {
         method: "POST",
@@ -137,40 +197,153 @@ export default function ChatWidget({
       {open && (
         <div className="mb-3 flex w-80 max-w-[calc(100vw-2rem)] flex-col rounded-2xl border border-line bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <p className="font-display text-lg">Hulp nodig?</p>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-full px-1.5 text-ink/40 hover:text-ink"
-              aria-label="Sluiten"
-            >
-              ✕
-            </button>
+            <div className="flex min-w-0 items-center gap-2">
+              {view !== "chat" && (
+                <button
+                  onClick={() => setView(view === "closed" ? "history" : "chat")}
+                  className="rounded-full px-1.5 text-ink/50 hover:text-ink"
+                  aria-label="Terug"
+                >
+                  ←
+                </button>
+              )}
+              <p className="truncate font-display text-lg">
+                {view === "history" ? "Eerdere gesprekken" : view === "closed" ? "Gesloten gesprek" : "Hulp nodig?"}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              {view === "chat" && closedList.length > 0 && (
+                <button
+                  onClick={() => setView("history")}
+                  className="rounded-full border border-line px-2.5 py-1 text-xs text-ink/60 hover:border-ink hover:text-ink"
+                >
+                  Eerdere gesprekken ({closedList.length})
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-full px-1.5 text-ink/40 hover:text-ink"
+                aria-label="Sluiten"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           <div className="flex max-h-96 min-h-[10rem] flex-col gap-2 overflow-y-auto px-4 py-3">
-            {!conversation && (
-              <p className="text-xs text-ink/50">
-                Stuur ons een berichtje, we reageren zo snel mogelijk. Je
-                ziet het antwoord hier terug.
-              </p>
+            {view === "history" && (
+              <ul className="-mx-1 divide-y divide-line">
+                {closedList.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      onClick={() => openClosed(c.id)}
+                      className="block w-full rounded-lg px-2 py-2.5 text-left hover:bg-mist"
+                    >
+                      <span className="block text-xs text-ink/40">
+                        {new Date(c.createdAt).toLocaleDateString("nl-NL", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </span>
+                      <span className="block truncate text-sm">{c.preview || "Gesprek"}</span>
+                    </button>
+                  </li>
+                ))}
+                {closedList.length === 0 && (
+                  <li className="px-2 py-2 text-xs text-ink/50">Nog geen gesloten gesprekken.</li>
+                )}
+              </ul>
             )}
-            {conversation?.messages.map((m) => (
-              <div
-                key={m.id}
-                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                  m.sender === "SUPPORT"
-                    ? "bg-mist text-ink"
-                    : "ml-auto bg-ink text-paper"
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{m.body}</p>
-              </div>
-            ))}
+
+            {view === "closed" &&
+              viewing?.messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                    m.sender === "SUPPORT" ? "bg-mist text-ink" : "ml-auto bg-ink text-paper"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{m.body}</p>
+                </div>
+              ))}
+
+            {view === "chat" && (
+              <>
+                {!conversation && (
+                  <p className="text-xs text-ink/50">
+                    Stuur ons een berichtje, we reageren zo snel mogelijk. Je
+                    ziet het antwoord hier terug.
+                  </p>
+                )}
+                {conversation?.messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                      m.sender === "SUPPORT" ? "bg-mist text-ink" : "ml-auto bg-ink text-paper"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{m.body}</p>
+                  </div>
+                ))}
+                {conversation?.status === "CLOSED" && (
+                  <p className="rounded-lg bg-ink/5 px-3 py-2 text-xs text-ink/60">
+                    Dit gesprek is afgerond. Stuur een bericht om een nieuw gesprek te starten.
+                  </p>
+                )}
+              </>
+            )}
             <div ref={bottomRef} />
           </div>
 
+          {view === "closed" && (
+            <div className="space-y-2 border-t border-line px-4 py-3">
+              {conversation && conversation.status !== "CLOSED" ? (
+                <>
+                  <p className="text-xs text-ink/50">
+                    Je hebt al een lopend gesprek. Heropenen kan pas als dat is afgerond.
+                  </p>
+                  <button
+                    onClick={() => setView("chat")}
+                    className="w-full rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning"
+                  >
+                    Naar het lopende gesprek
+                  </button>
+                </>
+              ) : (
+                <>
+                  <form onSubmit={sendMessage} className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Reageer om dit gesprek te heropenen"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm focus:border-awning focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={sending}
+                      className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-awning disabled:opacity-50"
+                    >
+                      {sending ? "..." : "Stuur"}
+                    </button>
+                  </form>
+                  {error && <p className="text-xs text-red-600">{error}</p>}
+                  <button
+                    onClick={startNewChat}
+                    className="text-xs text-ink/50 hover:text-ink hover:underline"
+                  >
+                    Of begin een nieuw gesprek
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {view === "chat" && (
           <form onSubmit={sendMessage} className="space-y-2 border-t border-line px-4 py-3">
-            {!conversation && !isLoggedIn && (
+            {!conversation && !isLoggedIn && closedList.length === 0 && (
               <>
                 <input
                   type="text"
@@ -209,6 +382,7 @@ export default function ChatWidget({
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
           </form>
+          )}
         </div>
       )}
 

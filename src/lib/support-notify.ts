@@ -57,6 +57,8 @@ export async function notifySupportOfMessage(opts: {
   email: string;
   message: string;
   isNew: boolean;
+  /** Een klant heeft een gesloten gesprek heropend (geen throttle, eigen onderwerp). */
+  reopened?: boolean;
 }) {
   try {
     const conversation = await prisma.supportConversation.findUnique({
@@ -67,6 +69,7 @@ export async function notifySupportOfMessage(opts: {
 
     if (
       !opts.isNew &&
+      !opts.reopened &&
       conversation?.notifiedAt &&
       Date.now() - conversation.notifiedAt.getTime() < FOLLOW_UP_THROTTLE_MS
     ) {
@@ -85,10 +88,16 @@ export async function notifySupportOfMessage(opts: {
       to: recipients,
       subject: opts.isNew
         ? `Nieuwe support-chat van ${opts.name}`
+        : opts.reopened
+        ? `Support-chat heropend door ${opts.name}`
         : `Nieuw bericht in support-chat van ${opts.name}`,
       replyTo: opts.email || undefined,
       html: emailLayout(
-        opts.isNew ? "Er is een support-chat aangemaakt" : "Nieuw bericht in een support-chat",
+        opts.isNew
+          ? "Er is een support-chat aangemaakt"
+          : opts.reopened
+          ? "Een klant heeft een gesloten support-chat heropend"
+          : "Nieuw bericht in een support-chat",
         `
           <p><strong>Van:</strong> ${escapeHtml(opts.name)} (${escapeHtml(opts.email)})</p>
           <p><strong>Zaak:</strong> ${

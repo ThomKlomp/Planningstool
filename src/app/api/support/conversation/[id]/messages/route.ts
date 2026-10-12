@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifySupportOfMessage } from "@/lib/support-notify";
+import {
+  createConversation,
+  findOpenConversation,
+  resolveContact,
+  type ChatOwner,
+} from "@/lib/support-chat";
 
 export async function POST(
   req: Request,
@@ -33,31 +39,74 @@ export async function POST(
     return NextResponse.json({ error: "Bericht is verplicht" }, { status: 400 });
   }
 
+  const sender = conversation.userId
+    ? await prisma.user.findUnique({
+        where: { id: conversation.userId },
+        select: { name: true, email: true },
+      })
+    : null;
+  const name = sender?.name ?? conversation.guestName ?? "Onbekend";
+  const email = sender?.email ?? conversation.guestEmail ?? "";
+
+  const owner: ChatOwner = { userId: conversation.userId, guestToken: conversation.guestToken };
+
+  // Een klant mag een gesloten gesprek bewust heropenen (reopen), maar alleen als
+  // er geen ander lopend gesprek is: er is hooguit één open gesprek per klant.
+  if (conversation.status === "CLOSED" && body?.reopen === true) {
+    const open = await findOpenConversation(owner);
+    if (open) {
+      return NextResponse.json(
+        { error: "Je hebt al een lopend gesprek. Sluit of beantwoord dat eerst.", openConversationId: open.id },
+        { status: 409 }
+      );
+    }
+    await prisma.supportMessage.create({
+      data: { conversationId: conversation.id, sender: "USER", body: message },
+    });
+    const reopened = await prisma.supportConversation.update({
+      where: { id: conversation.id },
+      data: { status: "OPEN" },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
+    await notifySupportOfMessage({
+      conversationId: conversation.id,
+      name,
+      email,
+      message,
+      isNew: false,
+      reopened: true,
+    });
+    return NextResponse.json({ conversation: reopened, reopened: true });
+  }
+
+  // Zonder dat: een gesloten gesprek wordt niet aangevuld, een nieuw bericht start
+  // een nieuw gesprek (bv. als wij het net hebben afgehandeld terwijl de klant typte).
+  if (conversation.status === "CLOSED") {
+    const contact = await resolveContact(owner, { name, email }, sender);
+    const { conversation: created } = await createConversation(owner, contact, message);
+    await notifySupportOfMessage({
+      conversationId: created.id,
+      name: contact.name || name,
+      email: contact.email || email,
+      message,
+      isNew: true,
+    });
+    return NextResponse.json({ conversation: created, startedNew: true });
+  }
+
   await prisma.supportMessage.create({
     data: { conversationId: conversation.id, sender: "USER", body: message },
   });
-  await prisma.supportConversation.update({
-    where: { id: conversation.id },
-    data: { status: "OPEN" },
-  });
 
-  const [updated, sender] = await Promise.all([
-    prisma.supportConversation.findUnique({
-      where: { id: conversation.id },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    }),
-    conversation.userId
-      ? prisma.user.findUnique({
-          where: { id: conversation.userId },
-          select: { name: true, email: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  const updated = await prisma.supportConversation.findUnique({
+    where: { id: conversation.id },
+    include: { messages: { orderBy: { createdAt: "asc" } } },
+  });
 
   await notifySupportOfMessage({
     conversationId: conversation.id,
-    name: sender?.name ?? conversation.guestName ?? "Onbekend",
-    email: sender?.email ?? conversation.guestEmail ?? "",
+    name,
+    email,
     message,
     isNew: false,
   });

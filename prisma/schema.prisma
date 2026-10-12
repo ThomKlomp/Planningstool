@@ -486,7 +486,7 @@ model Notification {
 model SupportConversation {
   id         String   @id @default(cuid())
   userId     String? // ingelogde gebruiker, indien van toepassing
-  guestToken String?  @unique // willekeurige token voor niet-ingelogde bezoekers
+  guestToken String? // willekeurige token voor niet-ingelogde bezoekers; hoort bij de browser, dus gedeeld door alle gesprekken van die bezoeker
   guestName  String?
   guestEmail String?
   status     String   @default("OPEN") // OPEN of CLOSED
@@ -498,6 +498,7 @@ model SupportConversation {
   user     User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([guestToken])
 }
 
 model SupportMessage {
