@@ -13,10 +13,11 @@ export function GET() {
 
   const body = `# Shiftje
 
-> Shiftje is een planningstool (roostersoftware) voor lokale horeca: cafés, restaurants en bars tot 40 medewerkers. Medewerkers geven beschikbaarheid door, eigenaar of manager maakt het rooster, en diensten ruilen en uren goedkeuren zitten in dezelfde webapp. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen, zonder creditcard.
+> Shiftje is een planningstool (roostersoftware) voor lokale horeca: cafés, restaurants en bars. Medewerkers geven beschikbaarheid door, eigenaar of manager maakt het rooster, en diensten ruilen en uren goedkeuren zitten in dezelfde webapp. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen, zonder creditcard.
 
 ## Pagina's
 - [Homepage](${SITE_URL}/): wat Shiftje is, functies en prijzen
+- [Functies](${SITE_URL}/functies): alle functies op een rij
 - [Prijzen](${SITE_URL}/#prijs): per maand excl. btw: ${prices}
 - [Veelgestelde vragen](${SITE_URL}/#faq)
 - [Rooster maken voor je café, kroeg of bar](${SITE_URL}/rooster-maken-cafe): hoe Shiftje werkt voor cafés, kroegen, eetcafés en bars

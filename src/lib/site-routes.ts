@@ -26,6 +26,7 @@ export const SITE_ROUTES: SiteRouteSection[] = [
     section: "Marketing / publiek",
     routes: [
       { path: "/", label: "Homepage", public: true },
+      { path: "/functies", label: "Functies", public: true },
       { path: "/over-ons", label: "Over ons", public: true },
       { path: "/artikel/[slug]", label: "Artikelen (wekelijks, zonder links vanaf de site)", public: true, note: "Bestanden in src/content/articles; alleen bereikbaar via Google, AI of externe links" },
       { path: "/rooster-oproepkrachten-horeca", label: "Artikel: oproepkrachten inplannen (proefpagina)", public: true },

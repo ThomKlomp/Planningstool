@@ -18,7 +18,7 @@ export default function SiteFooter({ minimal = false }: { minimal?: boolean }) {
           Shiftje
         </Link>
         <nav className="flex flex-wrap items-center gap-5">
-          <Link href="/#functies" className="hover:text-ink">
+          <Link href="/functies" className="hover:text-ink">
             Functies
           </Link>
           <Link href="/#prijs" className="hover:text-ink">

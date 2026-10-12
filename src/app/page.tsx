@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import LandingPage from "@/components/marketing/landing-page";
-import { PRICE_TIERS, MAX_STANDARD_MEMBERS, formatEuro } from "@/lib/pricing";
+import { PRICE_TIERS, formatEuro } from "@/lib/pricing";
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   // niveau (de homepage), dus " | Shiftje" staat hier zelf (samen 60 tekens).
   title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
   description:
-    "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
+    "Personeelsplanning voor lokale horeca. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
   alternates: { canonical: "/" },
   // Staat hier en niet in de layout: canonical en og:url zouden anders door
   // alle andere pagina's worden geërfd en naar de homepage wijzen. Een
@@ -22,14 +22,14 @@ export const metadata: Metadata = {
     url: "/",
     title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
     description:
-      "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
+      "Personeelsplanning voor lokale horeca. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
     images: [{ url: "/api/og", width: 1200, height: 630, alt: "Shiftje: personeelsplanning voor lokale horeca" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Personeelsplanning voor lokale horeca, vaste prijs | Shiftje",
     description:
-      "Personeelsplanning voor lokale horeca tot 40 medewerkers. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
+      "Personeelsplanning voor lokale horeca. Geen kosten per medewerker, wel beschikbaarheid, rooster, ruilen en uren. Probeer 7 dagen gratis.",
     images: ["/api/og"],
   },
 };
@@ -45,7 +45,7 @@ const softwareApplicationSchema = {
   operatingSystem: "Web",
   inLanguage: "nl-NL",
   description:
-    "Planningstool voor lokale horeca (cafés, restaurants en bars tot 40 medewerkers): beschikbaarheid, personeelsplanning, diensten ruilen en urenregistratie op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen.",
+    "Planningstool voor lokale horeca (cafés, restaurants en bars): beschikbaarheid, personeelsplanning, diensten ruilen en urenregistratie op één plek. Eén vaste prijs per zaak, geen kosten per medewerker. 7 dagen gratis proberen.",
   // Alleen functies die echt in het product zitten.
   featureList: [
     "Beschikbaarheid doorgeven",
@@ -96,7 +96,7 @@ const faqSchema = {
       name: "Wat is Shiftje?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor lokale horecabedrijven, zoals cafés, restaurants en bars met tot 40 medewerkers. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
+        text: "Shiftje is een Nederlandse rooster- en personeelsplanningapp voor lokale horecabedrijven, zoals cafés, restaurants en bars. Beschikbaarheid, rooster, diensten ruilen en uren zitten allemaal in dezelfde app.",
       },
     },
     {
@@ -104,7 +104,7 @@ const faqSchema = {
       name: "Voor wie is Shiftje gemaakt?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Voor lokale horecazaken tot 40 medewerkers: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
+        text: "Voor lokale horecazaken: cafés, restaurants en bars. Eén team, één rooster, geen ingewikkelde configuratie vooraf.",
       },
     },
     {
@@ -112,9 +112,7 @@ const faqSchema = {
       name: "Wat kost Shiftje?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: `Vanaf ${formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers, oplopend in staffels tot ${formatEuro(
-          PRICE_TIERS[PRICE_TIERS.length - 1].monthlyExcl
-        )} per maand voor 31–40 medewerkers. Je betaalt één vast bedrag per zaak, niet per gebruiker. Boven de 40 medewerkers reken je op maat.`,
+        text: `Vanaf ${formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw voor 1–10 medewerkers; de prijs loopt op met de grootte van je team. Je betaalt één vast bedrag per zaak, niet per gebruiker. Heb je een groter team, dan maken we een prijs op maat.`,
       },
     },
     {
@@ -160,56 +158,15 @@ const faqSchema = {
   ],
 };
 
-// Aanvullende functies onder de kaarten. Alleen wat het product echt doet.
-const MORE_FEATURES = [
-  {
-    title: "Open diensten",
-    body: "Staat er een dienst open, dan zie je dat meteen in het rooster. Medewerkers kunnen hem zelf pakken, of jij wijst hem toe.",
-  },
-  {
-    title: "Terugkerende diensten en sjablonen",
-    body: "Staat iemand elke vrijdag op dezelfde dienst? Stel het één keer in, het rooster vult zich vooruit. Je vaste diensttijden bewaar je als sjabloon.",
-  },
-  {
-    title: "Weer bij het rooster",
-    body: "Naast het rooster zie je de weersverwachting voor jouw plaats, met een korte terrashint per dag. Geen voorspelling van drukte, wel een steuntje bij het inplannen.",
-  },
-  {
-    title: "Rooster in je agenda",
-    body: "Via een agenda-koppeling zien medewerkers hun diensten in de agenda die ze al gebruiken.",
-  },
-  {
-    title: "Rooster delen",
-    body: "Publiceer het rooster en mail het naar je team. Of download het als PDF of CSV.",
-  },
-  {
-    title: "Uren exporteren",
-    body: "Een export van de goedgekeurde uren per periode, voor in je eigen administratie.",
-  },
-  {
-    title: "Verschillende rechten",
-    body: "Eigenaar en manager plannen en keuren goed. Medewerkers geven beschikbaarheid door en vullen hun eigen uren in.",
-  },
-  {
-    title: "Meldingen",
-    body: "Je krijgt een melding in de app en per e-mail, bijvoorbeeld bij opengestelde diensten of een verzoek dat op goedkeuring wacht.",
-  },
-  {
-    title: "Chat",
-    body: "Een vraag? Stuur ons een bericht in de chat.",
-  },
-];
-
 export default function HomePage() {
   return (
     <LandingPage
       content={{
-        eyebrow: `Voor cafés, restaurants & bars tot ${MAX_STANDARD_MEMBERS} medewerkers`,
+        eyebrow: "Voor cafés, restaurants & bars",
         h1: "De eenvoudige personeelsplanning voor lokale horeca",
         definition: (
           <>
-            Shiftje is de planningstool voor lokale horeca: cafés, restaurants en bars tot{" "}
-            {MAX_STANDARD_MEMBERS} medewerkers. Je team geeft beschikbaarheid door, jij maakt het
+            Shiftje is de planningstool voor lokale horeca: cafés, restaurants en bars. Je team geeft beschikbaarheid door, jij maakt het
             rooster en ruilen en uren zitten in dezelfde app, voor één vaste prijs per zaak vanaf{" "}
             {formatEuro(PRICE_TIERS[0].monthlyExcl)} per maand excl. btw.
           </>
@@ -225,7 +182,6 @@ export default function HomePage() {
         functiesHeading: "Alles wat je nodig hebt, op één pagina",
         functiesIntro:
           "Of je nu een café, restaurant of bar runt: Shiftje vervangt de spreadsheet voor je rooster en de WhatsApp-groep voor alles daaromheen. Beschikbaarheid, personeelsplanning, ruilen en uren zitten allemaal in dezelfde app, zodat jij en je team maar op één plek hoeven te kijken.",
-        moreFeatures: MORE_FEATURES,
         faqs: faqSchema.mainEntity.map((f) => ({ name: f.name, answer: f.acceptedAnswer.text })),
         schemas: [softwareApplicationSchema, faqSchema],
       }}

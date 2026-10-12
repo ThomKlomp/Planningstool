@@ -54,14 +54,14 @@ export default async function SiteHeader({
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <HomeLink track={homeTrack} />
         <nav className="flex items-center gap-2 text-sm font-medium sm:gap-6">
-          <Link href="/#functies" className="hidden hover:text-terra md:inline">
+          <Link href="/functies" className="hidden hover:text-terra md:inline">
             Functies
-          </Link>
-          <Link href="/#faq" className="hidden hover:text-terra md:inline">
-            Vragen
           </Link>
           <Link href="/#prijs" className="hidden hover:text-terra md:inline">
             Prijzen
+          </Link>
+          <Link href="/#faq" className="hidden hover:text-terra md:inline">
+            Vragen
           </Link>
           <Link href="/over-ons" className="hidden hover:text-terra md:inline">
             Over ons

@@ -79,7 +79,15 @@ export async function PATCH(req: Request) {
 
   // Bedrijfsgegevens: lege strings opslaan als null, zodat een leeg veld
   // consistent "niet ingevuld" betekent.
-  for (const field of ["billingName", "kvkNumber", "vatNumber", "address", "postalCode"] as const) {
+  // Alleen de eigenaar mag de bedrijfsgegevens (voor de factuur) wijzigen.
+  const BILLING_FIELDS = ["billingName", "kvkNumber", "vatNumber", "address", "postalCode"] as const;
+  if (membership.role !== "OWNER" && BILLING_FIELDS.some((f) => body?.[f] !== undefined)) {
+    return NextResponse.json(
+      { error: "Alleen de eigenaar kan de bedrijfsgegevens wijzigen" },
+      { status: 403 }
+    );
+  }
+  for (const field of BILLING_FIELDS) {
     if (body?.[field] !== undefined) {
       const value = String(body[field]).trim();
       data[field] = value || null;
