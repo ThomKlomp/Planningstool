@@ -172,8 +172,8 @@ export default function ArtikelPage({ params }: { params: { slug: string } }) {
       dateModified: a.updated,
       mainEntityOfPage: url,
       author: [
-        { "@type": "Person", name: "Thom" },
-        { "@type": "Person", name: "Daniel" },
+        { "@type": "Person", name: "Thom", url: `${SITE_URL}/over-ons` },
+        { "@type": "Person", name: "Daniel", url: `${SITE_URL}/over-ons` },
       ],
       publisher: { "@id": `${SITE_URL}/#organization` },
       isPartOf: { "@id": `${SITE_URL}/#website` },

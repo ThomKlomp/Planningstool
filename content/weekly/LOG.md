@@ -15,3 +15,4 @@ Eén regel per week. De skill leest dit om herhaling te voorkomen: kies geen ond
 
 | Datum | Artikel (slug) | Forum of review | SEO/GEO-update |
 |---|---|---|---|
+| 2026-10-12 | Roosterwijzigingen doorgeven zonder groepsapp-chaos (`roosterwijzigingen-doorgeven-horeca`) | Type B: profieltekst (softwaredirectory) | Auteur-url in Article-schema |
