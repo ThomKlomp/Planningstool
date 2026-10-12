@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LandingPage, { type LandingFaq } from "@/components/marketing/landing-page";
-import { PRICE_TIERS, MAX_STANDARD_MEMBERS, formatEuro } from "@/lib/pricing";
+import { PRICE_TIERS, formatEuro } from "@/lib/pricing";
 
 const SITE_URL = process.env.NEXTAUTH_URL || "https://shiftje.nl";
 const PATH = "/rooster-maken-cafe";
@@ -79,57 +79,6 @@ const FAQS: LandingFaq[] = [
   },
 ];
 
-const MORE_FEATURES = [
-  {
-    title: "Open diensten",
-    body: "Staat er een dienst open, dan zie je dat meteen in het rooster. Medewerkers kunnen hem zelf pakken, of jij wijst hem toe.",
-  },
-  {
-    title: "Vaste diensten",
-    body: "Staat dezelfde barkracht elke vrijdag? Stel het één keer in, het rooster vult zich vooruit. Je vaste diensttijden bewaar je als sjabloon.",
-  },
-  {
-    title: "Sluitingsdagen",
-    body: "Elke maandag dicht, of een losse dag? Stel je sluitingsdagen in, dan zien medewerkers ze meteen bij het doorgeven van beschikbaarheid.",
-  },
-  {
-    title: "Terrasweer",
-    body: "Naast het rooster zie je de weersverwachting voor jouw plaats, met een korte terrashint per dag. Een steuntje bij het inplannen, geen voorspelling van drukte.",
-  },
-  {
-    title: "Tot na middernacht",
-    body: "Eindigt een dienst na 00:00? De gewerkte uren worden dan gewoon goed berekend.",
-  },
-  {
-    title: "Bar en keuken samen",
-    body: "Een eetcafé, een grand café, een restaurant met bar: je plant bar, zaal en keuken samen in één rooster, elk team in een eigen kleur.",
-  },
-  {
-    title: "Rooster in je agenda",
-    body: "Via een agenda-koppeling zien medewerkers hun diensten in de agenda die ze al gebruiken.",
-  },
-  {
-    title: "Rooster delen",
-    body: "Publiceer het rooster en mail het naar je team. Of download het als PDF of CSV.",
-  },
-  {
-    title: "Uren exporteren",
-    body: "Een export van de goedgekeurde uren per periode, voor in je eigen administratie.",
-  },
-  {
-    title: "Verschillende rechten",
-    body: "Eigenaar en manager plannen en keuren goed. Medewerkers geven beschikbaarheid door en vullen hun eigen uren in.",
-  },
-  {
-    title: "Meldingen",
-    body: "Je krijgt een melding in de app en per e-mail, bijvoorbeeld bij opengestelde diensten of een verzoek dat op goedkeuring wacht.",
-  },
-  {
-    title: "Chat",
-    body: "Een vraag? Stuur ons een bericht in de chat.",
-  },
-];
-
 const webPageSchema = {
   "@context": "https://schema.org",
   "@type": "WebPage",
@@ -169,12 +118,11 @@ export default function RoosterMakenCafePage() {
     <LandingPage
       content={{
         venue: "cafe",
-        eyebrow: `Voor cafés, kroegen, eetcafés & bars tot ${MAX_STANDARD_MEMBERS} medewerkers`,
+        eyebrow: "Voor cafés, kroegen, eetcafés & bars",
         h1: TITLE,
         definition: (
           <>
-            Shiftje is een rooster-app voor cafés, kroegen, eetcafés en bars tot {MAX_STANDARD_MEMBERS}{" "}
-            medewerkers. Je team geeft beschikbaarheid door, jij maakt het rooster en ruilen en uren
+            Shiftje is een rooster-app voor cafés, kroegen, eetcafés en bars. Je team geeft beschikbaarheid door, jij maakt het rooster en ruilen en uren
             zitten in dezelfde app, voor één vaste prijs per zaak vanaf {formatEuro(firstTier.monthlyExcl)}{" "}
             per maand excl. btw.
           </>
@@ -195,7 +143,6 @@ export default function RoosterMakenCafePage() {
           Teams:
             "Deel medewerkers in bij bar, zaal of keuken. Handig voor een eetcafé of een restaurant met bar: op het rooster zie je in één oogopslag wie waar hoort.",
         },
-        moreFeatures: MORE_FEATURES,
         faqs: FAQS,
         footerNote: (
           <>

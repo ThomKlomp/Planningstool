@@ -47,8 +47,9 @@ export default async function DashboardOverviewPage() {
   const nodes: Record<string, React.ReactNode> = {};
   for (const id of [...layout.pinned, ...layout.own]) nodes[id] = renderBlock(id, ctx);
 
+  // Bedrijfsgegevens voor de factuur zijn alleen voor de eigenaar zichtbaar.
   const billingIncomplete =
-    canManage &&
+    membership.role === "OWNER" &&
     company &&
     !(company.billingName && company.kvkNumber && company.address && company.postalCode);
 

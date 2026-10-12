@@ -109,24 +109,27 @@ export default async function SettingsPage() {
         </div>
       )}
 
-      <section className="mt-10">
-        <h2 className="font-display text-xl">Bedrijfsgegevens</h2>
-        <p className="mt-1 text-sm text-ink/60">
-          Nodig voor je facturen. Vul deze in ieder geval in voordat je een
-          betaald abonnement afsluit.
-        </p>
-        <div className="mt-4">
-          <CompanyDetailsSetting
-            initialValue={{
-              billingName: company?.billingName ?? "",
-              kvkNumber: company?.kvkNumber ?? "",
-              vatNumber: company?.vatNumber ?? "",
-              address: company?.address ?? "",
-              postalCode: company?.postalCode ?? "",
-            }}
-          />
-        </div>
-      </section>
+      {/* Bedrijfsgegevens (facturering): alleen de eigenaar. */}
+      {membership.role === "OWNER" && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl">Bedrijfsgegevens</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Nodig voor je facturen. Vul deze in ieder geval in voordat je een
+            betaald abonnement afsluit.
+          </p>
+          <div className="mt-4">
+            <CompanyDetailsSetting
+              initialValue={{
+                billingName: company?.billingName ?? "",
+                kvkNumber: company?.kvkNumber ?? "",
+                vatNumber: company?.vatNumber ?? "",
+                address: company?.address ?? "",
+                postalCode: company?.postalCode ?? "",
+              }}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="mt-10">
         <h2 className="font-display text-xl">Beschikbaarheid automatisch openen</h2>
