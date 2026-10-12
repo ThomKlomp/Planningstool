@@ -1,0 +1,206 @@
+{
+  "slug": "roosterwijzigingen-doorgeven-horeca",
+  "title": "Roosterwijzigingen doorgeven zonder groepsapp-chaos",
+  "description": "Hoe geef je roosterwijzigingen in je horecazaak door zodat iedereen ze ziet? Eén plek, vaste afspraken en een checklist die ook zonder software werkt.",
+  "published": "2026-10-12",
+  "updated": "2026-10-12",
+  "intro": "Roosterwijzigingen gaan mis als ze over meerdere kanalen verspreid raken. Het werkt beter als je één plek aanwijst waar het actuele rooster staat, vooraf afspreekt hoe wijzigingen worden gemeld en elke wijziging bevestigd laat worden. Dat kost een uur om op te zetten en kan met een gedeeld bestand, een prikbord en één vaste groepschat voor de melding zelf.",
+  "blocks": [
+    {
+      "type": "h2",
+      "text": "Waarom wijzigingen zo vaak misgaan"
+    },
+    {
+      "type": "p",
+      "text": "In veel zaken ontstaat een rooster op één plek en leeft het daarna op vier: een Excelbestand, een uitgeprint vel, een groepsapp en de herinnering van de ondernemer. Zodra er iets verandert, wordt het op één van die plekken aangepast en op de rest niet."
+    },
+    {
+      "type": "p",
+      "text": "Een artikel van het Amsterdams Dagblad (26 mei 2026) beschrijft hoe bij handmatig plannen met papier of groepsapps fouten ontstaan: een medewerker denkt vrij te zijn terwijl hij toch ingepland staat, en wijzigingen worden te laat gelezen. Een artikel van WijBusinessNieuws (26 september 2026) noemt dubbel ingeplande medewerkers en wijzigingen die hen niet op tijd bereiken als terugkerende problemen bij planning met Excel, een whiteboard of losse briefjes. Beide teksten komen deels van partijen die zelf planningsoftware aanbevelen; het patroon dat ze beschrijven is wel herkenbaar."
+    },
+    {
+      "type": "h2",
+      "text": "Eén plek voor het actuele rooster"
+    },
+    {
+      "type": "p",
+      "text": "Wijs één plek aan waar het rooster staat dat telt. Alles wat daarbuiten staat, is een kopie. Dat kan een gedeeld bestand zijn, een vaste pagina of een rooster op een prikbord, zolang iedereen weet dat dit de enige bron is."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Zet de datum en de tijd van de laatste aanpassing boven aan het rooster.",
+        "Bewaar oude versies niet op dezelfde plek, zodat niemand de verkeerde opent.",
+        "Hang op het prikbord alleen een uitdraai met de datum van uitprinten erop, en vervang die bij elke wijziging.",
+        "Maak één persoon verantwoordelijk voor het bijwerken, meestal de manager of de ondernemer."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Eén kanaal voor de melding"
+    },
+    {
+      "type": "p",
+      "text": "Het rooster zelf staat op één plek; de melding dat er iets veranderd is, loopt ook via één vast kanaal. Een branche-artikel van de KHN (31 augustus 2023) beschrijft dat onverwachte wijzigingen vaak via WhatsApp en telefoon bij medewerkers terechtkomen, naast e-mail, en dat dat voor zowel medewerkers als ondernemer onoverzichtelijk is. Een artikel van Horecava (31 maart 2025) noemt planningsapps als manier om de communicatie te verbeteren, omdat medewerkers daar makkelijk kunnen doorgeven wanneer ze wel of niet beschikbaar zijn."
+    },
+    {
+      "type": "p",
+      "text": "Wat je ook kiest: leg het vast en houd je eraan. Een groepschat is prima als meldkanaal, op voorwaarde dat de chat alleen meldt dat het rooster is aangepast en niet zelf het rooster is."
+    },
+    {
+      "type": "h2",
+      "text": "Wat een goede melding bevat"
+    },
+    {
+      "type": "p",
+      "text": "Een melding die los te begrijpen is, voorkomt vragen terug. Gebruik altijd dezelfde opbouw, zodat medewerkers weten waar ze op moeten letten."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "**Wie:** om welke medewerker gaat het, en wie neemt de dienst over?",
+        "**Wanneer:** dag, begintijd en eindtijd van de dienst.",
+        "**Wat is er veranderd:** vervallen, verplaatst, overgenomen of nieuw.",
+        "**Wat moet de ander doen:** bevestigen, of niets?",
+        "**Tot wanneer:** voor welk tijdstip moet de reactie binnen zijn?"
+      ]
+    },
+    {
+      "type": "table",
+      "label": "Voorbeeld, geen norm: een melding in dezelfde opbouw",
+      "headers": [
+        "Onderdeel",
+        "Voorbeeld"
+      ],
+      "rows": [
+        [
+          "Wie",
+          "Sanne valt weg, Milan neemt over"
+        ],
+        [
+          "Wanneer",
+          "Vrijdag 17 oktober, 17.00 tot 23.00 uur, bar"
+        ],
+        [
+          "Wat is er veranderd",
+          "Dienst overgenomen"
+        ],
+        [
+          "Wat moet de ander doen",
+          "Milan en Sanne bevestigen in het kanaal"
+        ],
+        [
+          "Tot wanneer",
+          "Woensdagavond"
+        ]
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Laat elke wijziging bevestigen"
+    },
+    {
+      "type": "p",
+      "text": "Het grootste gat zit tussen verzenden en gelezen hebben. WijBusinessNieuws (26 september 2026) wijst erop dat wijzigingen medewerkers niet op tijd bereiken. Een bevestiging maakt dat zichtbaar: wie niet reageert, is niet geïnformeerd."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Vraag de direct betrokkenen om een korte reactie, bijvoorbeeld 'akkoord'.",
+        "Houd een lijstje bij met wie bevestigd heeft; een vinkje in het rooster volstaat.",
+        "Bel niet-reagerenden dezelfde dag, niet de avond ervoor.",
+        "Maak vooraf duidelijk dat zwijgen niet gelijk staat aan akkoord."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Wijzigingen op het laatste moment"
+    },
+    {
+      "type": "p",
+      "text": "Bij uitval of een plotselinge ruil heb je geen tijd voor een uitgebreide ronde. Maak daarom vooraf een vaste volgorde, zodat je onder druk niet hoeft na te denken. Zo voorkom je dat je drie mensen tegelijk appt en later niet meer weet wie ja heeft gezegd."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Meld de gat-dienst in het vaste kanaal, met dag, tijd en functie.",
+        "Geef één reactietijd, bijvoorbeeld binnen een uur, en kondig aan dat de eerste die ja zegt de dienst krijgt.",
+        "Zodra iemand de dienst heeft, meld je in hetzelfde kanaal dat hij is ingevuld, zodat niemand meer reageert.",
+        "Pas daarna direct het rooster aan en werk de datum van de laatste aanpassing bij."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Het slotstuk wordt het vaakst vergeten: het rooster zelf aanpassen. Een ruil die alleen in de chat is afgesproken, staat een week later nergens meer. Zie het bijwerken van het rooster dus als onderdeel van de ruil, niet als iets voor later."
+    },
+    {
+      "type": "p",
+      "text": "Kies een vast moment in de week waarop jij of de manager het rooster van de komende dagen langsloopt. Kijk daarbij naar dubbele diensten, lege plekken en diensten waarvan de bevestiging nog ontbreekt. Een controle van tien minuten, bijvoorbeeld op donderdag voor het weekend, vangt de meeste fouten af voordat ze op de werkvloer zichtbaar worden. Geef het team ook de ruimte om zelf te melden als iets niet klopt: zij zien fouten vaak eerder dan jij."
+    },
+    {
+      "type": "h2",
+      "text": "Afspraken voor het team"
+    },
+    {
+      "type": "p",
+      "text": "De KHN (31 augustus 2023) adviseert om duidelijke afspraken te maken over roosterwensen, de termijn om die door te geven en het aantal dagen dat iemand niet beschikbaar is, en om helder te zijn over wat wel en niet haalbaar is. Hetzelfde geldt voor wijzigingen: zet de afspraken op papier, bespreek ze één keer met het hele team en neem ze mee in het welkomstgesprek van nieuwe medewerkers."
+    },
+    {
+      "type": "checklist",
+      "title": "Teamafspraken over wijzigingen",
+      "items": [
+        "Het rooster staat op één vaste plek; die plek kent iedereen.",
+        "Wijzigingen worden gemeld in één vast kanaal, niet in privéberichten.",
+        "Elke melding bevat wie, wanneer, wat en tot wanneer.",
+        "Betrokkenen bevestigen binnen de gestelde tijd.",
+        "Ruilen mag alleen als de ander akkoord heeft gegeven en de manager het weet.",
+        "Alleen de manager of ondernemer past het rooster zelf aan.",
+        "Nieuwe medewerkers krijgen deze afspraken in hun eerste week."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Wanneer een tool helpt"
+    },
+    {
+      "type": "p",
+      "text": "Met bovenstaande werk je goed met Excel en een groepschat, zolang het team klein en overzichtelijk blijft. Bij meer medewerkers, veel ruilen of veel wisselende beschikbaarheid wordt het bijhouden zelf het werk. Dan loont het om te kijken naar een online planner die wijzigingen centraal verwerkt en meldt. Bepaal eerst waar het probleem zit voordat je iets kiest: piekmomenten, structurele onderbezetting of miscommunicatie, zoals WijBusinessNieuws (26 september 2026) adviseert."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Is een WhatsApp-groep voor het rooster slecht?",
+      "a": "Niet per se. Als meldkanaal werkt een groep prima. Het wordt lastig zodra de chat zelf het rooster is, omdat berichten wegzakken en niemand weet welke versie geldt."
+    },
+    {
+      "q": "Hoe weet ik dat medewerkers een wijziging hebben gezien?",
+      "a": "Vraag om een korte bevestiging en houd bij wie die heeft gegeven. Wie niet reageert, bel je dezelfde dag."
+    },
+    {
+      "q": "Wie mag het rooster aanpassen?",
+      "a": "Leg dit vast: bij voorkeur één of twee personen, zodat er één actuele versie is. Medewerkers melden of regelen een ruil, de manager verwerkt het."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Waarom worstelen zoveel horecazaken met hun personeelsrooster (Amsterdams Dagblad, 26 mei 2026)",
+      "url": "https://www.amsterdamsdagblad.nl/algemeen/waarom-worstelen-zoveel-horecazaken-met-hun-personeelsrooster",
+      "accessed": "2026-10-12"
+    },
+    {
+      "title": "Personeelstekort in het mkb: zo krijg je je planning wél rond (WijBusinessNieuws, 26 september 2026)",
+      "url": "https://wbn.nl/wijbusinessnieuws/personeelsplanning/",
+      "accessed": "2026-10-12"
+    },
+    {
+      "title": "10 tips voor het binden en boeien van medewerkers (KHN, 31 augustus 2023)",
+      "url": "https://khn.nl/nieuws/10-tips-voor-het-binden-en-boeien-van-medewerkers",
+      "accessed": "2026-10-12"
+    },
+    {
+      "title": "Zomerdrukte in de horeca: heb jij je roosters al ingevuld? (Horecava, 31 maart 2025)",
+      "url": "https://www.horecava.nl/nieuws/zomerdrukte-horeca-roosters-invullen",
+      "accessed": "2026-10-12"
+    }
+  ]
+}
