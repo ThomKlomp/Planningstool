@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 export default function TimeEntryForm({
   closedDates = [],
   closedReasons = {},
+  locations = [],
 }: {
+  locations?: { id: string; name: string }[]; // locaties waaruit gekozen kan worden (alleen bij meer dan één)
   closedDates?: string[];
   closedReasons?: Record<string, string>; // "YYYY-MM-DD" -> reden
 }) {
@@ -16,6 +18,7 @@ export default function TimeEntryForm({
   const [endTime, setEndTime] = useState("23:00");
   const [breakMinutes, setBreakMinutes] = useState("0");
   const [note, setNote] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +33,7 @@ export default function TimeEntryForm({
     const res = await fetch("/api/time-entries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, startTime, endTime, breakMinutes, note }),
+      body: JSON.stringify({ date, startTime, endTime, breakMinutes, note, locationId: locationId || undefined }),
     });
 
     if (!res.ok) {
@@ -83,6 +86,23 @@ export default function TimeEntryForm({
           className="w-24 rounded-lg border border-line px-3 py-2 text-sm"
         />
       </Field>
+      {locations.length > 1 && (
+        <Field label="Locatie">
+          <select
+            value={locationId}
+            onChange={(e) => setLocationId(e.target.value)}
+            required
+            className="rounded-lg border border-line px-3 py-2 text-sm"
+          >
+            <option value="">Kies locatie</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
       <Field label="Notitie">
         <input
           type="text"

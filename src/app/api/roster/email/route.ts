@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayoutWide } from "@/lib/email";
 import { resolveWeek, getISOWeekNumber, toDateParam } from "@/lib/week";
 import { isRosterPublished } from "@/lib/roster-publish";
+import { shiftVisibleTo } from "@/lib/locations";
 
 type GridMember = {
   membershipId: string;
@@ -13,6 +14,7 @@ type GridMember = {
   role: string;
   departmentId: string | null;
   departmentName: string | null;
+  locationIds: string[]; // leeg = alle locaties
 };
 type GridShift = {
   date: Date;
@@ -21,6 +23,8 @@ type GridShift = {
   membershipId: string | null;
   departmentId: string | null;
   role: string | null;
+  locationId: string | null;
+  locationName: string | null;
 };
 
 function dayLabel(day: Date) {
@@ -56,7 +60,7 @@ function buildRosterTableHtml(week: Date[], members: GridMember[], shifts: GridS
       .filter(
         (s) => s.membershipId === membershipId && s.date.toDateString() === day.toDateString()
       )
-      .map((s) => `${s.startTime}-${s.endTime}`)
+      .map((s) => `${s.startTime}-${s.endTime}${s.locationName ? ` (${s.locationName})` : ""}`)
       .join("; ");
   }
 
@@ -197,14 +201,15 @@ export async function POST(req: Request) {
   const [membersRaw, shiftsRaw, company, events] = await Promise.all([
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
-      include: { user: true, department: true },
+      include: { user: true, department: true, locations: true },
     }),
     prisma.shift.findMany({
       where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
+      include: { location: { select: { name: true } } },
     }),
     prisma.company.findUnique({
       where: { id: membership.companyId },
-      select: { showCompanyRosterToEmployees: true },
+      select: { showCompanyRosterToEmployees: true, showAllLocationsToEmployees: true },
     }),
     prisma.rosterEvent.findMany({
       where: {
@@ -222,6 +227,7 @@ export async function POST(req: Request) {
     role: m.role,
     departmentId: m.departmentId,
     departmentName: m.department?.name ?? null,
+    locationIds: m.locations.map((l) => l.locationId),
   }));
   const allShifts: GridShift[] = shiftsRaw.map((s) => ({
     date: s.date,
@@ -230,6 +236,8 @@ export async function POST(req: Request) {
     membershipId: s.membershipId,
     departmentId: s.departmentId,
     role: s.role,
+    locationId: s.locationId,
+    locationName: s.location?.name ?? null,
   }));
 
   if (allMembers.length === 0) {
@@ -278,19 +286,26 @@ export async function POST(req: Request) {
 
   const managersAndOwners = allMembers.filter((m) => m.role === "OWNER" || m.role === "MANAGER");
   const employees = allMembers.filter((m) => m.role === "EMPLOYEE");
+  const restrictByLocation = !(company?.showAllLocationsToEmployees ?? true);
 
   // Managers/eigenaren zien altijd het volledige rooster, ook als
   // medewerkers beperkt zicht hebben.
   await sendGroup(managersAndOwners, allMembers, allShifts, allShifts.filter((s) => !s.membershipId));
 
-  if (showFullToEmployees) {
-    await sendGroup(employees, allMembers, allShifts, allShifts.filter((s) => !s.membershipId));
-  } else {
+  // Medewerkers: standaard het hele rooster (of alleen hun team, zie hieronder). Staat
+  // "medewerkers zien alleen de eigen locatie" aan, dan krijgt iedereen alleen het deel van
+  // zijn eigen locatie(s); medewerkers zonder locatie krijgen alles.
+  async function sendToEmployees(emps: GridMember[], baseMembers: GridMember[], baseShifts: GridShift[]) {
+    const baseOpen = baseShifts.filter((s) => !s.membershipId);
+    if (showFullToEmployees) {
+      await sendGroup(emps, baseMembers, baseShifts, baseOpen);
+      return;
+    }
     // Zelfde beperking als in de app: alleen het eigen team te zien, of
     // (zonder team) alleen de eigen shifts.
     const byDepartment = new Map<string, GridMember[]>();
     const withoutDepartment: GridMember[] = [];
-    for (const e of employees) {
+    for (const e of emps) {
       if (e.departmentId) {
         if (!byDepartment.has(e.departmentId)) byDepartment.set(e.departmentId, []);
         byDepartment.get(e.departmentId)!.push(e);
@@ -300,27 +315,60 @@ export async function POST(req: Request) {
     }
 
     for (const [departmentId, recipients] of byDepartment) {
-      const teamMembers = allMembers.filter((m) => m.departmentId === departmentId);
+      const teamMembers = baseMembers.filter((m) => m.departmentId === departmentId);
       const teamMembershipIds = new Set(teamMembers.map((m) => m.membershipId));
-      const teamShifts = allShifts.filter(
+      const teamShifts = baseShifts.filter(
         (s) => s.membershipId && teamMembershipIds.has(s.membershipId)
       );
       // Open diensten van het eigen team (of zonder team) horen er ook bij.
-      const teamOpen = allShifts.filter(
+      const teamOpen = baseShifts.filter(
         (s) => !s.membershipId && (!s.departmentId || s.departmentId === departmentId)
       );
       await sendGroup(recipients, teamMembers, teamShifts, teamOpen);
     }
 
     for (const e of withoutDepartment) {
-      const ownShifts = allShifts.filter((s) => s.membershipId === e.membershipId);
+      const ownShifts = baseShifts.filter((s) => s.membershipId === e.membershipId);
       await sendGroup(
         [e],
         [e],
         ownShifts,
-        allShifts.filter((s) => !s.membershipId && !s.departmentId)
+        baseShifts.filter((s) => !s.membershipId && !s.departmentId)
       );
     }
+  }
+
+  if (restrictByLocation) {
+    const groups = new Map<string, { ids: string[]; emps: GridMember[] }>();
+    for (const e of employees) {
+      const key = [...e.locationIds].sort().join(",");
+      if (!groups.has(key)) groups.set(key, { ids: e.locationIds, emps: [] });
+      groups.get(key)!.emps.push(e);
+    }
+    for (const { ids, emps } of groups.values()) {
+      if (ids.length === 0) {
+        await sendToEmployees(emps, allMembers, allShifts);
+        continue;
+      }
+      const shifts = shiftsRaw.filter((raw) =>
+        shiftVisibleTo(
+          { locationId: raw.locationId, membership: raw.membershipId ? { locations: membersRaw.find((m) => m.id === raw.membershipId)?.locations } : null },
+          ids
+        )
+      );
+      const shiftKeys = new Set(shifts.map((x) => x.id));
+      const groupShifts = allShifts.filter((_, idx) => shiftKeys.has(shiftsRaw[idx].id));
+      const withShift = new Set(groupShifts.map((s) => s.membershipId));
+      const groupMembers = allMembers.filter(
+        (m) =>
+          m.locationIds.length === 0 ||
+          m.locationIds.some((id) => ids.includes(id)) ||
+          withShift.has(m.membershipId)
+      );
+      await sendToEmployees(emps, groupMembers, groupShifts);
+    }
+  } else {
+    await sendToEmployees(employees, allMembers, allShifts);
   }
 
   // Onthouden dat (en wanneer) het rooster gemaild is, zodat de manager dat

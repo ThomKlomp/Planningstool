@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { resolveShiftDepartment } from "@/lib/teams";
+import { resolveShiftLocation } from "@/lib/locations";
 import {
   generateRecurringShifts,
   midnightUTC,
@@ -48,12 +49,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: team.error }, { status: 400 });
   }
 
+  const location = await resolveShiftLocation(membership.companyId, target.id, body?.locationId);
+  if (!location.ok) {
+    return NextResponse.json({ error: location.error }, { status: 400 });
+  }
+
   const startDate = midnightUTC(new Date());
   const pattern = await prisma.recurringShift.create({
     data: {
       companyId: membership.companyId,
       membershipId: target.id,
       departmentId: team.departmentId,
+      locationId: location.locationId,
       weekday,
       startTime,
       endTime,

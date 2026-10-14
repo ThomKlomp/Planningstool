@@ -81,7 +81,26 @@ export async function PATCH(
     extraDepartmentIds = requested;
   }
 
-  if (Object.keys(data).length === 0 && extraDepartmentIds === undefined) {
+  // Locaties van de medewerker: de hele lijst wordt vervangen. Leeg = alle locaties.
+  let locationIds: string[] | undefined;
+  if (body?.locationIds !== undefined) {
+    if (!Array.isArray(body.locationIds)) {
+      return NextResponse.json({ error: "Ongeldige locaties" }, { status: 400 });
+    }
+    const requested: string[] = Array.from(
+      new Set(body.locationIds.filter((id: unknown): id is string => typeof id === "string"))
+    );
+    const found = await prisma.location.findMany({
+      where: { id: { in: requested }, companyId: membership.companyId },
+      select: { id: true },
+    });
+    if (found.length !== requested.length) {
+      return NextResponse.json({ error: "Locatie niet gevonden" }, { status: 404 });
+    }
+    locationIds = requested;
+  }
+
+  if (Object.keys(data).length === 0 && extraDepartmentIds === undefined && locationIds === undefined) {
     return NextResponse.json({ error: "Niets om aan te passen" }, { status: 400 });
   }
 
@@ -119,6 +138,15 @@ export async function PATCH(
           NOT: { departmentId: null },
         },
         data: { departmentId: null },
+      }),
+    ]);
+  }
+
+  if (locationIds !== undefined) {
+    await prisma.$transaction([
+      prisma.membershipLocation.deleteMany({ where: { membershipId: params.membershipId } }),
+      prisma.membershipLocation.createMany({
+        data: locationIds.map((locationId) => ({ membershipId: params.membershipId, locationId })),
       }),
     ]);
   }

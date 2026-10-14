@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ShiftLocationSelect, { type LocationOption } from "./shift-location-select";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
 import { announceOpenShiftMail } from "./open-shift-mail-host";
 import { slotLabel, type SlotLabelInfo } from "@/lib/availability-slots";
@@ -18,6 +19,7 @@ type Member = {
   departmentName: string | null;
   departmentColor: string | null;
   teams?: MemberTeam[]; // hoofdteam eerst; alleen gevuld als de medewerker meerdere teams heeft
+  locationIds?: string[];
 };
 type ShiftTemplate = {
   id: string;
@@ -45,6 +47,8 @@ export default function DayPanel({
   availabilities,
   shiftTemplates,
   departments,
+  locations = [],
+  defaultLocationId = "",
   slots,
   onClose,
   onDone,
@@ -54,6 +58,8 @@ export default function DayPanel({
   availabilities: Availability[];
   shiftTemplates: ShiftTemplate[];
   departments: MemberTeam[];
+  locations?: LocationOption[];
+  defaultLocationId?: string;
   slots: SlotLabelInfo[];
   onClose: () => void;
   onDone: () => void;
@@ -155,6 +161,8 @@ export default function DayPanel({
               members={members}
               dayTemplates={dayTemplates}
               departments={departments}
+              locations={locations}
+              defaultLocationId={defaultLocationId}
               onDone={onDone}
             />
           </div>
@@ -181,14 +189,19 @@ function AddShiftForm({
   members,
   dayTemplates,
   departments,
+  locations,
+  defaultLocationId,
   onDone,
 }: {
   dateIso: string;
   members: Member[];
   dayTemplates: ShiftTemplate[];
   departments: MemberTeam[];
+  locations: LocationOption[];
+  defaultLocationId: string;
   onDone: () => void;
 }) {
+  const [locationId, setLocationId] = useState(defaultLocationId);
   const [startTime, setStartTime] = useState(dayTemplates[0]?.startTime ?? "17:00");
   const [endTime, setEndTime] = useState(dayTemplates[0]?.endTime ?? "23:00");
   const [membershipId, setMembershipId] = useState("");
@@ -216,6 +229,7 @@ function AddShiftForm({
         role: role || undefined,
         membershipId: membershipId || undefined,
         departmentId: departmentId || undefined,
+        locationId: locationId || undefined,
         includeManagers: !membershipId && includeManagers,
       }),
     });
@@ -262,6 +276,7 @@ function AddShiftForm({
         onChange={(e) => {
           setMembershipId(e.target.value);
           setDepartmentId("");
+          setLocationId(defaultLocationId);
         }}
         className="w-full rounded-lg border border-line px-2 py-1.5 text-sm"
       >
@@ -285,6 +300,13 @@ function AddShiftForm({
           onChange={setDepartmentId}
         />
       )}
+      <ShiftLocationSelect
+        locations={locations}
+        memberLocationIds={members.find((m) => m.membershipId === membershipId)?.locationIds ?? []}
+        hasMember={Boolean(membershipId)}
+        value={locationId}
+        onChange={setLocationId}
+      />
       {!membershipId && (
         <label className="flex items-start gap-2 text-xs text-ink/70">
           <input

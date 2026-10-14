@@ -28,6 +28,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
 
   const allShifts = await prisma.shift.findMany({
     where: { membershipId: membership.id, date: { gte: from, lte: to } },
+    include: { location: { select: { name: true } } },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
@@ -41,7 +42,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
   const ics = buildShiftsICS({
     companyName: membership.company.name,
     memberName: membership.user.name ?? "",
-    shifts,
+    shifts: shifts.map((s) => ({ ...s, locationName: s.location?.name ?? null })),
   });
 
   return new NextResponse(ics, {

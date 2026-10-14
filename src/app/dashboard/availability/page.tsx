@@ -7,11 +7,14 @@ import WeekNav from "../week-nav";
 import { resolveWeek, isWeekOpenByDefault } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
 import { slotLabel } from "@/lib/availability-slots";
+import LocationFilter from "@/components/location-filter";
+import LocationBadge from "@/components/location-badge";
+import { listLocations, locationIdsOf, resolveLocationFilter, worksAtLocation } from "@/lib/locations";
 
 export default async function AvailabilityPage({
   searchParams,
 }: {
-  searchParams: { week?: string };
+  searchParams: { week?: string; loc?: string };
 }) {
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
@@ -19,7 +22,7 @@ export default async function AvailabilityPage({
   const week = resolveWeek(searchParams?.week);
   const weekStartIso = week[0].toISOString();
 
-  const [ownEntries, teamEntries, members, weekStatus, shiftTemplates, company, closedDays, slots] =
+  const [ownEntries, teamEntries, membersAll, weekStatus, shiftTemplates, company, closedDays, slots, locations] =
     await Promise.all([
       prisma.availability.findMany({
         where: {
@@ -39,7 +42,7 @@ export default async function AvailabilityPage({
       canManage
         ? prisma.membership.findMany({
             where: { companyId: membership.companyId },
-            include: { user: true },
+            include: { user: true, locations: true },
           })
         : Promise.resolve([]),
       prisma.weekStatus.findUnique({
@@ -65,7 +68,14 @@ export default async function AvailabilityPage({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
         orderBy: { startTime: "asc" },
       }),
+      listLocations(membership.companyId),
     ]);
+
+  // Locatiefilter (alleen managers): het teamoverzicht toont dan alleen wie op die locatie werkt.
+  const activeLoc = canManage ? resolveLocationFilter(searchParams?.loc, locations, null) : "";
+  const members = activeLoc ? membersAll.filter((m) => worksAtLocation(m, activeLoc)) : membersAll;
+  const locationName = (ids: string[]) =>
+    ids.map((id) => locations.find((l) => l.id === id)).filter((l): l is NonNullable<typeof l> => Boolean(l));
 
   const isWeekOpen =
     weekStatus?.isOpen ?? isWeekOpenByDefault(week[0], company?.autoOpenWeeks ?? 2);
@@ -113,7 +123,11 @@ export default async function AvailabilityPage({
       </div>
 
       <div className="mt-4">
-        <WeekNav basePath="/dashboard/availability" weekStart={week[0]} />
+        <WeekNav
+          basePath="/dashboard/availability"
+          weekStart={week[0]}
+          extraQuery={activeLoc ? `loc=${activeLoc}` : undefined}
+        />
       </div>
 
       {!isWeekOpen && !canManage && (
@@ -167,7 +181,15 @@ export default async function AvailabilityPage({
 
       {canManage && (
         <section className="mt-12">
-          <h2 className="font-display text-xl">Team-beschikbaarheid</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-xl">Team-beschikbaarheid</h2>
+            <LocationFilter
+              basePath="/dashboard/availability"
+              params={{ week: searchParams?.week }}
+              locations={locations}
+              active={activeLoc}
+            />
+          </div>
           <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
             <table className="w-full table-fixed text-sm">
               <thead>
@@ -183,8 +205,12 @@ export default async function AvailabilityPage({
               <tbody>
                 {members.map((m) => (
                   <tr key={m.id} className="border-b border-line last:border-0">
-                    <td className="truncate px-4 py-3 font-medium">
-                      {m.user.name ?? m.user.email}
+                    <td className="px-4 py-3 font-medium">
+                      <span className="block truncate">{m.user.name ?? m.user.email}</span>
+                      {locations.length > 1 &&
+                        locationName(locationIdsOf(m)).map((l) => (
+                          <LocationBadge key={l.id} name={l.name} color={l.color} className="mr-1 mt-0.5" />
+                        ))}
                     </td>
                     {week.map((d) => {
                       const dayEntries = teamEntries.filter(

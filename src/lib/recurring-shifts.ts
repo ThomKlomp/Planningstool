@@ -68,6 +68,7 @@ export async function generateRecurringShifts(patternId: string): Promise<number
         companyId: pattern.companyId,
         membershipId: pattern.membershipId,
         departmentId: pattern.departmentId,
+        locationId: pattern.locationId,
         date,
         startTime: pattern.startTime,
         endTime: pattern.endTime,

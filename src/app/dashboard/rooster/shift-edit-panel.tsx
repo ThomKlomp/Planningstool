@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { promptOpenShiftMail } from "./open-shift-mail-host";
+import ShiftLocationSelect, { type LocationOption } from "./shift-location-select";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
 
 type Member = {
@@ -9,12 +10,14 @@ type Member = {
   name: string;
   departmentName: string | null;
   teams?: MemberTeam[];
+  locationIds?: string[];
 };
 
 export default function ShiftEditPanel({
   shift,
   members,
   departments,
+  locations = [],
   onClose,
   onDone,
 }: {
@@ -26,9 +29,11 @@ export default function ShiftEditPanel({
     role: string | null;
     membershipId: string | null;
     departmentId?: string | null;
+    locationId?: string | null;
   };
   members: Member[];
   departments: MemberTeam[];
+  locations?: LocationOption[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -37,6 +42,7 @@ export default function ShiftEditPanel({
   const [role, setRole] = useState(shift.role ?? "");
   const [membershipId, setMembershipId] = useState(shift.membershipId ?? "");
   const [departmentId, setDepartmentId] = useState(shift.departmentId ?? "");
+  const [locationId, setLocationId] = useState(shift.locationId ?? "");
   const selectedTeams = members.find((m) => m.membershipId === membershipId)?.teams ?? [];
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +60,7 @@ export default function ShiftEditPanel({
         role: role || null,
         membershipId: membershipId || null,
         departmentId: departmentId || null,
+        locationId: locationId || null,
       }),
     });
 
@@ -145,6 +152,9 @@ export default function ShiftEditPanel({
               onChange={(e) => {
                 setMembershipId(e.target.value);
                 setDepartmentId("");
+                // De locatie blijft staan, tenzij de nieuwe medewerker daar niet werkt.
+                const ids = members.find((m) => m.membershipId === e.target.value)?.locationIds ?? [];
+                if (ids.length > 0 && !ids.includes(locationId)) setLocationId("");
               }}
               className="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-sm focus:border-awning focus:outline-none"
             >
@@ -167,6 +177,14 @@ export default function ShiftEditPanel({
               onChange={setDepartmentId}
             />
           )}
+
+          <ShiftLocationSelect
+            locations={locations}
+            memberLocationIds={members.find((m) => m.membershipId === membershipId)?.locationIds ?? []}
+            hasMember={Boolean(membershipId)}
+            value={locationId}
+            onChange={setLocationId}
+          />
 
           <div>
             <label className="block text-xs text-ink/60">Functie/rol (optioneel)</label>

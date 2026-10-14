@@ -12,6 +12,7 @@ type Shift = {
   memberName: string | null;
   membershipId: string | null;
   departmentName: string | null;
+  locationName?: string | null;
 };
 
 type Member = {
@@ -58,7 +59,7 @@ function buildGrid(members: Member[], shifts: Shift[], weekStart: string) {
           s.membershipId === membershipId &&
           new Date(s.date).toDateString() === day.toDateString()
       )
-      .map((s) => `${s.startTime}-${s.endTime}`)
+      .map((s) => `${s.startTime}-${s.endTime}${s.locationName ? ` (${s.locationName})` : ""}`)
       .join("; ");
   }
 

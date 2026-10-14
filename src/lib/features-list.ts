@@ -18,6 +18,10 @@ export const MORE_FEATURES: { title: string; body: string }[] = [
     body: "Via een agenda-koppeling zien medewerkers hun diensten in de agenda die ze al gebruiken.",
   },
   {
+    title: "Meerdere locaties",
+    body: "Heb je meer dan één locatie? Voeg ze toe als kostenplaats, binnen dezelfde zaak en hetzelfde abonnement. Medewerkers houden één account en kunnen aan meerdere locaties gekoppeld zijn. Rooster, beschikbaarheid en uren zie je per locatie, en je bepaalt of medewerkers de andere locaties mogen zien.",
+  },
+  {
     title: "Rooster delen",
     body: "Publiceer het rooster en mail het naar je team. Of download het als PDF of CSV.",
   },

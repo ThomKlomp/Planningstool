@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dayName, dayNamePlural } from "@/lib/recurring-shifts-labels";
+import ShiftLocationSelect, { type LocationOption } from "../rooster/shift-location-select";
 
 type Team = { id: string; name: string };
-type Member = { id: string; name: string; teams: Team[] }; // teams: hoofdteam eerst
+type Member = { id: string; name: string; teams: Team[]; locationIds?: string[] }; // teams: hoofdteam eerst
 type Template = { id: string; name: string; startTime: string; endTime: string };
 type Pattern = {
   id: string;
@@ -16,6 +17,7 @@ type Pattern = {
   endTime: string;
   role: string | null;
   departmentName: string | null;
+  locationName?: string | null;
 };
 
 // Volgorde in de keuzelijst: maandag eerst (zoals in het rooster).
@@ -25,7 +27,9 @@ export default function RecurringShiftsManager({
   members,
   templates,
   initialPatterns,
+  locations = [],
 }: {
+  locations?: LocationOption[];
   members: Member[];
   templates: Template[];
   initialPatterns: Pattern[];
@@ -38,6 +42,7 @@ export default function RecurringShiftsManager({
   const [endTime, setEndTime] = useState("18:00");
   const [role, setRole] = useState("");
   const [departmentId, setDepartmentId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -62,6 +67,7 @@ export default function RecurringShiftsManager({
         endTime,
         role: role || undefined,
         departmentId: departmentId || undefined,
+        locationId: locationId || undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -85,6 +91,7 @@ export default function RecurringShiftsManager({
         endTime,
         role: role || null,
         departmentName: team?.name ?? null,
+        locationName: locations.find((l) => l.id === locationId)?.name ?? null,
       },
     ]);
     setMessage(
@@ -92,6 +99,7 @@ export default function RecurringShiftsManager({
     );
     setRole("");
     setDepartmentId("");
+    setLocationId("");
     router.refresh();
   }
 
@@ -130,6 +138,7 @@ export default function RecurringShiftsManager({
                   · elke {dayName(p.weekday)} {p.startTime}–{p.endTime}
                   {p.role ? ` · ${p.role}` : ""}
                   {p.departmentName ? ` · ${p.departmentName}` : ""}
+                  {p.locationName ? ` · ${p.locationName}` : ""}
                 </span>
               </span>
               <button
@@ -243,6 +252,13 @@ export default function RecurringShiftsManager({
               </select>
             </div>
           )}
+          <ShiftLocationSelect
+            locations={locations}
+            memberLocationIds={members.find((m) => m.id === membershipId)?.locationIds ?? []}
+            hasMember
+            value={locationId}
+            onChange={setLocationId}
+          />
           <button
             type="submit"
             disabled={saving || !membershipId}

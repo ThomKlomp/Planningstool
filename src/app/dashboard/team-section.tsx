@@ -16,9 +16,11 @@ type Invite = {
 export default function TeamSection({
   initialPendingInvites,
   departments = [],
+  locations = [],
 }: {
   initialPendingInvites: Invite[];
   departments?: { id: string; name: string }[];
+  locations?: { id: string; name: string; color: string }[];
 }) {
   const withTeam = (invite: Invite): Invite => ({
     ...invite,
@@ -37,6 +39,7 @@ export default function TeamSection({
         </p>
         <InviteForm
           departments={departments}
+          locations={locations}
           onInvited={(invite) => setPendingInvites((prev) => [withTeam(invite), ...prev])}
         />
       </div>

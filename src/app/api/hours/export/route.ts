@@ -22,13 +22,22 @@ export async function GET(req: Request) {
   }
   const { from, to } = period;
 
+  // Optioneel één locatie (?location=<id>); uren zonder eigen locatie tellen via hun dienst mee.
+  const locationId = new URL(req.url).searchParams.get("location") || "";
   const entries = await prisma.timeEntry.findMany({
     where: {
       companyId: membership.companyId,
       status: "APPROVED",
       date: { gte: from, lte: to },
+      ...(locationId
+        ? { OR: [{ locationId }, { locationId: null, shift: { locationId } }] }
+        : {}),
     },
-    include: { membership: { include: { user: true, department: true } } },
+    include: {
+      membership: { include: { user: true, department: true } },
+      location: { select: { name: true } },
+      shift: { select: { location: { select: { name: true } } } },
+    },
   });
 
   const label = `${from.toISOString().slice(0, 10)}_${to.toISOString().slice(0, 10)}`;
@@ -40,6 +49,7 @@ export async function GET(req: Request) {
       breakMinutes: e.breakMinutes,
       memberName: e.membership.user.name ?? e.membership.user.email ?? "Onbekend",
       departmentName: e.membership.department?.name ?? null,
+      locationName: e.location?.name ?? e.shift?.location?.name ?? null,
     })),
     label
   );
