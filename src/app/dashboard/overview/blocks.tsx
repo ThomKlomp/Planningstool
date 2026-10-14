@@ -452,10 +452,15 @@ async function RosterStatus({ ctx }: { ctx: BlockContext }) {
   const current = resolveWeek()[0];
   const next = new Date(current);
   next.setDate(next.getDate() + 7);
-  const rows = await prisma.rosterWeek.findMany({
-    where: { companyId: ctx.companyId, weekStart: { in: [current, next] } },
-  });
-  const statusOf = (d: Date) => rows.find((r) => r.weekStart.getTime() === d.getTime())?.published ?? false;
+  const [rows, company] = await Promise.all([
+    prisma.rosterWeek.findMany({
+      where: { companyId: ctx.companyId, weekStart: { in: [current, next] } },
+    }),
+    prisma.company.findUnique({ where: { id: ctx.companyId }, select: { alwaysPublishRoster: true } }),
+  ]);
+  const always = company?.alwaysPublishRoster ?? false;
+  const statusOf = (d: Date) =>
+    always || (rows.find((r) => r.weekStart.getTime() === d.getTime())?.published ?? false);
   return (
     <ul className="space-y-2 text-sm">
       {[current, next].map((d) => (
@@ -468,7 +473,7 @@ async function RosterStatus({ ctx }: { ctx: BlockContext }) {
               statusOf(d) ? "bg-awning/10 text-awning" : "bg-amber/20 text-amber-dark"
             }`}
           >
-            {statusOf(d) ? "Gepubliceerd" : "Concept"}
+            {always ? "Altijd gepubliceerd" : statusOf(d) ? "Gepubliceerd" : "Concept"}
           </span>
         </li>
       ))}

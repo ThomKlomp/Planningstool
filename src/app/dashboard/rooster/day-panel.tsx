@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
+import { announceOpenShiftMail } from "./open-shift-mail-host";
 import { slotLabel, type SlotLabelInfo } from "@/lib/availability-slots";
 
 type Availability = {
@@ -204,7 +205,7 @@ function AddShiftForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/shifts", {
+    const res = await fetch("/api/shifts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -217,6 +218,10 @@ function AddShiftForm({
       }),
     });
     setSaving(false);
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      announceOpenShiftMail(data?.openShiftMail);
+    }
     onDone();
   }
 

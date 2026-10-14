@@ -10,6 +10,7 @@ import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
 import WeekOpenEmailSetting from "./week-open-email-setting";
+import CompanyFlagSetting from "./company-flag-setting";
 import AutoApprovalSettings from "./auto-approval-settings";
 import JoinLink from "./join-link";
 import CompanyDetailsSetting from "./company-details-setting";
@@ -38,6 +39,8 @@ export default async function SettingsPage() {
         autoApproveShiftSwaps: true,
         autoApproveHours: true,
         emailWeekOpenToEmployees: true,
+        alwaysPublishRoster: true,
+        notifyManagersOpenShift: true,
         subscriptionStatus: true,
         trialEndsAt: true,
         billingName: true,
@@ -194,6 +197,30 @@ export default async function SettingsPage() {
               color: d.color,
               order: d.order,
             }))}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Publiceren &amp; open diensten</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Standaard publiceer je een rooster per week. Met &ldquo;altijd gepubliceerd&rdquo; zien medewerkers elke
+          wijziging meteen. Open diensten worden naar het team gemaild: binnen 7 dagen naar iedereen in het team, daarna
+          alleen naar wie beschikbaar is (of nog niet weet).
+        </p>
+        <div className="mt-4 space-y-3">
+          <CompanyFlagSetting
+            field="alwaysPublishRoster"
+            initialValue={company?.alwaysPublishRoster ?? false}
+            label="Rooster altijd gepubliceerd"
+            hint="Medewerkers zien elke wijziging direct. Er is geen publiceer-knop meer en het rooster wordt niet meer automatisch gemaild, dat doe je zelf via Rooster mailen."
+            confirmOn="Rooster altijd publiceren? Medewerkers zien dan ook concept-wijzigingen direct, ook van weken die nog niet gepubliceerd waren."
+          />
+          <CompanyFlagSetting
+            field="notifyManagersOpenShift"
+            initialValue={company?.notifyManagersOpenShift ?? false}
+            label="Managers ook op de hoogte stellen van open diensten"
+            hint="Standaard krijgen alleen medewerkers de mail over een open dienst. Met dit vinkje ontvangen ook managers en eigenaren (uit hetzelfde team) de mail."
           />
         </div>
       </section>

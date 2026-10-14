@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
-import { notifyShiftChanges, notifyOpenShift, describeShift } from "@/lib/roster-change";
+import { notifyShiftChanges, describeShift } from "@/lib/roster-change";
+import { sendOpenShiftMail, type OpenShiftMailSummary } from "@/lib/open-shift-mail";
 import { resolveShiftDepartment } from "@/lib/teams";
 
 export async function GET(req: Request) {
@@ -125,9 +126,11 @@ export async function POST(req: Request) {
     });
   }
 
-  // Open dienst: laat het team weten dat iemand 'm kan oppakken.
+  // Open dienst: het team wordt automatisch gemaild (zie lib/open-shift-mail voor wie en waarom);
+  // de samenvatting gaat terug naar het scherm voor de melding.
+  let openShiftMail: OpenShiftMailSummary | undefined;
   if (!membershipId) {
-    await notifyOpenShift({
+    openShiftMail = await sendOpenShiftMail({
       companyId: membership.companyId,
       companyName: membership.companyName,
       companySlug: membership.companySlug,
@@ -136,5 +139,5 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({ shift });
+  return NextResponse.json({ shift, openShiftMail });
 }

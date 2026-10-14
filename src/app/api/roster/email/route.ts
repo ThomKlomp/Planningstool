@@ -14,7 +14,14 @@ type GridMember = {
   departmentId: string | null;
   departmentName: string | null;
 };
-type GridShift = { date: Date; startTime: string; endTime: string; membershipId: string | null };
+type GridShift = {
+  date: Date;
+  startTime: string;
+  endTime: string;
+  membershipId: string | null;
+  departmentId: string | null;
+  role: string | null;
+};
 
 function dayLabel(day: Date) {
   const label = day.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric" });
@@ -134,6 +141,29 @@ function buildEventsHtml(events: MailEvent[]) {
   </div>`;
 }
 
+/** Apart blokje bovenaan: open diensten die nog ingevuld moeten worden. */
+function buildOpenShiftsHtml(shifts: GridShift[]) {
+  const open = shifts
+    .filter((s) => !s.membershipId)
+    .sort((a, b) => a.date.getTime() - b.date.getTime() || a.startTime.localeCompare(b.startTime));
+  if (open.length === 0) return "";
+  const items = open
+    .map((s) => {
+      const when = s.date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+      return `<li style="margin-bottom:4px;"><strong>${escapeHtml(when)}</strong>, ${s.startTime}–${s.endTime}${
+        s.role ? ` · ${escapeHtml(s.role)}` : ""
+      }</li>`;
+    })
+    .join("");
+  return `<div style="margin-bottom:16px; padding:12px 14px; background:#FDF3E1; border-left:4px solid #C9821F; border-radius:8px;">
+    <p style="margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; color:#8A6A1F;">Nog in te vullen: open diensten</p>
+    <p style="margin:0 0 6px; font-size:13px;">Deze ${open.length === 1 ? "dienst heeft" : "diensten hebben"} nog niemand. Kun jij? Pak ${
+      open.length === 1 ? "'m" : "ze"
+    } op in het rooster.</p>
+    <ul style="margin:0; padding-left:18px;">${items}</ul>
+  </div>`;
+}
+
 function buildRosterButtonHtml(url: string) {
   return `<p style="margin-top:24px;">
     <a href="${url}" style="display:inline-block; background:#1B1B18; color:#FAF7F2; padding:12px 20px; border-radius:999px; text-decoration:none; font-weight:500;">
@@ -198,6 +228,8 @@ export async function POST(req: Request) {
     startTime: s.startTime,
     endTime: s.endTime,
     membershipId: s.membershipId,
+    departmentId: s.departmentId,
+    role: s.role,
   }));
 
   if (allMembers.length === 0) {
@@ -215,13 +247,21 @@ export async function POST(req: Request) {
 
   // Verstuurt één mail per groep, met de geadresseerden in BCC zodat ze
   // elkaars e-mailadres niet zien.
-  async function sendGroup(recipients: GridMember[], members: GridMember[], shifts: GridShift[]) {
+  async function sendGroup(
+    recipients: GridMember[],
+    members: GridMember[],
+    shifts: GridShift[],
+    openShifts: GridShift[]
+  ) {
     const emails = recipients.map((m) => m.email).filter((e): e is string => Boolean(e));
     if (emails.length === 0) return;
 
     const html = emailLayoutWide(
       `Rooster ${weekLabel} bij ${membership.companyName}`,
-      eventsHtml + buildRosterTableHtml(week, members, shifts) + buildRosterButtonHtml(rosterUrl)
+      eventsHtml +
+        buildOpenShiftsHtml(openShifts) +
+        buildRosterTableHtml(week, members, shifts) +
+        buildRosterButtonHtml(rosterUrl)
     );
 
     const ownerEmail = allMembers.find((m) => m.role === "OWNER")?.email;
@@ -241,10 +281,10 @@ export async function POST(req: Request) {
 
   // Managers/eigenaren zien altijd het volledige rooster, ook als
   // medewerkers beperkt zicht hebben.
-  await sendGroup(managersAndOwners, allMembers, allShifts);
+  await sendGroup(managersAndOwners, allMembers, allShifts, allShifts.filter((s) => !s.membershipId));
 
   if (showFullToEmployees) {
-    await sendGroup(employees, allMembers, allShifts);
+    await sendGroup(employees, allMembers, allShifts, allShifts.filter((s) => !s.membershipId));
   } else {
     // Zelfde beperking als in de app: alleen het eigen team te zien, of
     // (zonder team) alleen de eigen shifts.
@@ -265,12 +305,21 @@ export async function POST(req: Request) {
       const teamShifts = allShifts.filter(
         (s) => s.membershipId && teamMembershipIds.has(s.membershipId)
       );
-      await sendGroup(recipients, teamMembers, teamShifts);
+      // Open diensten van het eigen team (of zonder team) horen er ook bij.
+      const teamOpen = allShifts.filter(
+        (s) => !s.membershipId && (!s.departmentId || s.departmentId === departmentId)
+      );
+      await sendGroup(recipients, teamMembers, teamShifts, teamOpen);
     }
 
     for (const e of withoutDepartment) {
       const ownShifts = allShifts.filter((s) => s.membershipId === e.membershipId);
-      await sendGroup([e], [e], ownShifts);
+      await sendGroup(
+        [e],
+        [e],
+        ownShifts,
+        allShifts.filter((s) => !s.membershipId && !s.departmentId)
+      );
     }
   }
 

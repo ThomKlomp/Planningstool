@@ -3,7 +3,7 @@ import { getWeekDates, getISOWeekNumber } from "@/lib/week";
 
 // Aantal bcc-ontvangers per bericht. Mailproviders accepteren maar een beperkt
 // aantal ontvangers per bericht (Resend: 50 in totaal).
-const BCC_BATCH_SIZE = 40;
+export const BCC_BATCH_SIZE = 40;
 
 // Resend staat standaard 2 verzoeken per seconde toe. Verstuur dus rustig, ook
 // over meerdere zaken heen, en probeer het bij een "te snel"-melding opnieuw.
@@ -23,7 +23,7 @@ async function throttle() {
 type SendResult = { skipped?: boolean; error?: { name?: string; message?: string; statusCode?: number | null } | null };
 
 /** Eén bericht versturen; geeft null bij succes, anders de reden. */
-async function sendOne(args: Parameters<typeof sendEmail>[0]): Promise<string | null> {
+export async function sendOne(args: Parameters<typeof sendEmail>[0]): Promise<string | null> {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     await throttle();
     let result: SendResult;
@@ -86,6 +86,31 @@ export async function sendOpenWeekMail(
       bcc: recipients.slice(i, i + BCC_BATCH_SIZE),
       subject,
       html,
+    });
+    if (problem) problems.push(problem);
+    else sent += 1;
+  }
+  return { sent, problems };
+}
+
+/**
+ * Mailt een lijst ontvangers in bcc, in delen en rustig (zie sendOne).
+ * Geeft terug hoeveel berichten zijn aangekomen en welke problemen er waren.
+ */
+export async function sendBccInBatches(opts: {
+  to: string;
+  recipients: string[];
+  subject: string;
+  html: string;
+}): Promise<{ sent: number; problems: string[] }> {
+  let sent = 0;
+  const problems: string[] = [];
+  for (let i = 0; i < opts.recipients.length; i += BCC_BATCH_SIZE) {
+    const problem = await sendOne({
+      to: opts.to,
+      bcc: opts.recipients.slice(i, i + BCC_BATCH_SIZE),
+      subject: opts.subject,
+      html: opts.html,
     });
     if (problem) problems.push(problem);
     else sent += 1;

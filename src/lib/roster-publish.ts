@@ -21,8 +21,18 @@ export function isPastWeek(weekStart: Date): boolean {
   return weekStart.getTime() < currentWeekStart.getTime();
 }
 
+/** Staat "rooster altijd gepubliceerd" aan voor deze zaak? Dan geldt elke week als gepubliceerd. */
+export async function isAlwaysPublished(companyId: string): Promise<boolean> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { alwaysPublishRoster: true },
+  });
+  return company?.alwaysPublishRoster ?? false;
+}
+
 export async function isRosterPublished(companyId: string, weekStart: Date): Promise<boolean> {
   if (isPastWeek(weekStart)) return true;
+  if (await isAlwaysPublished(companyId)) return true;
   const row = await prisma.rosterWeek.findUnique({
     where: { companyId_weekStart: { companyId, weekStart } },
     select: { published: true },
@@ -40,6 +50,7 @@ export async function filterVisibleForEmployee<T extends { date: Date }>(
   items: T[]
 ): Promise<T[]> {
   if (items.length === 0) return items;
+  if (await isAlwaysPublished(companyId)) return items;
 
   const upcomingWeeks = new Map<string, Date>();
   for (const item of items) {

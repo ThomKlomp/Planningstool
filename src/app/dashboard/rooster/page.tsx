@@ -7,6 +7,7 @@ import RosterBoard from "./roster-board";
 import RosterActions from "./roster-actions";
 import PendingSwapApprovals from "./pending-swap-approvals";
 import RosterPublishToggle from "./roster-publish-toggle";
+import OpenShiftMailHost from "./open-shift-mail-host";
 import { isPastWeek } from "@/lib/roster-publish";
 import { teamIdsOf } from "@/lib/teams";
 import WeekStatusToggle from "../week-status-toggle";
@@ -60,6 +61,7 @@ export default async function RosterPage({
           autoOpenWeeks: true,
           closedWeekdays: true,
           showCompanyRosterToEmployees: true,
+          alwaysPublishRoster: true,
           address: true,
           postalCode: true,
         },
@@ -151,7 +153,8 @@ export default async function RosterPage({
     if (c.reason) closedReasons[c.date.toDateString()] = c.reason;
   }
 
-  const rosterPublished = isPastWeek(week[0]) || (rosterWeek?.published ?? false);
+  const alwaysPublished = company?.alwaysPublishRoster ?? false;
+  const rosterPublished = alwaysPublished || isPastWeek(week[0]) || (rosterWeek?.published ?? false);
   const hideRosterFromViewer = !canManage && !rosterPublished;
 
   const showCompanyRoster = company?.showCompanyRosterToEmployees ?? true;
@@ -222,7 +225,13 @@ export default async function RosterPage({
         />
       </div>
 
-      {canManage && !isPastWeek(week[0]) && (
+      {canManage && !isPastWeek(week[0]) && alwaysPublished && (
+        <p className="mt-3 rounded-lg bg-awning/10 px-3 py-2 text-xs text-awning">
+          Het rooster staat altijd gepubliceerd: medewerkers zien elke wijziging meteen. Je past dit aan bij Instellingen.
+        </p>
+      )}
+
+      {canManage && !isPastWeek(week[0]) && !alwaysPublished && (
         <div className="mt-3">
           <RosterPublishToggle
             key={`publish-${week[0].toISOString()}`}
@@ -393,6 +402,7 @@ export default async function RosterPage({
           />
         </div>
       )}
+      {canManage && <OpenShiftMailHost />}
     </div>
   );
 }

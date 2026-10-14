@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { promptOpenShiftMail } from "./open-shift-mail-host";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
 
 type Member = {
@@ -62,7 +63,9 @@ export default function ShiftEditPanel({
       setError(data.error ?? "Opslaan mislukt.");
       return;
     }
+    const data = await res.json().catch(() => null);
     onDone();
+    if (data?.becameOpen) promptOpenShiftMail(shift.id);
   }
 
   async function remove() {
