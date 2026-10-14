@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   notifyShiftChanges,
-  notifyOpenShift,
   describeShift,
   shiftDateLabel,
   type ShiftChange,
@@ -87,6 +86,17 @@ export async function PATCH(
     data.departmentId = team.departmentId;
   } else if (newMembershipId !== undefined && newMembershipId !== shift.membershipId) {
     data.departmentId = null;
+  }
+
+  // Een dienst die open komt te staan behoudt het team van de medewerker die eraf gaat,
+  // anders zou de open dienst naar "geen team" (iedereen) gaan.
+  if (newMembershipId === null && shift.membershipId && !data.departmentId) {
+    const previous = await prisma.membership.findUnique({
+      where: { id: shift.membershipId },
+      select: { departmentId: true },
+    });
+    const keep = shift.departmentId ?? previous?.departmentId ?? null;
+    if (keep) data.departmentId = keep;
   }
 
   const updated = await prisma.shift.update({
@@ -178,18 +188,11 @@ export async function PATCH(
     });
   }
 
-  // Een toegewezen dienst die weer open komt te staan: het team mag 'm oppakken.
-  if (newMembershipId === null && shift.membershipId) {
-    await notifyOpenShift({
-      companyId: membership.companyId,
-      companyName: membership.companyName,
-      companySlug: membership.companySlug,
-      actorMembershipId: membership.membershipId,
-      shift: updated,
-    });
-  }
+  // Een toegewezen dienst die weer open komt te staan: de manager krijgt in het scherm de vraag
+  // of het team gemaild moet worden (POST /api/shifts/[id]/open-mail).
+  const becameOpen = newMembershipId === null && Boolean(shift.membershipId);
 
-  return NextResponse.json({ shift: updated });
+  return NextResponse.json({ shift: updated, becameOpen });
 }
 
 export async function DELETE(

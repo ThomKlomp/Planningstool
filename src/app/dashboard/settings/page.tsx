@@ -10,6 +10,7 @@ import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
 import RosterVisibilitySetting from "./roster-visibility-setting";
 import WeekOpenEmailSetting from "./week-open-email-setting";
+import CompanyFlagSetting from "./company-flag-setting";
 import AutoApprovalSettings from "./auto-approval-settings";
 import JoinLink from "./join-link";
 import CompanyDetailsSetting from "./company-details-setting";
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
         autoApproveShiftSwaps: true,
         autoApproveHours: true,
         emailWeekOpenToEmployees: true,
+        alwaysPublishRoster: true,
         subscriptionStatus: true,
         trialEndsAt: true,
         billingName: true,
@@ -194,6 +196,22 @@ export default async function SettingsPage() {
               color: d.color,
               order: d.order,
             }))}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl">Publiceren</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Standaard publiceer je een rooster per week. Met &ldquo;altijd gepubliceerd&rdquo; zien medewerkers elke wijziging meteen.
+        </p>
+        <div className="mt-4 space-y-3">
+          <CompanyFlagSetting
+            field="alwaysPublishRoster"
+            initialValue={company?.alwaysPublishRoster ?? false}
+            label="Rooster altijd gepubliceerd"
+            hint="Medewerkers zien elke wijziging direct. Er is geen publiceer-knop meer en het rooster wordt niet meer automatisch gemaild, dat doe je zelf via Rooster mailen."
+            confirmOn="Rooster altijd publiceren? Medewerkers zien dan ook concept-wijzigingen direct, ook van weken die nog niet gepubliceerd waren."
           />
         </div>
       </section>

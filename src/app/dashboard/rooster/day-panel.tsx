@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ShiftTeamSelect, { OpenShiftTeamSelect, type MemberTeam } from "./shift-team-select";
+import { announceOpenShiftMail } from "./open-shift-mail-host";
 import { slotLabel, type SlotLabelInfo } from "@/lib/availability-slots";
 
 type Availability = {
@@ -193,6 +194,7 @@ function AddShiftForm({
   const [membershipId, setMembershipId] = useState("");
   const [role, setRole] = useState("");
   const [departmentId, setDepartmentId] = useState("");
+  const [includeManagers, setIncludeManagers] = useState(false);
   const [saving, setSaving] = useState(false);
   const selectedTeams = members.find((m) => m.membershipId === membershipId)?.teams ?? [];
 
@@ -204,7 +206,7 @@ function AddShiftForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/shifts", {
+    const res = await fetch("/api/shifts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -214,9 +216,14 @@ function AddShiftForm({
         role: role || undefined,
         membershipId: membershipId || undefined,
         departmentId: departmentId || undefined,
+        includeManagers: !membershipId && includeManagers,
       }),
     });
     setSaving(false);
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      announceOpenShiftMail(data?.openShiftMail);
+    }
     onDone();
   }
 
@@ -277,6 +284,22 @@ function AddShiftForm({
           value={departmentId}
           onChange={setDepartmentId}
         />
+      )}
+      {!membershipId && (
+        <label className="flex items-start gap-2 text-xs text-ink/70">
+          <input
+            type="checkbox"
+            checked={includeManagers}
+            onChange={(e) => setIncludeManagers(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 rounded border-line text-awning focus:ring-awning"
+          />
+          <span>
+            Managers ook mailen
+            <span className="block text-ink/40">
+              Het team krijgt automatisch een mail als het rooster gepubliceerd is.
+            </span>
+          </span>
+        </label>
       )}
       <input
         type="text"

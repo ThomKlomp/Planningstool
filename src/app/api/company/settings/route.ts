@@ -23,6 +23,7 @@ export async function PATCH(req: Request) {
     autoApproveHours?: boolean;
     emailWeekOpenToEmployees?: boolean;
     pinnedDashboardBlocks?: string[];
+    alwaysPublishRoster?: boolean;
     billingName?: string | null;
     kvkNumber?: string | null;
     vatNumber?: string | null;
@@ -55,6 +56,11 @@ export async function PATCH(req: Request) {
   if (body?.autoApproveShiftSwaps !== undefined) {
     data.autoApproveShiftSwaps = Boolean(body.autoApproveShiftSwaps);
   }
+
+  if (body?.alwaysPublishRoster !== undefined) {
+    data.alwaysPublishRoster = Boolean(body.alwaysPublishRoster);
+  }
+
 
   // Blokken op het overzicht die voor medewerkers zijn vastgezet.
   if (body?.pinnedDashboardBlocks !== undefined) {
