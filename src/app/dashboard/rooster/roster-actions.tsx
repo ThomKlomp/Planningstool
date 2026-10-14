@@ -72,6 +72,7 @@ function dayLabel(day: Date) {
 
 export default function RosterActions({
   isPublished,
+  alwaysPublished = false,
   emailedAt,
   emailedCount,
   weekStart,
@@ -80,6 +81,7 @@ export default function RosterActions({
   shifts,
 }: {
   isPublished: boolean;
+  alwaysPublished?: boolean;
   emailedAt: string | null;
   emailedCount: number | null;
   weekStart: string;
@@ -220,6 +222,11 @@ export default function RosterActions({
       {!isPublished && (
         <span className="text-xs text-ink/50">
           Mailen en downloaden kan pas nadat je het rooster hebt gepubliceerd.
+        </span>
+      )}
+      {!emailedAt && isPublished && alwaysPublished && (
+        <span className="w-full text-xs text-ink/50">
+          Nog niet gemaild. Het rooster staat altijd gepubliceerd, mail het zelf wanneer je klaar bent.
         </span>
       )}
       {emailedAt && (

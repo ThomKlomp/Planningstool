@@ -85,7 +85,6 @@ model Company {
   autoApproveShiftSwaps Boolean @default(false) // medewerkers mogen overnemen/ruilen zonder managergoedkeuring
   pinnedDashboardBlocks String[] @default([]) // blokken die managers voor medewerkers op het overzicht hebben vastgezet
   alwaysPublishRoster Boolean @default(false) // roosters zijn altijd gepubliceerd: medewerkers zien elke wijziging direct, geen publiceerknop
-  notifyManagersOpenShift Boolean @default(false) // managers/eigenaren ook mailen bij een open dienst
   emailWeekOpenToEmployees Boolean @default(true) // mail iedereen zodra een nieuwe week openstaat voor beschikbaarheid
   autoApproveHours Boolean @default(false) // ingediende uren worden automatisch goedgekeurd zonder managergoedkeuring
 

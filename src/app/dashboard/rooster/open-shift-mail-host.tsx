@@ -51,6 +51,20 @@ export default function OpenShiftMailHost() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [includeManagers, setIncludeManagers] = useState(false);
+
+  async function loadPreview(shiftId: string, withManagers: boolean) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/shifts/${shiftId}/open-mail${withManagers ? "?includeManagers=1" : ""}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Voorbeeld laden mislukt.");
+      setPreview(data.summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Voorbeeld laden mislukt.");
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
     function onSent(e: Event) {
@@ -61,16 +75,8 @@ export default function OpenShiftMailHost() {
       setPromptShift(shiftId);
       setPreview(null);
       setError(null);
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/shifts/${shiftId}/open-mail`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Voorbeeld laden mislukt.");
-        setPreview(data.summary);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Voorbeeld laden mislukt.");
-      }
-      setLoading(false);
+      setIncludeManagers(false);
+      await loadPreview(shiftId, false);
     }
     window.addEventListener(SENT_EVENT, onSent);
     window.addEventListener(PROMPT_EVENT, onPrompt);
@@ -85,7 +91,11 @@ export default function OpenShiftMailHost() {
     setSending(true);
     setError(null);
     try {
-      const res = await fetch(`/api/shifts/${promptShift}/open-mail`, { method: "POST" });
+      const res = await fetch(`/api/shifts/${promptShift}/open-mail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ includeManagers }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Mailen mislukt.");
       setPromptShift(null);
@@ -126,6 +136,19 @@ export default function OpenShiftMailHost() {
                 <PersonList title="Krijgt geen mail" people={preview.skipped} />
               </>
             )}
+            <label className="mt-3 flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={includeManagers}
+                disabled={sending}
+                onChange={(e) => {
+                  setIncludeManagers(e.target.checked);
+                  if (promptShift) loadPreview(promptShift, e.target.checked);
+                }}
+                className="h-3.5 w-3.5 rounded border-line text-awning focus:ring-awning"
+              />
+              Managers ook mailen
+            </label>
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <div className="mt-4 flex justify-end gap-2">
               <button

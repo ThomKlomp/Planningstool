@@ -274,6 +274,7 @@ export default async function RosterPage({
         {canManage && (
           <RosterActions
             isPublished={rosterPublished}
+            alwaysPublished={alwaysPublished}
             emailedAt={rosterWeek?.emailedAt ? rosterWeek.emailedAt.toISOString() : null}
             emailedCount={rosterWeek?.emailedCount ?? null}
             weekStart={week[0].toISOString()}

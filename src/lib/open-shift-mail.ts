@@ -103,6 +103,8 @@ export async function planOpenShiftMail(opts: {
   companyId: string;
   shift: ShiftInput;
   actorMembershipId: string;
+  /** Ook managers/eigenaren van het team mailen (kiest de manager per keer). */
+  includeManagers?: boolean;
 }): Promise<OpenShiftPlan> {
   const { shift } = opts;
   const today = startOfDay(new Date());
@@ -116,11 +118,7 @@ export async function planOpenShiftMail(opts: {
   const shiftWin = windowOf(shift.startTime, shift.endTime);
   const weekday = shift.date.getDay();
 
-  const company = await prisma.company.findUnique({
-    where: { id: opts.companyId },
-    select: { notifyManagersOpenShift: true },
-  });
-  const includeManagers = company?.notifyManagersOpenShift ?? false;
+  const includeManagers = opts.includeManagers ?? false;
 
   const [members, allTemplates, slots] = await Promise.all([
     prisma.membership.findMany({
@@ -288,6 +286,7 @@ export async function sendOpenShiftMail(opts: {
   companySlug: string;
   actorMembershipId: string;
   shift: ShiftInput;
+  includeManagers?: boolean;
 }): Promise<OpenShiftMailSummary> {
   try {
     const plan = await planOpenShiftMail(opts);

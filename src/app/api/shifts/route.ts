@@ -136,6 +136,7 @@ export async function POST(req: Request) {
       companySlug: membership.companySlug,
       actorMembershipId: membership.membershipId,
       shift,
+      includeManagers: body?.includeManagers === true,
     });
   }
 
