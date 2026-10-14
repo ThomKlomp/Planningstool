@@ -10,6 +10,16 @@ import RosterPublishToggle from "./roster-publish-toggle";
 import OpenShiftMailHost from "./open-shift-mail-host";
 import { isPastWeek } from "@/lib/roster-publish";
 import { teamIdsOf } from "@/lib/teams";
+import LocationFilter from "@/components/location-filter";
+import {
+  listLocations,
+  locationIdsOf,
+  resolveLocationFilter,
+  shiftAtLocation,
+  shiftVisibleTo,
+  visibleLocationIds,
+  worksAtLocation,
+} from "@/lib/locations";
 import WeekStatusToggle from "../week-status-toggle";
 import WeekNav from "../week-nav";
 import WeatherSidebar from "./weather-sidebar";
@@ -19,7 +29,7 @@ type View = "company" | "team" | "personal";
 export default async function RosterPage({
   searchParams,
 }: {
-  searchParams: { week?: string; view?: string };
+  searchParams: { week?: string; view?: string; loc?: string };
 }) {
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
@@ -29,11 +39,16 @@ export default async function RosterPage({
     u.name ?? (canManage ? u.email : null) ?? "Onbekend";
   const week = resolveWeek(searchParams?.week);
 
-  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals, rosterWeek, rosterEvents, departments, slots] =
+  const [membersRaw, availabilities, shiftsRaw, weekStatus, shiftTemplates, company, closedDays, swapRequestsThisWeek, pendingApprovals, rosterWeek, rosterEvents, departments, slots, locations] =
     await Promise.all([
       prisma.membership.findMany({
         where: { companyId: membership.companyId },
-        include: { user: true, department: true, extraDepartments: { include: { department: true } } },
+        include: {
+          user: true,
+          department: true,
+          extraDepartments: { include: { department: true } },
+          locations: true,
+        },
       }),
       prisma.availability.findMany({
         where: {
@@ -43,7 +58,11 @@ export default async function RosterPage({
       }),
       prisma.shift.findMany({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
-        include: { membership: { include: { user: true, department: true } }, department: true },
+        include: {
+          membership: { include: { user: true, department: true, locations: true } },
+          department: true,
+          location: true,
+        },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       }),
       prisma.weekStatus.findUnique({
@@ -62,6 +81,7 @@ export default async function RosterPage({
           closedWeekdays: true,
           showCompanyRosterToEmployees: true,
           alwaysPublishRoster: true,
+          showAllLocationsToEmployees: true,
           address: true,
           postalCode: true,
         },
@@ -115,6 +135,7 @@ export default async function RosterPage({
         where: { companyId: membership.companyId, date: { gte: week[0], lte: week[6] } },
         select: { id: true, title: true, startTime: true, endTime: true },
       }),
+      listLocations(membership.companyId),
     ]);
 
   // membershipId -> naam, handig om in de goedkeuringslijst te tonen.
@@ -201,7 +222,36 @@ export default async function RosterPage({
     visibleShifts = shiftsRaw.filter((s) => s.membershipId === membership.membershipId);
   }
 
+  // Locaties (kostenplaats): een medewerker ziet alleen de eigen locaties als de zaak dat zo heeft
+  // ingesteld; het filter kiest één locatie, en een dienst zonder locatie telt overal waar de
+  // medewerker werkt. "Mijn rooster" blijft altijd alles van jezelf tonen.
+  const visibleLocs = visibleLocationIds({
+    canManage,
+    showAllToEmployees: company?.showAllLocationsToEmployees ?? true,
+    own: ownMember ?? {},
+  });
+  const allowedLocations = visibleLocs ? locations.filter((l) => visibleLocs.includes(l.id)) : locations;
+  const activeLoc = resolveLocationFilter(searchParams?.loc, locations, visibleLocs);
+  if (view !== "personal" && locations.length > 0) {
+    if (activeLoc) {
+      visibleShifts = visibleShifts.filter((s) => shiftAtLocation(s, activeLoc));
+      const withShift = new Set(visibleShifts.map((s) => s.membershipId));
+      visibleMembers = visibleMembers.filter(
+        (m) => worksAtLocation(m, activeLoc) || withShift.has(m.id)
+      );
+    } else if (visibleLocs) {
+      visibleShifts = visibleShifts.filter((s) => shiftVisibleTo(s, visibleLocs));
+      const withShift = new Set(visibleShifts.map((s) => s.membershipId));
+      visibleMembers = visibleMembers.filter((m) => {
+        const ids = locationIdsOf(m);
+        return ids.length === 0 || ids.some((id) => visibleLocs.includes(id)) || withShift.has(m.id);
+      });
+    }
+  }
+  const locationOf = (s: RawShift) => locations.find((l) => l.id === s.locationId) ?? null;
+
   const weekParam = toDateParam(week[0]);
+  const locQuery = activeLoc ? `&loc=${activeLoc}` : "";
 
   return (
     <div>
@@ -246,20 +296,20 @@ export default async function RosterPage({
           {showCompanyRoster && (
             <RosterViewTab
               active={view === "company"}
-              href={`/dashboard/rooster?week=${weekParam}&view=company`}
+              href={`/dashboard/rooster?week=${weekParam}&view=company${locQuery}`}
             >
               Bedrijf
             </RosterViewTab>
           )}
           <RosterViewTab
             active={view === "team"}
-            href={`/dashboard/rooster?week=${weekParam}&view=team`}
+            href={`/dashboard/rooster?week=${weekParam}&view=team${locQuery}`}
           >
             Mijn team
           </RosterViewTab>
           <RosterViewTab
             active={view === "personal"}
-            href={`/dashboard/rooster?week=${weekParam}&view=personal`}
+            href={`/dashboard/rooster?week=${weekParam}&view=personal${locQuery}`}
           >
             Mijn rooster
           </RosterViewTab>
@@ -268,7 +318,17 @@ export default async function RosterPage({
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <WeekNav basePath="/dashboard/rooster" weekStart={week[0]} />
+          <WeekNav
+            basePath="/dashboard/rooster"
+            weekStart={week[0]}
+            extraQuery={[searchParams?.view ? `view=${searchParams.view}` : "", activeLoc ? `loc=${activeLoc}` : ""].filter(Boolean).join("&") || undefined}
+          />
+          <LocationFilter
+            basePath="/dashboard/rooster"
+            params={{ week: weekParam, view: searchParams?.view }}
+            locations={allowedLocations}
+            active={activeLoc}
+          />
           <WeatherSidebar weekDates={week.map(toDateParam)} address={company?.address ?? null} postalCode={company?.postalCode ?? null} />
         </div>
         {canManage && (
@@ -279,12 +339,12 @@ export default async function RosterPage({
             emailedCount={rosterWeek?.emailedCount ?? null}
             weekStart={week[0].toISOString()}
             weekLabel={`week ${getISOWeekNumber(week[0])}`}
-            members={members.map((m) => ({
+            members={visibleMembers.map((m) => ({
               membershipId: m.id,
               name: displayName(m.user),
               departmentName: m.department?.name ?? null,
             }))}
-            shifts={shiftsRaw.map((s) => ({
+            shifts={visibleShifts.map((s) => ({
               id: s.id,
               date: s.date.toISOString(),
               startTime: s.startTime,
@@ -293,6 +353,7 @@ export default async function RosterPage({
               memberName: s.membership ? displayName(s.membership.user) : null,
               membershipId: s.membershipId,
               departmentName: shiftTeam(s)?.name ?? null,
+              locationName: locationOf(s)?.name ?? null,
             }))}
           />
         )}
@@ -335,6 +396,9 @@ export default async function RosterPage({
             canManage={canManage}
             viewerMembershipId={membership.membershipId}
             viewerTeamIds={ownTeamIds}
+            viewerLocationIds={ownMember ? locationIdsOf(ownMember) : []}
+            locations={allowedLocations}
+            defaultLocationId={activeLoc}
             departments={departments}
             slots={slots}
             swapRequests={swapRequestsThisWeek.map((r) => ({
@@ -369,6 +433,7 @@ export default async function RosterPage({
               departmentName: m.department?.name ?? null,
               departmentColor: m.department?.color ?? null,
               teams: teamsOfMember(m),
+              locationIds: locationIdsOf(m),
             }))}
             shiftTemplates={shiftTemplates.map((t) => ({
               id: t.id,
@@ -377,7 +442,14 @@ export default async function RosterPage({
               endTime: t.endTime,
               weekdays: t.weekdays,
             }))}
-            availabilities={availabilities.map((a) => ({
+            availabilities={availabilities
+              .filter(
+                (a) =>
+                  canManage ||
+                  !visibleLocs ||
+                  visibleMembers.some((m) => m.id === a.membershipId)
+              )
+              .map((a) => ({
               membershipId: a.membershipId,
               date: a.date.toISOString(),
               daypart: a.daypart,
@@ -395,6 +467,9 @@ export default async function RosterPage({
               departmentId: s.departmentId,
               departmentName: shiftTeam(s)?.name ?? null,
               departmentColor: shiftTeam(s)?.color ?? null,
+              locationId: s.locationId,
+              locationName: locationOf(s)?.name ?? null,
+              locationColor: locationOf(s)?.color ?? null,
             }))}
             closedDates={closedDates}
             closedReasons={closedReasons}

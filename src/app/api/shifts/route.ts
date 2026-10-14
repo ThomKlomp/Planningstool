@@ -6,6 +6,7 @@ import { filterVisibleForEmployee } from "@/lib/roster-publish";
 import { notifyShiftChanges, describeShift } from "@/lib/roster-change";
 import { sendOpenShiftMail, type OpenShiftMailSummary } from "@/lib/open-shift-mail";
 import { resolveShiftDepartment } from "@/lib/teams";
+import { resolveShiftLocation, shiftVisibleTo, visibleLocationIds } from "@/lib/locations";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -39,6 +40,7 @@ export async function GET(req: Request) {
         select: {
           id: true,
           departmentId: true,
+          locations: { select: { locationId: true } },
           role: canManage,
           user: { select: { id: true, name: true, email: canManage } },
         },
@@ -48,9 +50,30 @@ export async function GET(req: Request) {
   });
 
   // Medewerkers krijgen alleen shifts uit gepubliceerde (of verleden) weken.
-  const shifts = canManage
+  const published = canManage
     ? allShifts
     : await filterVisibleForEmployee(membership.companyId, allShifts);
+
+  // Locatiebeperking (Instellingen): een medewerker ziet dan alleen diensten van de eigen locaties.
+  let shifts = published;
+  if (!canManage) {
+    const [company, own] = await Promise.all([
+      prisma.company.findUnique({
+        where: { id: membership.companyId },
+        select: { showAllLocationsToEmployees: true },
+      }),
+      prisma.membership.findUnique({
+        where: { id: membership.membershipId },
+        select: { locations: { select: { locationId: true } } },
+      }),
+    ]);
+    const visible = visibleLocationIds({
+      canManage,
+      showAllToEmployees: company?.showAllLocationsToEmployees ?? true,
+      own: own ?? {},
+    });
+    shifts = published.filter((s) => shiftVisibleTo(s, visible));
+  }
 
   return NextResponse.json({ shifts });
 }
@@ -79,9 +102,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: team.error }, { status: 400 });
   }
 
+  const location = await resolveShiftLocation(membership.companyId, membershipId, body?.locationId);
+  if (!location.ok) {
+    return NextResponse.json({ error: location.error }, { status: 400 });
+  }
+
   const shift = await prisma.shift.create({
     data: {
       companyId: membership.companyId,
+      locationId: location.locationId,
       date: new Date(date),
       startTime,
       endTime,

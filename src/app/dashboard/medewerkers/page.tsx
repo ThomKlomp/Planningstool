@@ -4,10 +4,16 @@ import { prisma } from "@/lib/prisma";
 import JoinLink from "../settings/join-link";
 import MembersManager from "./members-manager";
 import TeamSection from "../team-section";
+import LocationFilter from "@/components/location-filter";
+import { listLocations, resolveLocationFilter } from "@/lib/locations";
 
 export const dynamic = "force-dynamic";
 
-export default async function MembersPage() {
+export default async function MembersPage({
+  searchParams,
+}: {
+  searchParams: { loc?: string };
+}) {
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
   const canManage = membership.role === "OWNER" || membership.role === "MANAGER";
@@ -16,10 +22,10 @@ export default async function MembersPage() {
     redirect("/dashboard");
   }
 
-  const [members, departments, pendingInvites] = await Promise.all([
+  const [members, departments, pendingInvites, locations] = await Promise.all([
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
-      include: { user: true, extraDepartments: true },
+      include: { user: true, extraDepartments: true, locations: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.department.findMany({
@@ -31,7 +37,9 @@ export default async function MembersPage() {
       where: { companyId: membership.companyId, acceptedAt: null },
       orderBy: { createdAt: "desc" },
     }),
+    listLocations(membership.companyId),
   ]);
+  const activeLoc = resolveLocationFilter(searchParams?.loc, locations, null);
 
   return (
     <div className="max-w-2xl">
@@ -41,12 +49,20 @@ export default async function MembersPage() {
         Teams zelf maak je aan bij Instellingen.
       </p>
 
+      {locations.length > 1 && (
+        <div className="mt-4">
+          <LocationFilter basePath="/dashboard/medewerkers" params={{}} locations={locations} active={activeLoc} />
+        </div>
+      )}
+
       <section className="mt-8">
         <MembersManager
           viewerRole={membership.role}
           viewerMembershipId={membership.membershipId}
           isDemoCompany={membership.companySlug === "demo"}
           departments={departments}
+          locations={locations}
+          activeLocation={activeLoc}
           members={members.map((m) => ({
             membershipId: m.id,
             name: m.user.name ?? m.user.email ?? "Onbekend",
@@ -54,12 +70,14 @@ export default async function MembersPage() {
             role: m.role,
             departmentId: m.departmentId,
             extraDepartmentIds: m.extraDepartments.map((e) => e.departmentId),
+            locationIds: m.locations.map((l) => l.locationId),
           }))}
         />
       </section>
 
       <TeamSection
         departments={departments}
+        locations={locations}
         initialPendingInvites={pendingInvites.map((i) => ({
           id: i.id,
           email: i.email,

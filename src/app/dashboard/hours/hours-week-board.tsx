@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTodayKey } from "@/lib/use-today-key";
 import { workedHours, formatHours } from "@/lib/worked-hours";
+import LocationBadge from "@/components/location-badge";
 import { EditableEntryPanel, StatusBadge, type Entry } from "./entry-parts";
 
 // Uren op dezelfde manier getoond als het rooster: per dag een kaart, daarin
@@ -188,6 +189,13 @@ export default function HoursWeekBoard({
                                 <span className="text-ink/40"> · {formatHours(hours)}</span>
                               )}
                             </p>
+                            {entry.locationName && (
+                              <LocationBadge
+                                name={entry.locationName}
+                                color={entry.locationColor}
+                                className="mt-0.5"
+                              />
+                            )}
                             {entry.breakMinutes > 0 && (
                               <p className="text-[11px] text-ink/40">{entry.breakMinutes} min pauze</p>
                             )}

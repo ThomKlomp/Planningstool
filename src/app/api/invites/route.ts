@@ -52,6 +52,19 @@ export async function POST(req: Request) {
     extraDepartmentIds = found.map((d) => d.id);
   }
 
+  // Locaties (optioneel): alleen locaties van deze zaak. Leeg = alle locaties.
+  let locationIds: string[] = [];
+  if (Array.isArray(body?.locationIds) && body.locationIds.length > 0) {
+    const requested: string[] = Array.from(
+      new Set(body.locationIds.filter((id: unknown): id is string => typeof id === "string"))
+    );
+    const found = await prisma.location.findMany({
+      where: { id: { in: requested }, companyId: membership.companyId },
+      select: { id: true },
+    });
+    locationIds = found.map((l) => l.id);
+  }
+
   // Hoofdteam (optioneel, alleen voor medewerkers): moet een team van deze zaak zijn.
   let departmentId: string | null = null;
   if (role === "EMPLOYEE" && typeof body?.departmentId === "string" && body.departmentId) {
@@ -71,6 +84,7 @@ export async function POST(req: Request) {
       role,
       departmentId,
       extraDepartmentIds,
+      locationIds,
       companyId: membership.companyId,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14), // 14 dagen geldig
     },

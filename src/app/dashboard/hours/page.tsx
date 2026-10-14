@@ -9,11 +9,13 @@ import WeekNav from "../week-nav";
 import { resolveWeek, getWeekDates, getISOWeekNumber, toDateParam } from "@/lib/week";
 import { isDateClosed } from "@/lib/closed-days";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
+import LocationFilter from "@/components/location-filter";
+import { listLocations, locationIdsOf, resolveLocationFilter, worksAtLocation } from "@/lib/locations";
 
 export default async function HoursPage({
   searchParams,
 }: {
-  searchParams: { week?: string };
+  searchParams: { week?: string; loc?: string };
 }) {
   const { membership } = await requireMembership();
   await requireActiveSubscription(membership);
@@ -29,14 +31,15 @@ export default async function HoursPage({
   const closedFrom = rangeStart < week[0] ? rangeStart : week[0];
   const closedTo = rangeEnd > week[6] ? rangeEnd : week[6];
 
-  const [allEntries, closedDays, company] = await Promise.all([
+  const [allEntries, closedDays, company, locations, ownMember] = await Promise.all([
     prisma.timeEntry.findMany({
       where: canManage
         ? { companyId: membership.companyId, date: weekRange }
         : { membershipId: membership.membershipId, date: weekRange },
       include: {
-        membership: { include: { user: true, department: true } },
-        shift: { include: { department: true } },
+        membership: { include: { user: true, department: true, locations: true } },
+        shift: { include: { department: true, location: true } },
+        location: true,
       },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     }),
@@ -47,12 +50,30 @@ export default async function HoursPage({
       where: { id: membership.companyId },
       select: { closedWeekdays: true },
     }),
+    listLocations(membership.companyId),
+    prisma.membership.findUnique({
+      where: { id: membership.membershipId },
+      select: { locations: { select: { locationId: true } } },
+    }),
   ]);
+
+  // Locatiefilter (alleen voor managers): uren zonder eigen locatie tellen via hun dienst
+  // mee, en anders overal waar de medewerker werkt.
+  const activeLoc = canManage ? resolveLocationFilter(searchParams?.loc, locations, null) : "";
+  const locationById = new Map(locations.map((l) => [l.id, l]));
+  const entryLocation = (e: (typeof allEntries)[number]) =>
+    locationById.get(e.locationId ?? e.shift?.locationId ?? "") ?? null;
 
   // Zie api/time-entries: conceptregels van nog niet gepubliceerde weken zijn
   // voor medewerkers verborgen.
+  const locationFiltered = activeLoc
+    ? allEntries.filter((e) => {
+        const loc = e.locationId ?? e.shift?.locationId ?? null;
+        return loc ? loc === activeLoc : worksAtLocation(e.membership, activeLoc);
+      })
+    : allEntries;
   const entries = canManage
-    ? allEntries
+    ? locationFiltered
     : [
         ...(await filterVisibleForEmployee(
           membership.companyId,
@@ -144,7 +165,7 @@ export default async function HoursPage({
 
       {canManage && (
         <div className="mt-4 max-w-3xl">
-          <ExportHours />
+          <ExportHours locations={locations} />
         </div>
       )}
 
@@ -156,12 +177,31 @@ export default async function HoursPage({
 
       {!canManage && (
         <div className="mt-6 max-w-3xl">
-          <TimeEntryForm closedDates={closedDates} closedReasons={closedReasons} />
+          <TimeEntryForm
+            closedDates={closedDates}
+            closedReasons={closedReasons}
+            locations={(ownMember && locationIdsOf(ownMember).length > 0
+              ? locations.filter((l) => locationIdsOf(ownMember).includes(l.id))
+              : locations
+            ).map((l) => ({ id: l.id, name: l.name }))}
+          />
         </div>
       )}
 
-      <div className="mt-6">
-        <WeekNav basePath="/dashboard/hours" weekStart={week[0]} />
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <WeekNav
+          basePath="/dashboard/hours"
+          weekStart={week[0]}
+          extraQuery={activeLoc ? `loc=${activeLoc}` : undefined}
+        />
+        {canManage && (
+          <LocationFilter
+            basePath="/dashboard/hours"
+            params={{ week: searchParams?.week }}
+            locations={locations}
+            active={activeLoc}
+          />
+        )}
       </div>
 
       {openWeeks.length > 0 && (
@@ -206,6 +246,8 @@ export default async function HoursPage({
               departmentName: dept?.name ?? null,
               departmentColor: dept?.color ?? null,
               departmentOrder: dept?.order ?? null,
+              locationName: entryLocation(e)?.name ?? null,
+              locationColor: entryLocation(e)?.color ?? null,
               notScheduled:
                 canManage &&
                 (e.status === "SUBMITTED" || e.status === "QUERIED" || e.status === "APPROVED") &&

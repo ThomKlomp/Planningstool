@@ -15,10 +15,13 @@ type TierWarning = {
 export default function InviteForm({
   onInvited,
   departments = [],
+  locations = [],
 }: {
   onInvited?: (invite: Invite) => void;
   departments?: { id: string; name: string }[];
+  locations?: { id: string; name: string; color: string }[];
 }) {
+  const [locationIds, setLocationIds] = useState<string[]>([]);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"EMPLOYEE" | "MANAGER">("EMPLOYEE");
@@ -50,6 +53,7 @@ export default function InviteForm({
         email,
         role,
         extraDepartmentIds: extraIds,
+        locationIds,
         departmentId: role === "EMPLOYEE" && departmentId ? departmentId : undefined,
       }),
     });
@@ -74,6 +78,7 @@ export default function InviteForm({
     setEmail("");
     setDepartmentId("");
     setExtraIds([]);
+    setLocationIds([]);
     setShowExtras(false);
     setLoading(false);
     router.refresh();
@@ -166,6 +171,40 @@ export default function InviteForm({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {locations.length > 0 && (
+        <div className="w-full">
+          <p className="text-xs text-ink/60">
+            Locaties <span className="text-ink/40">(niets gekozen = alle locaties)</span>
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {locations.map((l) => {
+              const active = locationIds.includes(l.id);
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() =>
+                    setLocationIds((prev) =>
+                      prev.includes(l.id) ? prev.filter((id) => id !== l.id) : [...prev, l.id]
+                    )
+                  }
+                  className={`rounded-full border px-2.5 py-1 text-xs ${
+                    active ? "border-ink bg-ink text-paper" : "border-line text-ink/60 hover:border-ink"
+                  }`}
+                >
+                  <span
+                    className="mr-1.5 inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: l.color }}
+                    aria-hidden
+                  />
+                  {l.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

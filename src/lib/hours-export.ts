@@ -7,6 +7,7 @@ export type ExportEntry = {
   breakMinutes: number;
   memberName: string;
   departmentName: string | null;
+  locationName?: string | null;
 };
 
 import { workedHours } from "@/lib/worked-hours";
@@ -87,29 +88,30 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
   );
 
   // --- Maandoverzicht: per persoon per maand
-  const month = new Map<string, { name: string; team: string; y: number; m: number; n: number; h: number }>();
+  const month = new Map<string, { name: string; team: string; loc: string; y: number; m: number; n: number; h: number }>();
   // --- Weekoverzicht: per persoon per ISO-week
-  const week = new Map<string, { name: string; team: string; w: ReturnType<typeof isoWeek>; n: number; h: number }>();
+  const week = new Map<string, { name: string; team: string; loc: string; w: ReturnType<typeof isoWeek>; n: number; h: number }>();
   // --- Dagoverzicht: per persoon per dag
-  const day = new Map<string, { name: string; team: string; date: Date; times: string[]; brk: number; h: number }>();
+  const day = new Map<string, { name: string; team: string; loc: string; date: Date; times: string[]; brk: number; h: number }>();
 
   for (const e of sorted) {
     const h = workedHours(e);
     const team = e.departmentName ?? "";
+    const loc = e.locationName ?? "";
     const y = e.date.getUTCFullYear();
     const m = e.date.getUTCMonth();
 
-    const mk = `${e.memberName}|${y}-${m}`;
-    const mo = month.get(mk) ?? { name: e.memberName, team, y, m, n: 0, h: 0 };
+    const mk = `${e.memberName}|${loc}|${y}-${m}`;
+    const mo = month.get(mk) ?? { name: e.memberName, team, loc, y, m, n: 0, h: 0 };
     mo.n += 1; mo.h += h; month.set(mk, mo);
 
     const w = isoWeek(e.date);
-    const wk = `${e.memberName}|${w.year}-${w.week}`;
-    const we = week.get(wk) ?? { name: e.memberName, team, w, n: 0, h: 0 };
+    const wk = `${e.memberName}|${loc}|${w.year}-${w.week}`;
+    const we = week.get(wk) ?? { name: e.memberName, team, loc, w, n: 0, h: 0 };
     we.n += 1; we.h += h; week.set(wk, we);
 
-    const dk = `${e.memberName}|${iso(e.date)}`;
-    const da = day.get(dk) ?? { name: e.memberName, team, date: e.date, times: [], brk: 0, h: 0 };
+    const dk = `${e.memberName}|${loc}|${iso(e.date)}`;
+    const da = day.get(dk) ?? { name: e.memberName, team, loc, date: e.date, times: [], brk: 0, h: 0 };
     da.times.push(`${e.startTime}–${e.endTime}`);
     da.brk += e.breakMinutes || 0;
     da.h += h;
@@ -117,6 +119,11 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
   }
 
   const r2 = (n: number) => Math.round(n * 100) / 100;
+  // Alleen een Locatie-kolom als de zaak locaties gebruikt; anders blijft de export zoals hij was.
+  const hasLoc = entries.some((e) => e.locationName);
+  const locCol = hasLoc ? [{ header: "Locatie", width: 16 }] : [];
+  const withLoc = (loc: string, row: (string | number)[]) =>
+    hasLoc ? [row[0], row[1], loc, ...row.slice(2)] : row;
 
   addSheet(
     wb,
@@ -124,11 +131,12 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
     [
       { header: "Medewerker", width: 26 },
       { header: "Team", width: 16 },
+      ...locCol,
       { header: "Maand", width: 18 },
       { header: "Diensten", width: 10 },
       { header: "Uren", width: 10, hours: true },
     ],
-    Array.from(month.values()).map((r) => [r.name, r.team, `${MONTHS[r.m]} ${r.y}`, r.n, r2(r.h)])
+    Array.from(month.values()).map((r) => withLoc(r.loc, [r.name, r.team, `${MONTHS[r.m]} ${r.y}`, r.n, r2(r.h)]))
   );
 
   addSheet(
@@ -137,15 +145,18 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
     [
       { header: "Medewerker", width: 26 },
       { header: "Team", width: 16 },
+      ...locCol,
       { header: "Week", width: 14 },
       { header: "Van", width: 12 },
       { header: "Tot", width: 12 },
       { header: "Diensten", width: 10 },
       { header: "Uren", width: 10, hours: true },
     ],
-    Array.from(week.values()).map((r) => [
-      r.name, r.team, `Week ${r.w.week} (${r.w.year})`, iso(r.w.monday), iso(r.w.sunday), r.n, r2(r.h),
-    ])
+    Array.from(week.values()).map((r) =>
+      withLoc(r.loc, [
+        r.name, r.team, `Week ${r.w.week} (${r.w.year})`, iso(r.w.monday), iso(r.w.sunday), r.n, r2(r.h),
+      ])
+    )
   );
 
   addSheet(
@@ -154,17 +165,20 @@ export async function buildHoursWorkbook(entries: ExportEntry[], periodLabel: st
     [
       { header: "Medewerker", width: 26 },
       { header: "Team", width: 16 },
+      ...locCol,
       { header: "Datum", width: 12 },
       { header: "Dag", width: 12 },
       { header: "Tijden", width: 24 },
       { header: "Pauze (min)", width: 12 },
       { header: "Uren", width: 10, hours: true },
     ],
-    Array.from(day.values()).map((r) => [
-      r.name, r.team, iso(r.date),
-      r.date.toLocaleDateString("nl-NL", { weekday: "long", timeZone: "UTC" }),
-      r.times.join("; "), r.brk, r2(r.h),
-    ])
+    Array.from(day.values()).map((r) =>
+      withLoc(r.loc, [
+        r.name, r.team, iso(r.date),
+        r.date.toLocaleDateString("nl-NL", { weekday: "long", timeZone: "UTC" }),
+        r.times.join("; "), r.brk, r2(r.h),
+      ])
+    )
   );
 
   // Metadata-blad bovenaan is bewust weggelaten; periode zit in de bestandsnaam.

@@ -9,6 +9,7 @@ import {
   type ShiftChange,
 } from "@/lib/roster-change";
 import { resolveShiftDepartment } from "@/lib/teams";
+import { resolveShiftLocation } from "@/lib/locations";
 
 export async function PATCH(
   req: Request,
@@ -37,6 +38,7 @@ export async function PATCH(
     role?: string | null;
     membershipId?: string | null;
     departmentId?: string | null;
+    locationId?: string | null;
   } = {};
 
   if (body?.startTime !== undefined) {
@@ -86,6 +88,21 @@ export async function PATCH(
     data.departmentId = team.departmentId;
   } else if (newMembershipId !== undefined && newMembershipId !== shift.membershipId) {
     data.departmentId = null;
+  }
+
+  // Locatie: expliciet gekozen, of (bij een andere medewerker) behouden als die er ook werkt.
+  if (body?.locationId !== undefined) {
+    const loc = await resolveShiftLocation(membership.companyId, finalMembershipId, body.locationId || null);
+    if (!loc.ok) return NextResponse.json({ error: loc.error }, { status: 400 });
+    data.locationId = loc.locationId;
+  } else if (newMembershipId !== undefined && newMembershipId !== shift.membershipId) {
+    const keep = await resolveShiftLocation(membership.companyId, newMembershipId, shift.locationId);
+    if (keep.ok) {
+      data.locationId = keep.locationId;
+    } else {
+      const fallback = await resolveShiftLocation(membership.companyId, newMembershipId, null);
+      data.locationId = fallback.ok ? fallback.locationId : null;
+    }
   }
 
   // Een dienst die open komt te staan behoudt het team van de medewerker die eraf gaat,

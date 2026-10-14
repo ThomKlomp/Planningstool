@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DayPanel from "./day-panel";
+import LocationBadge from "@/components/location-badge";
 import ShiftEditPanel from "./shift-edit-panel";
 import EventPanel, { type RosterEventData } from "./event-panel";
 import { type MemberTeam } from "./shift-team-select";
@@ -19,6 +20,9 @@ type Shift = {
   departmentId?: string | null; // expliciet team van de dienst (leeg = hoofdteam van de medewerker)
   departmentName: string | null;
   departmentColor: string | null;
+  locationId?: string | null;
+  locationName?: string | null;
+  locationColor?: string | null;
 };
 
 type SwapProposal = { proposedById: string; name: string; note: string | null };
@@ -47,6 +51,7 @@ type Member = {
   departmentName: string | null;
   departmentColor: string | null;
   teams?: MemberTeam[]; // hoofdteam eerst; alleen gevuld bij meerdere teams
+  locationIds?: string[]; // locaties van de medewerker (leeg = alle locaties)
 };
 type ShiftTemplate = {
   id: string;
@@ -88,6 +93,9 @@ export default function RosterBoard({
   viewerMembershipId,
   viewerTeamIds = [],
   departments = [],
+  locations = [],
+  viewerLocationIds = [],
+  defaultLocationId = "",
   slots = [],
   swapRequests = [],
   events = [],
@@ -105,6 +113,9 @@ export default function RosterBoard({
   viewerMembershipId?: string;
   viewerTeamIds?: string[]; // teams van de kijker: bepaalt welke open diensten die mag oppakken
   departments?: { id: string; name: string }[]; // alle teams van de zaak, voor open diensten
+  locations?: { id: string; name: string; color: string }[]; // locaties van de zaak (leeg = zaak gebruikt geen locaties)
+  viewerLocationIds?: string[]; // locaties van de kijker: bepaalt welke open diensten die mag oppakken
+  defaultLocationId?: string; // gekozen locatiefilter, voorgesteld bij een nieuwe dienst
   slots?: { id: string; title: string | null; startTime: string; endTime: string }[]; // extra tijdvakken, voor de labels in het dagpaneel
   swapRequests?: SwapRequest[];
   events?: RosterEventData[];
@@ -244,6 +255,7 @@ export default function RosterBoard({
                         canManage={canManage}
                         viewerMembershipId={viewerMembershipId}
                         viewerTeamIds={viewerTeamIds}
+                        viewerLocationIds={viewerLocationIds}
                         swapRequest={swapRequests.find((r) => r.shiftId === shift.id)}
                         onChanged={() => router.refresh()}
                         onEdit={() => setEditingShift(shift)}
@@ -293,6 +305,8 @@ export default function RosterBoard({
           )}
           shiftTemplates={shiftTemplates}
           departments={departments}
+          locations={locations}
+          defaultLocationId={defaultLocationId}
           slots={slots}
           onClose={() => setOpenDay(null)}
           onDone={() => {
@@ -307,6 +321,7 @@ export default function RosterBoard({
           shift={editingShift}
           members={members}
           departments={departments}
+          locations={locations}
           onClose={() => setEditingShift(null)}
           onDone={() => {
             setEditingShift(null);
@@ -371,6 +386,7 @@ function ShiftCard({
   canManage,
   viewerMembershipId,
   viewerTeamIds,
+  viewerLocationIds,
   swapRequest: rawSwapRequest,
   onChanged,
   onEdit,
@@ -379,6 +395,7 @@ function ShiftCard({
   canManage: boolean;
   viewerMembershipId?: string;
   viewerTeamIds: string[];
+  viewerLocationIds: string[];
   swapRequest?: SwapRequest;
   onChanged: () => void;
   onEdit?: () => void;
@@ -416,7 +433,11 @@ function ShiftCard({
     isOpenShift &&
     Boolean(viewerMembershipId) &&
     new Date(shift.date) >= new Date(new Date().toDateString()) &&
-    (canManage || !shift.departmentId || viewerTeamIds.includes(shift.departmentId));
+    (canManage || !shift.departmentId || viewerTeamIds.includes(shift.departmentId)) &&
+    (canManage ||
+      !shift.locationId ||
+      viewerLocationIds.length === 0 ||
+      viewerLocationIds.includes(shift.locationId));
 
   async function pickUp(e: React.MouseEvent) {
     e.stopPropagation();
@@ -484,6 +505,9 @@ function ShiftCard({
           <p className="text-ink/60">
             {shift.startTime}–{shift.endTime}
           </p>
+          {shift.locationName && (
+            <LocationBadge name={shift.locationName} color={shift.locationColor} className="mt-0.5" />
+          )}
         </div>
       </div>
 

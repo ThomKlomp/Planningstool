@@ -13,6 +13,7 @@ type ShiftForFeed = {
   role: string | null;
   note: string | null;
   updatedAt: Date;
+  locationName?: string | null;
 };
 
 const VTIMEZONE = [
@@ -95,7 +96,9 @@ export function buildShiftsICS(opts: {
     lines.push(`DTSTART;TZID=Europe/Amsterdam:${localDateTime(shift.date, shift.startTime)}`);
     lines.push(`DTEND;TZID=Europe/Amsterdam:${localDateTime(shift.date, shift.endTime)}`);
     lines.push(fold(`SUMMARY:${escapeText(shift.role ? `Dienst: ${shift.role}` : "Dienst")}`));
-    lines.push(fold(`LOCATION:${escapeText(opts.companyName)}`));
+    lines.push(
+      fold(`LOCATION:${escapeText(shift.locationName ? `${opts.companyName}, ${shift.locationName}` : opts.companyName)}`)
+    );
     if (shift.note) {
       lines.push(fold(`DESCRIPTION:${escapeText(shift.note)}`));
     }

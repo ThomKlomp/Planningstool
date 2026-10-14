@@ -19,7 +19,8 @@ function monthRange(monthsAgo: number) {
 // Download van goedgekeurde uren als Excel (3 tabbladen), voor een zelf
 // gekozen periode (begin- en einddatum). Staan er in die periode nog uren
 // open, dan krijgt de manager eerst een waarschuwing.
-export default function ExportHours() {
+export default function ExportHours({ locations = [] }: { locations?: { id: string; name: string }[] }) {
+  const [locationId, setLocationId] = useState("");
   const thisMonth = monthRange(0);
   const [from, setFrom] = useState(thisMonth.from);
   const [to, setTo] = useState(thisMonth.to);
@@ -28,7 +29,7 @@ export default function ExportHours() {
   const [error, setError] = useState<string | null>(null);
 
   const validRange = Boolean(from) && Boolean(to) && from <= to;
-  const url = `/api/hours/export?from=${from}&to=${to}`;
+  const url = `/api/hours/export?from=${from}&to=${to}${locationId ? `&location=${locationId}` : ""}`;
 
   function applyPreset(monthsAgo: number) {
     const range = monthRange(monthsAgo);
@@ -88,6 +89,21 @@ export default function ExportHours() {
           }}
           className="rounded-lg border border-line px-3 py-2 text-sm"
         />
+        {locations.length > 0 && (
+          <select
+            value={locationId}
+            onChange={(e) => setLocationId(e.target.value)}
+            aria-label="Locatie"
+            className="rounded-lg border border-line px-3 py-2 text-sm"
+          >
+            <option value="">Alle locaties</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           onClick={handleExport}
           disabled={checking || !validRange}

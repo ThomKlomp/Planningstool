@@ -103,6 +103,8 @@ model Company {
   notifications Notification[]
   closedWeekdays Int[] @default([]) // vaste sluitingsdagen, bv. [1,2] = elke ma+di dicht (0=zo...6=za)
   departments Department[]
+  locations Location[]
+  showAllLocationsToEmployees Boolean @default(true) // medewerkers zien ook de andere locaties; uit = alleen de eigen locatie(s)
 
   // ---------- Bedrijfsgegevens (voor facturering) ----------
   billingName String? // officiële bedrijfsnaam, kan afwijken van "name" hierboven
@@ -221,6 +223,7 @@ model Membership {
   timeEntries    TimeEntry[]
   extraDepartments MembershipDepartment[]
   recurringShifts  RecurringShift[]
+  locations        MembershipLocation[]
 
   @@unique([userId, companyId])
 }
@@ -239,6 +242,40 @@ model MembershipDepartment {
   @@index([departmentId])
 }
 
+// Locaties binnen één zaak (bv. "Centrum", "Haven"): een kostenplaats, geen aparte
+// zaak. Alle bedrijfsinstellingen, het abonnement en de accounts blijven gedeeld;
+// de locatie maakt alleen onderscheid in rooster, beschikbaarheid, uren en
+// medewerkers. Een medewerker kan aan meerdere locaties gekoppeld zijn; zonder
+// koppeling werkt iemand overal.
+model Location {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  color     String   @default("#3F6E5B")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  company         Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships     MembershipLocation[]
+  shifts          Shift[]
+  recurringShifts RecurringShift[]
+  timeEntries     TimeEntry[]
+
+  @@index([companyId])
+}
+
+model MembershipLocation {
+  id           String @id @default(cuid())
+  membershipId String
+  locationId   String
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  location   Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, locationId])
+  @@index([locationId])
+}
+
 // Uitnodiging van een medewerker per e-mail, voordat die een account heeft.
 model Invite {
   id        String   @id @default(cuid())
@@ -252,6 +289,7 @@ model Invite {
   acceptedAt DateTime?
   extraDepartmentIds String[] @default([]) // extra teams die de medewerker bij het accepteren erbij krijgt
   departmentId String? // hoofdteam dat de manager bij het uitnodigen koos (leeg = medewerker kiest zelf)
+  locationIds String[] @default([]) // locaties waaraan de medewerker bij het accepteren wordt gekoppeld (leeg = alle locaties)
 
   @@index([companyId])
 }
@@ -377,11 +415,13 @@ model Shift {
 
   departmentId    String? // team waarvoor deze dienst gewerkt wordt; leeg = hoofdteam van de medewerker
   recurringShiftId String? // gezet als deze dienst uit een terugkerend patroon komt
+  locationId      String? // locatie (kostenplaats) waar de dienst gewerkt wordt; leeg = geen vaste locatie
 
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   recurringShift RecurringShift? @relation(fields: [recurringShiftId], references: [id], onDelete: SetNull)
+  location   Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
   timeEntry  TimeEntry?
   swapRequest ShiftSwapRequest?
 
@@ -399,6 +439,7 @@ model RecurringShift {
   companyId      String
   membershipId   String
   departmentId   String?
+  locationId     String?
   weekday        Int // 0 = zondag ... 6 = zaterdag (zoals Date.getDay())
   startTime      String
   endTime        String
@@ -410,6 +451,7 @@ model RecurringShift {
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  location   Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
   shifts     Shift[]
 
   @@index([companyId])
@@ -533,6 +575,7 @@ model TimeEntry {
   breakMinutes Int             @default(0)
   status       TimeEntryStatus @default(SUBMITTED)
   note         String?
+  locationId   String? // locatie bij uren zonder dienst; bij uren uit een dienst telt de locatie van de dienst
   managerComment String? // vraag/opmerking van de manager bij status QUERIED
   reviewedById String? // membershipId van de manager die goed-/afkeurde
   reviewedAt   DateTime?
@@ -540,6 +583,7 @@ model TimeEntry {
   company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   shift      Shift?     @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  location   Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

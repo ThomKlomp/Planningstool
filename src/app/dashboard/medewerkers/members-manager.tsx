@@ -13,7 +13,9 @@ type Member = {
   role: Role;
   departmentId: string | null;
   extraDepartmentIds: string[];
+  locationIds: string[];
 };
+type Location = { id: string; name: string; color: string };
 
 function matchesQuery(m: Member, query: string) {
   const q = query.trim().toLowerCase();
@@ -25,12 +27,16 @@ const ROLE_ORDER: Role[] = ["OWNER", "MANAGER", "EMPLOYEE"];
 export default function MembersManager({
   members,
   departments,
+  locations = [],
+  activeLocation = "",
   viewerRole,
   viewerMembershipId,
   isDemoCompany = false,
 }: {
   members: Member[];
   departments: Department[];
+  locations?: Location[];
+  activeLocation?: string;
   viewerRole: Role;
   viewerMembershipId: string;
   isDemoCompany?: boolean;
@@ -46,6 +52,12 @@ export default function MembersManager({
   const [extras, setExtras] = useState<Record<string, string[]>>(() => {
     const map: Record<string, string[]> = {};
     for (const m of members) map[m.membershipId] = m.extraDepartmentIds;
+    return map;
+  });
+  // Locaties per medewerker (kostenplaats): niets gekozen betekent dat iemand overal werkt.
+  const [memberLocations, setMemberLocations] = useState<Record<string, string[]>>(() => {
+    const map: Record<string, string[]> = {};
+    for (const m of members) map[m.membershipId] = m.locationIds;
     return map;
   });
   const [removed, setRemoved] = useState<string[]>([]);
@@ -103,6 +115,22 @@ export default function MembersManager({
       router.refresh();
     } catch (e) {
       setExtras((prev) => ({ ...prev, [membershipId]: current }));
+      setError(e instanceof Error ? e.message : "Opslaan mislukt.");
+    }
+  }
+
+  async function toggleLocation(membershipId: string, locationId: string) {
+    const current = memberLocations[membershipId] ?? [];
+    const next = current.includes(locationId)
+      ? current.filter((id) => id !== locationId)
+      : [...current, locationId];
+    setError(null);
+    setMemberLocations((prev) => ({ ...prev, [membershipId]: next }));
+    try {
+      await patch(membershipId, { locationIds: next });
+      router.refresh();
+    } catch (e) {
+      setMemberLocations((prev) => ({ ...prev, [membershipId]: current }));
       setError(e instanceof Error ? e.message : "Opslaan mislukt.");
     }
   }
@@ -178,7 +206,12 @@ export default function MembersManager({
     ROLE_ORDER.indexOf(roles[a.membershipId]) - ROLE_ORDER.indexOf(roles[b.membershipId]) ||
     a.name.localeCompare(b.name);
   const visible = members.filter(
-    (m) => !removed.includes(m.membershipId) && matchesQuery(m, query)
+    (m) =>
+      !removed.includes(m.membershipId) &&
+      matchesQuery(m, query) &&
+      (!activeLocation ||
+        (memberLocations[m.membershipId] ?? []).length === 0 ||
+        (memberLocations[m.membershipId] ?? []).includes(activeLocation))
   );
   const groups: { id: string; name: string; color: string | null; people: Member[] }[] = [
     ...departments.map((d) => ({ id: d.id, name: d.name, color: d.color as string | null })),
@@ -323,6 +356,39 @@ export default function MembersManager({
                   </div>
                 </div>
               </div>
+              {/* Locaties: standaard alles aangevinkt-uit (= overal); kies waar iemand werkt. */}
+              {locations.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5">
+                  <span className="text-[11px] text-ink/40">
+                    {(memberLocations[m.membershipId] ?? []).length === 0
+                      ? "Alle locaties"
+                      : "Werkt op:"}
+                  </span>
+                  {locations.map((l) => {
+                    const active = (memberLocations[m.membershipId] ?? []).includes(l.id);
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => toggleLocation(m.membershipId, l.id)}
+                        aria-pressed={active}
+                        className={`rounded-full border px-2.5 py-1 text-xs ${
+                          active
+                            ? "border-ink bg-ink text-paper"
+                            : "border-line text-ink/60 hover:border-ink"
+                        }`}
+                      >
+                        <span
+                          className="mr-1.5 inline-block h-2 w-2 rounded-full"
+                          style={{ backgroundColor: l.color }}
+                          aria-hidden
+                        />
+                        {l.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {/* Extra teams: bewust klein en ingeklapt, dit is een uitzondering. */}
               {departments.length > 1 && (
                 <div className="mt-1 text-right">

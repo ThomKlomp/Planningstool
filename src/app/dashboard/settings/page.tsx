@@ -8,6 +8,8 @@ import AutoOpenWeeksSetting from "./auto-open-weeks-setting";
 import ClosedDaysManager from "./closed-days-manager";
 import ClosedWeekdaysSetting from "./closed-weekdays-setting";
 import DepartmentsManager from "./departments-manager";
+import LocationsManager from "./locations-manager";
+import { listLocations } from "@/lib/locations";
 import RosterVisibilitySetting from "./roster-visibility-setting";
 import WeekOpenEmailSetting from "./week-open-email-setting";
 import CompanyFlagSetting from "./company-flag-setting";
@@ -24,7 +26,7 @@ export default async function SettingsPage() {
     redirect("/dashboard");
   }
 
-  const [shiftTemplates, company, closedDays, departments, members] = await Promise.all([
+  const [shiftTemplates, company, closedDays, departments, members, locations] = await Promise.all([
     prisma.shiftTemplate.findMany({
       where: { companyId: membership.companyId },
       orderBy: { startTime: "asc" },
@@ -40,6 +42,7 @@ export default async function SettingsPage() {
         autoApproveHours: true,
         emailWeekOpenToEmployees: true,
         alwaysPublishRoster: true,
+        showAllLocationsToEmployees: true,
         subscriptionStatus: true,
         trialEndsAt: true,
         billingName: true,
@@ -59,15 +62,16 @@ export default async function SettingsPage() {
     }),
     prisma.membership.findMany({
       where: { companyId: membership.companyId },
-      include: { user: true, extraDepartments: true },
+      include: { user: true, extraDepartments: true, locations: true },
       orderBy: { createdAt: "asc" },
     }),
+    listLocations(membership.companyId),
   ]);
 
   // Terugkerende diensten (weinig gebruikt, staat ingeklapt onderaan).
   const recurringPatterns = await prisma.recurringShift.findMany({
     where: { companyId: membership.companyId },
-    include: { membership: { include: { user: true } }, department: true },
+    include: { membership: { include: { user: true } }, department: true, location: true },
     orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
   });
   const departmentById = new Map(departments.map((d) => [d.id, d]));
@@ -201,6 +205,40 @@ export default async function SettingsPage() {
       </section>
 
       <section className="mt-10">
+        <h2 className="font-display text-xl">Locaties</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Heeft je zaak meerdere locaties waar personeel heen en weer gaat? Voeg ze hier toe als
+          kostenplaats. Alles blijft binnen dezelfde zaak en hetzelfde abonnement: iedereen houdt één
+          account, maar je maakt onderscheid in rooster, beschikbaarheid, uren en medewerkers. Koppel
+          medewerkers aan een of meer locaties bij{" "}
+          <Link href="/dashboard/medewerkers" className="text-awning underline hover:no-underline">
+            Medewerkers
+          </Link>
+          ; wie nergens aan gekoppeld is, werkt op alle locaties.
+        </p>
+        <div className="mt-4">
+          <LocationsManager
+            initialLocations={locations.map((l) => ({
+              id: l.id,
+              name: l.name,
+              color: l.color,
+              order: l.order,
+            }))}
+          />
+        </div>
+        {locations.length > 1 && (
+          <div className="mt-3">
+            <CompanyFlagSetting
+              field="showAllLocationsToEmployees"
+              initialValue={company?.showAllLocationsToEmployees ?? true}
+              label="Medewerkers mogen ook de andere locaties inzien"
+              hint="Uitgezet? Dan zien medewerkers in het rooster alleen collega's en diensten van hun eigen locatie(s)."
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
         <h2 className="font-display text-xl">Publiceren</h2>
         <p className="mt-1 text-sm text-ink/60">
           Standaard publiceer je een rooster per week. Met &ldquo;altijd gepubliceerd&rdquo; zien medewerkers elke wijziging meteen.
@@ -278,7 +316,9 @@ export default async function SettingsPage() {
                 id: m.id,
                 name: m.user.name ?? m.user.email ?? "Onbekend",
                 teams: teamsOfMember(m),
+                locationIds: m.locations.map((l) => l.locationId),
               }))}
+              locations={locations.map((l) => ({ id: l.id, name: l.name, color: l.color }))}
               templates={shiftTemplates.map((t) => ({
                 id: t.id,
                 name: t.name,
@@ -294,6 +334,7 @@ export default async function SettingsPage() {
                 endTime: p.endTime,
                 role: p.role,
                 departmentName: p.department?.name ?? null,
+                locationName: p.location?.name ?? null,
               }))}
             />
           </div>

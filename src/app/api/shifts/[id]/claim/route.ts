@@ -55,6 +55,20 @@ export async function POST(
     }
   }
 
+  // Een medewerker die aan locaties gekoppeld is, pakt alleen een dienst op een eigen locatie op.
+  if (shift.locationId && !canManage) {
+    const mine = await prisma.membershipLocation.findMany({
+      where: { membershipId: membership.membershipId },
+      select: { locationId: true },
+    });
+    if (mine.length > 0 && !mine.some((l) => l.locationId === shift.locationId)) {
+      return NextResponse.json(
+        { error: "Deze dienst is op een andere locatie" },
+        { status: 403 }
+      );
+    }
+  }
+
   // Alleen toewijzen als de dienst nog steeds open is: bij twee mensen die tegelijk
   // klikken wint de eerste.
   const claimed = await prisma.shift.updateMany({

@@ -11,6 +11,8 @@ import { teamIdsOf } from "@/lib/teams";
 import { workedHours, formatHours } from "@/lib/worked-hours";
 import { isManagerRole, type DashboardBlockId } from "@/lib/dashboard-blocks";
 import MemberList from "../member-list";
+import LocationBadge from "@/components/location-badge";
+import { locationIdsOf, shiftVisibleTo, visibleLocationIds } from "@/lib/locations";
 
 // Inhoud van de blokken op het overzicht. Elk blok haalt zijn eigen gegevens
 // op en wordt alleen gerenderd als de gebruiker het ook op zijn overzicht heeft.
@@ -61,10 +63,33 @@ async function openAvailabilityWeek(companyId: string): Promise<Date | null> {
   return found;
 }
 
+/**
+ * Welke locaties mag deze kijker op het overzicht zien? null = alle. Alleen een medewerker
+ * kan beperkt zijn (instelling "andere locaties inzien" uit, en zelf aan locaties gekoppeld).
+ */
+async function viewerLocationScope(ctx: BlockContext): Promise<string[] | null> {
+  if (isManagerRole(ctx.role)) return null;
+  const [company, me] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: ctx.companyId },
+      select: { showAllLocationsToEmployees: true },
+    }),
+    prisma.membership.findUnique({
+      where: { id: ctx.membershipId },
+      select: { locations: { select: { locationId: true } } },
+    }),
+  ]);
+  return visibleLocationIds({
+    canManage: false,
+    showAllToEmployees: company?.showAllLocationsToEmployees ?? true,
+    own: me ?? {},
+  });
+}
+
 async function myShifts(ctx: BlockContext, range: { gte: Date; lte?: Date }, take?: number) {
   const shifts = await prisma.shift.findMany({
     where: { membershipId: ctx.membershipId, date: range },
-    include: { department: true, membership: { include: { department: true } } },
+    include: { department: true, location: true, membership: { include: { department: true } } },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
     take,
   });
@@ -74,15 +99,29 @@ async function myShifts(ctx: BlockContext, range: { gte: Date; lte?: Date }, tak
 async function TeamStats({ ctx }: { ctx: BlockContext }) {
   const manager = isManagerRole(ctx.role);
   const week = resolveWeek();
-  const [memberCount, allWeekShifts, pendingHours] = await Promise.all([
-    prisma.membership.count({ where: { companyId: ctx.companyId } }),
+  const scope = await viewerLocationScope(ctx);
+  const [allMembers, allWeekShiftsRaw, pendingHours] = await Promise.all([
+    prisma.membership.findMany({
+      where: { companyId: ctx.companyId },
+      select: { id: true, locations: { select: { locationId: true } } },
+    }),
     prisma.shift.findMany({
       where: { companyId: ctx.companyId, date: { gte: week[0], lte: week[6] } },
+      include: { membership: { select: { locations: { select: { locationId: true } } } } },
     }),
     manager
       ? prisma.timeEntry.count({ where: { companyId: ctx.companyId, status: "SUBMITTED" } })
       : Promise.resolve(0),
   ]);
+  // Beperkt zicht op locaties: alleen collega's en diensten van de eigen locatie(s) tellen mee.
+  const members = scope
+    ? allMembers.filter((m) => {
+        const ids = locationIdsOf(m);
+        return ids.length === 0 || ids.some((id) => scope.includes(id));
+      })
+    : allMembers;
+  const memberCount = members.length;
+  const allWeekShifts = allWeekShiftsRaw.filter((s) => shiftVisibleTo(s, scope));
   // Medewerkers tellen alleen mee wat ze ook in het rooster mogen zien.
   const shifts = manager ? allWeekShifts : await filterVisibleForEmployee(ctx.companyId, allWeekShifts);
   const open = shifts.filter((s) => !s.membershipId).length;
@@ -107,11 +146,18 @@ async function TeamStats({ ctx }: { ctx: BlockContext }) {
 }
 
 async function TeamMembers({ ctx }: { ctx: BlockContext }) {
-  const members = await prisma.membership.findMany({
+  const scope = await viewerLocationScope(ctx);
+  const allMembers = await prisma.membership.findMany({
     where: { companyId: ctx.companyId },
-    include: { user: true, department: true },
+    include: { user: true, department: true, locations: true },
     orderBy: { createdAt: "asc" },
   });
+  const members = scope
+    ? allMembers.filter((m) => {
+        const ids = locationIdsOf(m);
+        return ids.length === 0 || ids.some((id) => scope.includes(id));
+      })
+    : allMembers;
   // Alleen-lezen: beheren (indelen, status, verwijderen) doen managers bij Medewerkers.
   return (
     <MemberList
@@ -155,6 +201,7 @@ async function NextShift({ ctx }: { ctx: BlockContext }) {
           </>
         )}
         {days === 0 ? "vandaag" : days === 1 ? "morgen" : `over ${days} dagen`}
+        {next.location && <LocationBadge name={next.location.name} color={next.location.color} className="ml-1" />}
       </p>
       <MoreLink href="/dashboard/rooster">Naar het rooster →</MoreLink>
     </div>
@@ -175,7 +222,8 @@ async function MyWeek({ ctx }: { ctx: BlockContext }) {
         {shifts.map((s) => (
           <li key={s.id} className="flex justify-between gap-3">
             <span className="first-letter:uppercase">{fmtDay(s.date)}</span>
-            <span className="text-ink/60">
+            <span className="flex items-center gap-2 text-ink/60">
+              {s.location && <LocationBadge name={s.location.name} color={s.location.color} />}
               {s.startTime}–{s.endTime}
             </span>
           </li>
@@ -205,6 +253,7 @@ async function OpenShifts({ ctx }: { ctx: BlockContext }) {
     }
     teamFilter = { departmentId: { in: teamIds } };
   }
+  const scope = await viewerLocationScope(ctx);
 
   const found = await prisma.shift.findMany({
     where: {
@@ -213,11 +262,12 @@ async function OpenShifts({ ctx }: { ctx: BlockContext }) {
       date: { gte: today, lte: until },
       ...teamFilter,
     },
-    include: { department: true },
+    include: { department: true, location: true },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
     take: 30,
   });
-  const shifts = manager ? found : await filterVisibleForEmployee(ctx.companyId, found);
+  const visibleFound = found.filter((s) => shiftVisibleTo(s, scope));
+  const shifts = manager ? visibleFound : await filterVisibleForEmployee(ctx.companyId, visibleFound);
   if (shifts.length === 0) return <Empty>Er zijn de komende twee weken geen open diensten.</Empty>;
 
   return (
@@ -227,6 +277,7 @@ async function OpenShifts({ ctx }: { ctx: BlockContext }) {
           <li key={s.id} className="flex items-center justify-between gap-3">
             <span className="first-letter:uppercase">{fmtDay(s.date)}</span>
             <span className="flex items-center gap-2 text-ink/60">
+              {s.location && <LocationBadge name={s.location.name} color={s.location.color} />}
               {s.startTime}–{s.endTime}
               {s.department && (
                 <span
@@ -367,14 +418,17 @@ async function HoursApproval({ ctx }: { ctx: BlockContext }) {
 
 async function WorkingToday({ ctx }: { ctx: BlockContext }) {
   const today = startOfToday();
-  const shifts = await prisma.shift.findMany({
-    where: { companyId: ctx.companyId, date: today, NOT: { membershipId: null } },
-    include: {
-      department: true,
-      membership: { include: { user: true, department: true } },
-    },
-    orderBy: { startTime: "asc" },
-  });
+  const scope = await viewerLocationScope(ctx);
+  const shifts = (
+    await prisma.shift.findMany({
+      where: { companyId: ctx.companyId, date: today, NOT: { membershipId: null } },
+      include: {
+        department: true,
+        membership: { include: { user: true, department: true, locations: true } },
+      },
+      orderBy: { startTime: "asc" },
+    })
+  ).filter((s) => shiftVisibleTo(s, scope));
   if (shifts.length === 0) return <Empty>Vandaag staat er niemand ingeroosterd.</Empty>;
 
   const groups = new Map<string, { name: string; color: string | null; items: typeof shifts }>();

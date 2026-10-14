@@ -10,8 +10,8 @@ import { shiftDateLabel } from "@/lib/roster-change";
 //
 // - Alleen als het rooster van die week gepubliceerd is (of "altijd gepubliceerd" aanstaat)
 //   en de dienst nog moet komen.
-// - Ontvangers zijn de leden van het team van de dienst (hoofd- of extra team; zonder team:
-//   iedereen), niet de persoon die de dienst zelf aanmaakt. Managers/eigenaren alleen als de zaak
+// - Ontvangers zijn de leden van het team en de locatie van de dienst (hoofd- of extra team; zonder
+//   team of locatie: iedereen), niet de persoon die de dienst zelf aanmaakt. Managers/eigenaren alleen als de zaak
 //   dat heeft aangezet.
 // - Wie die dag al een soortgelijke dienst heeft (overlap, of dezelfde standaardshift) krijgt
 //   geen mail; wie bijvoorbeeld 12-17 werkt mag wel een mail voor een avonddienst krijgen.
@@ -28,6 +28,7 @@ type ShiftInput = {
   endTime: string;
   role: string | null;
   departmentId: string | null;
+  locationId?: string | null;
 };
 
 export type PlannedPerson = {
@@ -127,7 +128,7 @@ export async function planOpenShiftMail(opts: {
         id: { not: opts.actorMembershipId },
         role: includeManagers ? { in: ["OWNER", "MANAGER", "EMPLOYEE"] } : "EMPLOYEE",
       },
-      include: { user: { select: { name: true, email: true } }, extraDepartments: true },
+      include: { user: { select: { name: true, email: true } }, extraDepartments: true, locations: true },
     }),
     prisma.shiftTemplate.findMany({ where: { companyId: opts.companyId } }),
     prisma.availabilitySlot.findMany({ where: { companyId: opts.companyId, date: shift.date } }),
@@ -138,6 +139,10 @@ export async function planOpenShiftMail(opts: {
   // Team van de dienst: hoofd- of extra team. Managers (indien aangezet) horen er altijd bij.
   const candidates = members.filter((m) => {
     if (m.role !== "EMPLOYEE") return true;
+    // Locatie van de dienst: alleen wie daar werkt (zonder koppeling: overal).
+    if (shift.locationId && m.locations.length > 0 && !m.locations.some((l) => l.locationId === shift.locationId)) {
+      return false;
+    }
     if (!shift.departmentId) return true;
     return (
       m.departmentId === shift.departmentId ||
@@ -297,7 +302,12 @@ export async function sendOpenShiftMail(opts: {
     const link = `/dashboard/rooster?week=${toDateParam(getWeekDates(shift.date)[0])}`;
     const url = `${process.env.NEXTAUTH_URL ?? ""}${link}`;
     const title = `Open dienst op ${shiftDateLabel(shift.date)}`;
-    const where = `${shift.startTime}–${shift.endTime}${shift.role ? ` · ${shift.role}` : ""}`;
+    const locationName = shift.locationId
+      ? (await prisma.location.findUnique({ where: { id: shift.locationId }, select: { name: true } }))?.name
+      : undefined;
+    const where = `${shift.startTime}–${shift.endTime}${shift.role ? ` · ${shift.role}` : ""}${
+      locationName ? ` · ${locationName}` : ""
+    }`;
 
     await notify(opts.companyId, plan.recipients.map((r) => r.membershipId), {
       title,

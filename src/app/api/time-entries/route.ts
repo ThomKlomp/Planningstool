@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isDateClosed } from "@/lib/closed-days";
 import { filterVisibleForEmployee } from "@/lib/roster-publish";
+import { resolveShiftLocation } from "@/lib/locations";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -83,9 +84,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // Locatie waar gewerkt is: bij één eigen locatie vanzelf die, anders de gekozen locatie.
+  const location = await resolveShiftLocation(membership.companyId, membership.membershipId, body?.locationId);
+  if (!location.ok) {
+    return NextResponse.json({ error: location.error }, { status: 400 });
+  }
+
   const timeEntry = await prisma.timeEntry.create({
     data: {
       companyId: membership.companyId,
+      locationId: location.locationId,
       membershipId: membership.membershipId,
       date: new Date(date),
       startTime,

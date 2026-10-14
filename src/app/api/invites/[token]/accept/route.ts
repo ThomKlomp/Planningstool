@@ -60,6 +60,19 @@ export async function POST(
         skipDuplicates: true,
       });
     }
+    // Locaties die de manager bij het uitnodigen had aangegeven (bestaande locaties van de zaak).
+    if (invite.locationIds.length > 0) {
+      const valid = await tx.location.findMany({
+        where: { id: { in: invite.locationIds }, companyId: invite.companyId },
+        select: { id: true },
+      });
+      if (valid.length > 0) {
+        await tx.membershipLocation.createMany({
+          data: valid.map((l) => ({ membershipId: created.id, locationId: l.id })),
+          skipDuplicates: true,
+        });
+      }
+    }
     await tx.invite.update({
       where: { id: invite.id },
       data: { acceptedAt: new Date() },

@@ -24,6 +24,7 @@ export async function PATCH(req: Request) {
     emailWeekOpenToEmployees?: boolean;
     pinnedDashboardBlocks?: string[];
     alwaysPublishRoster?: boolean;
+    showAllLocationsToEmployees?: boolean;
     billingName?: string | null;
     kvkNumber?: string | null;
     vatNumber?: string | null;
@@ -55,6 +56,10 @@ export async function PATCH(req: Request) {
 
   if (body?.autoApproveShiftSwaps !== undefined) {
     data.autoApproveShiftSwaps = Boolean(body.autoApproveShiftSwaps);
+  }
+
+  if (body?.showAllLocationsToEmployees !== undefined) {
+    data.showAllLocationsToEmployees = Boolean(body.showAllLocationsToEmployees);
   }
 
   if (body?.alwaysPublishRoster !== undefined) {
